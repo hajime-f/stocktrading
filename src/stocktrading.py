@@ -1,19 +1,33 @@
-from Deal import Deal
+from Key import Key
 from Trade import trade
 from datetime import date, datetime, timezone, timedelta
-import time
+import time, jpholiday
+
+
+# 指定した日が平日ならTrue、土日祝日ならFalseを返す関数
+def is_weekdays(DATE):
+    Date = datetime(int(DATE[0:4]), int(DATE[4:6]), int(DATE[6:8]))
+    if Date.weekday() >= 5 or jpholiday.is_holiday(Date):
+        return 0
+    else:
+        return 1
+    
 
 if __name__ == '__main__':
 
-    # APIを叩くクラスDealをインスタンス化する
-    deal = Deal()
+    # サーバにアクセスするキーをインスタンス化する
+    key = Key()
     
-    # 預金残高（現物の買付余力）を出力する
-    deposit = deal.inquiry_deposit()
+    # 預金残高（現物の買付余力）をサーバに問い合わせる
+    deposit = key.inquiry_deposit()
     print(f"\033[33m預金残高：{int(deposit):,} 円\033[0m")
     
-    # 開場と閉場の日時を得る
+    # 土日祝判定
     d = date.today()
+    if not is_weekdays(d):
+        exit('本日は土日祝のため市場は開いていません。')
+    
+    # 開場と閉場の日時を得る
     JST = timezone(timedelta(hours=+9), 'JST')
     start1 = datetime(year=d.year, month=d.month, day=d.day, hour=9, minute=0, tzinfo=JST)   # 9:00から
     end1 = datetime(year=d.year, month=d.month, day=d.day, hour=15, minute=0, tzinfo=JST)    # 15:00まで
@@ -32,5 +46,5 @@ if __name__ == '__main__':
             time.sleep(1)
             
         # 取引する
-        tr = trade(deal)
+        tr = trade(key)
         

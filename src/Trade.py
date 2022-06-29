@@ -3,21 +3,21 @@
 
 
 
-def fetch_information(deal):
+def fetch_information(key):
 
     return 1
 
 
-def execute_transaction(deal):
+def execute_transaction(key):
     
     return 1
     
 
-def trade(deal):
+def trade(key):
 
-    info = fetch_information(deal)
+    info = fetch_information(key)
     
-    exe = execute_transaction(deal)
+    exe = execute_transaction(key)
 
     return 1
     

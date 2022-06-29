@@ -4,7 +4,7 @@ import json
 import pprint
 from dotenv import load_dotenv
 
-class Deal:
+class Key:
 
     kabu_station_ip = '192.168.0.101'
     
