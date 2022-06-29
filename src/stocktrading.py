@@ -4,15 +4,6 @@ from datetime import date, datetime, timezone, timedelta
 import time, jpholiday
 
 
-# 指定した日が平日ならTrue、土日祝日ならFalseを返す関数
-def is_weekdays(DATE):
-    Date = datetime(int(DATE[0:4]), int(DATE[4:6]), int(DATE[6:8]))
-    if Date.weekday() >= 5 or jpholiday.is_holiday(Date):
-        return 0
-    else:
-        return 1
-    
-
 if __name__ == '__main__':
 
     # サーバにアクセスするキーをインスタンス化する
@@ -23,12 +14,12 @@ if __name__ == '__main__':
     print(f"\033[33m預金残高：{int(deposit):,} 円\033[0m")
     
     # 土日祝判定
-    d = date.today()
-    if not is_weekdays(d):
+    JST = timezone(timedelta(hours=+9), 'JST')
+    d = datetime.now(JST)
+    if d.weekday() >= 5 or jpholiday.is_holiday(d):
         exit('本日は土日祝のため市場は開いていません。')
     
     # 開場と閉場の日時を得る
-    JST = timezone(timedelta(hours=+9), 'JST')
     start1 = datetime(year=d.year, month=d.month, day=d.day, hour=9, minute=0, tzinfo=JST)   # 9:00から
     end1 = datetime(year=d.year, month=d.month, day=d.day, hour=15, minute=0, tzinfo=JST)    # 15:00まで
     start2 = datetime(year=d.year, month=d.month, day=d.day, hour=11, minute=30, tzinfo=JST) # 昼休み11:30から
