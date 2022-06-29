@@ -45,7 +45,8 @@ class Deal:
                 
         
     def inquiry_deposit(self):
-
+        
+        # 預金残高（現物の取引余力）を問い合わせる
         url = self.base_url + '/wallet/cash'
         content = self.push_get_request(url)
         return content['StockAccountWallet']
