@@ -57,6 +57,36 @@ class Key:
         return content['StockAccountWallet']
 
 
+    def fetch_brand_info(self, code, exchange):
+
+        # ある銘柄の情報を得る
+        url = self.base_url + '/symbol/' + str(code) + '@' + str(exchange)
+        content = self.push_get_request(url)
+        return content
+
+
+    def push_register_request(self, code, exchange):
+
+        # ある銘柄を登録銘柄リストに登録する
+        url = self.base_url + '/register'
+        obj = { 'Symbols':
+                [ 
+                    {'Symbol': str(code), 'Exchange': exchange},
+                ] }
+        content = self.push_put_request(url, obj)
+        
+
+    def push_unregister_request(self, code, exchange):
+
+        # ある銘柄を登録銘柄リストから削除する
+        url = self.base_url + '/unregister'
+        obj = { 'Symbols':
+                [ 
+                    {'Symbol': str(code), 'Exchange': exchange},
+                ] }
+        content = self.push_put_request(url, obj)
+    
+
     def push_get_request(self, url):
         
         # GETリクエストをurlに送信する
@@ -67,6 +97,18 @@ class Key:
         content = self.throw_request(req)
         return content
 
+
+    def push_put_request(self, url, obj):
+
+        # PUT リクエストを url に送信する
+        json_data = json.dumps(obj).encode('utf8')
+        req = urllib.request.Request(url, json_data, method='PUT')
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('X-API-KEY', self.token)
+
+        content = self.throw_request(req)
+        return content
+    
 
     def throw_request(self, req):
 
