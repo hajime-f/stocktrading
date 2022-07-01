@@ -9,10 +9,6 @@ if __name__ == '__main__':
     # サーバにアクセスするキーをインスタンス化する
     key = Key()
     
-    # 預金残高（現物の買付余力）をサーバに問い合わせる
-    deposit = key.inquiry_deposit()
-    print(f"\033[33m預金残高：{int(deposit):,} 円\033[0m")
-    
     # ポートフォリオを初期化する
     pf = init_portfolio(key)
     
@@ -40,5 +36,5 @@ if __name__ == '__main__':
             time.sleep(1)
             
         # 取引する
-        tr = trade(pf, key)
+        tr = trade(pf)
         
