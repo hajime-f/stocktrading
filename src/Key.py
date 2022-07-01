@@ -41,7 +41,12 @@ class Key:
         req.add_header('Content-Type', 'application/json')
 
         content = self.throw_request(req)
-        self.token = content['Token']
+        try:
+            self.token = content['Token']
+        except KeyError:
+            exit('\033[31mAPIトークンを取得できませんでした。\033[0m')
+        except Exception:
+            exit('\033[31m不明な例外により強制終了します。\033[0m')
                 
         
     def inquiry_deposit(self):
@@ -70,11 +75,10 @@ class Key:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            print(e)
+            print('\033[31m'+ str(e) + '\033[0m')
             content = json.loads(e.read())
-            print(content)
         except Exception as e:
-            print(e)
+            print('\033[31m' + str(e) + '\033[0m')
 
         return content
     
