@@ -65,6 +65,14 @@ class Key:
         return content
 
 
+    def fetch_board_info(self, code, exchange):
+
+        # ある銘柄の板情報を得る
+        url = self.base_url + '/board/' + str(code) + '@' + str(exchange)
+        content = self.push_get_request(url)
+        return content
+    
+
     def push_register_request(self, code, exchange):
 
         # ある銘柄を登録銘柄リストに登録する

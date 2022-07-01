@@ -1,3 +1,4 @@
+from Stock import Stock
 from dataclasses import field, dataclass
 
 @dataclass(slots = True)
@@ -25,9 +26,9 @@ def init_portfolio(key):
     return pf
     
     
-def fetch_information(stock):
+def collect_information(stock):
     
-    
+    stock.fetch_data()
     
     
     return 1
@@ -42,7 +43,7 @@ def trade(pf):
     
     for stock in pf.stocks:
         
-        info = fetch_information(stock)
+        info = collect_information(stock)
         
         trans = execute_transaction(stock)
     

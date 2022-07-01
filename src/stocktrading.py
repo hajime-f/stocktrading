@@ -37,4 +37,4 @@ if __name__ == '__main__':
             
         # 取引する
         tr = trade(pf)
-        
+
