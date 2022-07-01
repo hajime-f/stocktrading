@@ -14,6 +14,7 @@ class Key:
         self.base_url = 'http://' + self.kabu_station_ip + ':8080/kabusapi/'
 
         # 環境変数の読み込み
+        # .env ファイルから API パスワードと注文パスワードを読み込む
         load_dotenv()
         
         # APIパスワードの設定
@@ -23,7 +24,7 @@ class Key:
             print('API パスワードが環境変数に設定されていません。')
         except Exception as e:
             print(e)
-
+        
         # 取引パスワードの設定
         try:
             self.order_password = os.getenv('OrderPassword')
@@ -93,8 +94,18 @@ class Key:
                     {'Symbol': str(code), 'Exchange': exchange},
                 ] }
         content = self.push_put_request(url, obj)
-    
 
+
+    def push_unregisterall_request(self):
+
+        # 登録銘柄リストからすべての銘柄を削除する
+        url = self.base_url + '/unregister/all'
+        req = urllib.request.Request(url, method='PUT')
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('X-API-KEY', self.token)
+        content = self.throw_request(req)
+        
+        
     def push_get_request(self, url):
         
         # GETリクエストをurlに送信する
