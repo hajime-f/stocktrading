@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env
+src/stocks.db
+stocks.db
 
 # C extensions
 *.so
