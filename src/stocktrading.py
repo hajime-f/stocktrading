@@ -19,10 +19,10 @@ if __name__ == '__main__':
     
     # 開場と閉場の日時を得る
     start1 = datetime(year=d.year, month=d.month, day=d.day, hour=9, minute=0, tzinfo=JST)   # 9:00から
-    end1 = datetime(year=d.year, month=d.month, day=d.day, hour=15, minute=0, tzinfo=JST)    # 15:00まで
+    end1 = datetime(year=d.year, month=d.month, day=d.day, hour=23, minute=0, tzinfo=JST)    # 15:00まで
     start2 = datetime(year=d.year, month=d.month, day=d.day, hour=11, minute=30, tzinfo=JST) # 昼休み11:30から
     end2 = datetime(year=d.year, month=d.month, day=d.day, hour=12, minute=30, tzinfo=JST)   # 昼休み12:30まで
-    tr = False
+    tr_flag = False
     
     # 市場が開くまで待機する
     while datetime.now(JST) < start1:
@@ -36,8 +36,8 @@ if __name__ == '__main__':
             time.sleep(1)
             
         # 取引する
-        tr = trade(pf)
+        tr_flag = trade(pf)
         
     # 取引を終了する
-    if tr:
+    if tr_flag:
         finalize(pf)

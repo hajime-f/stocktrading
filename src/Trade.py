@@ -34,16 +34,18 @@ def init_portfolio(key):
         time.sleep(0.2)  # 流量制限を回避するためのスリープ
         stocks.append(st)
         bar.update(1)
-    
+
+    # ポートフォリオを構成する
     pf = Portfolio(deposit, stocks)
     
     return pf
     
     
 def collect_information(stock):
-
+    
     # 最新のデータを取得する
     stock.fetch_data()
+    print('データ取得：', stock.code, stock.disp_name)
     time.sleep(0.3)
     
     return 1
@@ -53,7 +55,7 @@ def execute_transaction(stock):
     
     return 1
 
-    
+
 def trade(pf):
     
     for st in pf.stocks:
@@ -67,9 +69,9 @@ def trade(pf):
 
 
 def finalize(pf):
-
+    
     for st in pf.stocks:
-        st.store_daily_candle()
-        st.unregister_from_stock_list()
-        time.sleep(0.2)
+        st.store_daily_candle()  # 日足データの保存
+        st.unregister_from_stock_list()  # 銘柄登録の解除
+        time.sleep(0.2)  # 流量制限を回避するためのスリープ
 
