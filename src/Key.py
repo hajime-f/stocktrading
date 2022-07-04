@@ -83,10 +83,7 @@ class Key:
                     {'Symbol': str(code), 'Exchange': exchange},
                 ] }
         content = self.push_put_request(url, obj)
-<<<<<<< HEAD
         return content
-=======
->>>>>>> 625b6c6d6182a82066877ffbf19fed5b98053e32
         
 
     def push_unregister_request(self, code, exchange):
@@ -98,10 +95,7 @@ class Key:
                     {'Symbol': str(code), 'Exchange': exchange},
                 ] }
         content = self.push_put_request(url, obj)
-<<<<<<< HEAD
         return content
-=======
->>>>>>> 625b6c6d6182a82066877ffbf19fed5b98053e32
 
 
     def push_unregisterall_request(self):

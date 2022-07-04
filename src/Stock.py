@@ -1,11 +1,6 @@
 import pandas as pd
-import sqlite3, uuid, time
-<<<<<<< HEAD
+import sqlite3, uuid, statistics
 from datetime import datetime, timezone, timedelta
-=======
-from datetime import date
-from datetime import datetime
->>>>>>> 625b6c6d6182a82066877ffbf19fed5b98053e32
 
 class Stock():
 
@@ -31,7 +26,7 @@ class Stock():
         except Exception:
             exit('\033[31m不明な例外により強制終了します。\033[0m')
         
-
+        
     def fetch_data(self):
         
         # この銘柄の生データ（板情報）を新しく取得し、data の末尾に追加する
@@ -40,7 +35,7 @@ class Stock():
         df2 = pd.json_normalize(board_info, sep = '_')
         new_data = pd.concat([df1, df2], axis = 1)
         self.data = pd.concat([self.data, new_data])
-
+        
         
     def register_to_stock_list(self):
         
@@ -52,26 +47,29 @@ class Stock():
         
         # この銘柄を登録銘柄リストから削除する
         content = self.key.push_unregister_request(self.code, self.market)
-
-
+        
+        
     def store_daily_candle(self):
-
+        
         # 日足のローソク足をデータベースに保存する
-
+        
         # 各種の値段を計算する
         open_price = self.data['CurrentPrice'].head(1)[0]  # 始値
         highest_price = max(self.data['CurrentPrice']) # 最高値
         lowest_price = min(self.data['CurrentPrice'])  # 最安値
         close_price = self.data['CurrentPrice'].tail(1)[0]  # 終値
-
+        
         # 取引量を計算する
         volume = self.data['TradingVolume'].tail(1)[0]
+
+        # 平均価格を計算する
+        mean_price = statistics.mean(self.data['CurrentPrice'])
         
         # 現在日を取得する
         JST = timezone(timedelta(hours=+9), 'JST')
         index_date = datetime.now(JST).strftime('%Y-%m-%d')
 
-        columns = ['code', 'uuid', 'date', 'open', 'high', 'low', 'close', 'volume']
+        columns = ['code', 'uuid', 'date', 'open', 'high', 'low', 'close', 'volume', 'mean']
         daily_candle_data = pd.DataFrame(index = [], columns = columns)
         daily_candle_data.loc[index_date] = {'code': self.code,
                                              'uuid': str(uuid.uuid4()),
@@ -80,7 +78,8 @@ class Stock():
                                              'high': highest_price,
                                              'low': lowest_price,
                                              'close': close_price,
-                                             'volume': volume,}
+                                             'volume': volume,
+                                             'mean': mean_price,}
         
         # 日足データをDBに格納する
         conn = sqlite3.connect(self.db_file_name)
