@@ -1,2 +1,2 @@
-# Algorithmic trading program for Japanese stocks
+# kabuステーションAPIを使って日本株を自動売買するプログラム
 
