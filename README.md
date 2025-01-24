@@ -1,2 +1,2 @@
-# stocktrading
-Algorithmic trading program for Japanese stocks
+# Algorithmic trading program for Japanese stocks
+

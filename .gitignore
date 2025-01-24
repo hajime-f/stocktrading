@@ -129,6 +129,7 @@ celerybeat.pid
 
 # Environments
 .env
+stocktrading/.env
 .venv
 env/
 venv/
