@@ -78,6 +78,8 @@ class Initialize:
             exit("\033[31mAPIトークンを取得できませんでした。\033[0m")
         except Exception:
             exit("\033[31m不明な例外により強制終了します。\033[0m")
-        
 
+        
+        # WebSocketのインスタンスを生成
+        self.websocket = websocket.WebSocketStreamProcessor(self.ip_address, self.port)
 
