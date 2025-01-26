@@ -1,6 +1,6 @@
 # kabu station API を使った日本株の自動売買プログラム
 
-[kabu ステーション API](https://kabucom.github.io/kabusapi/ptal/) を使って、日本株を自動的に売買するプログラムです。
+[kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) を使って、日本株を自動的に売買するプログラムです。
 
 > [!CAUTION]
 > 本プログラムを使用することによって被った損害等について、制作者は一切の責任を負いません。

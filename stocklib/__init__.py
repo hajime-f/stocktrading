@@ -80,10 +80,8 @@ class Initialize:
         except Exception:
             exit("\033[31m不明な例外により強制終了します。\033[0m")
 
-        # WebSocketのインスタンスを生成
+        # インスタンスを生成
         self.websocket = websocket.WebSocketStreamProcessor(self.ip_address, self.port)
-
-        # Informationのインスタンスを生成
         self.information = information.InformationProcessor(self.base_url, self.token)
 
         
