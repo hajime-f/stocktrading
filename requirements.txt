@@ -2,3 +2,4 @@ pandas
 python-dotenv
 jpholiday
 tqdm
+websockets

@@ -1,4 +1,9 @@
 import stocklib
 
-lib = stocklib.Context()
-print(lib.token)
+if __name__ == '__main__':
+    
+    lib = stocklib.Initialize()
+    
+    
+    
+    
