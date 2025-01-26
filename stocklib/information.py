@@ -16,6 +16,14 @@ class InformationProcessor:
         content = self.get_request(url)
         return content['StockAccountWallet']
 
+
+    def fetch_information(self, code, exchange):
+
+        # ある銘柄の情報を得る
+        url = self.base_url + '/symbol/' + str(code) + '@' + str(exchange)
+        content = self.get_request(url)
+        return content
+    
     
     def get_request(self, url):
         
