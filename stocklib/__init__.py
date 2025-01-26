@@ -83,5 +83,5 @@ class Initialize:
         # インスタンスを生成
         self.websocket = websocket.WebSocketStreamProcessor(self.ip_address, self.port)
         self.information = information.InformationProcessor(self.base_url, self.token)
-
+        self.register = register.RegisterProcessor(self.base_url, self.token)
         

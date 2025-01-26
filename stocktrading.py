@@ -9,7 +9,7 @@ if __name__ == '__main__':
     print(f"\033[33m預金残高：{int(deposit):,} 円\033[0m")
 
     # 登録銘柄リストからすべての銘柄を削除する
-    lib.register.unregisterall()
+    lib.register.unregister_all()
     
     @lib.websocket
     def receive(msg):
