@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from stocklib import websocket
 from stocklib import information
+from stocklib import register
 
 class Initialize:
 

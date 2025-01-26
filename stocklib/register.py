@@ -8,6 +8,7 @@ class RegisterProcessor:
         self.base_url = base_url
         self.token = token
 
+        
     def register(self, code, exchange):
 
         # ある銘柄を登録銘柄リストに登録する
@@ -18,7 +19,8 @@ class RegisterProcessor:
                 ] }
         content = self.put_request(url, obj)
         return content
-        
+
+    
     def unregister_all(self):
 
         # 登録銘柄リストからすべての銘柄を削除する
@@ -29,6 +31,7 @@ class RegisterProcessor:
         content = self.throw_request(req)
         return content
 
+    
     def put_request(self, url, obj):
 
         # PUT リクエストを url に送信する
@@ -39,6 +42,7 @@ class RegisterProcessor:
 
         content = self.throw_request(req)
         return content
+
     
     def throw_request(self, req):
 

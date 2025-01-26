@@ -27,6 +27,6 @@ class WebSocketStreamProcessor:
             self.loop.create_task(stream(func))
             return stream
 
-        def run(self):
-            self.loop.run_forever()
+    def run(self):
+        self.loop.run_forever()
 

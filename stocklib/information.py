@@ -8,12 +8,14 @@ class InformationProcessor:
         self.base_url = base_url
         self.token = token
 
+        
     def deposit(self):
         
         # 預金残高（現物の取引余力）を問い合わせる
         url = self.base_url + '/wallet/cash'
         content = self.get_request(url)
         return content['StockAccountWallet']
+
     
     def get_request(self, url):
         
@@ -25,6 +27,7 @@ class InformationProcessor:
         content = self.throw_request(req)
         return content
 
+    
     def throw_request(self, req):
 
         # リクエストを投げる
