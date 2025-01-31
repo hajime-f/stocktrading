@@ -7,7 +7,7 @@ class WebSocketStreamProcessor:
 
     def __init__(self, ip_address, port):
 
-        self.uri = "ws://" + ip_address + port + "/kabusapi/websocket"
+        self.uri = "ws://" + ip_address + ":" + port + "/kabusapi/websocket"
 
     def __call__(self, func):
 

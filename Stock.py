@@ -4,9 +4,9 @@ from datetime import datetime, timezone, timedelta
 
 class Stock:
 
-    def __init__(self, code, lib, exchange=1, db_file_name='stock.db', log_path_name='./logs/'):
+    def __init__(self, symbol, lib, exchange=1, db_file_name='stock.db', log_path_name='./logs/'):
 
-        self.code = code
+        self.symbol = symbol
         self.lib= lib
         self.exchange = exchange
         self.db_file_name = db_file_name
@@ -18,12 +18,12 @@ class Stock:
     def register_to_list(self):
         
         # この銘柄を登録銘柄リストに登録する
-        content = self.lib.register.register(self.code, self.exchange)
+        content = self.lib.register.register(self.symbol, self.exchange)
         
 
     def set_infomation(self):
         
-        content = self.lib.information.fetch_information(self.code, self.exchange)
+        content = self.lib.information.fetch_information(self.symbol, self.exchange)
         try:
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
@@ -32,3 +32,10 @@ class Stock:
         except Exception:
             exit('\033[31m不明な例外により強制終了します。\033[0m')
         
+    def append_data(data):
+        
+        # この銘柄の生データ（板情報）を、data の末尾に追加する
+        df1 = pd.DataFrame([datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')], columns = ['DateTime'])
+        df2 = pd.json_normalize(data, sep = '_')
+        new_data = pd.concat([df1, df2], axis = 1)
+        self.data = pd.concat([self.data, new_data])

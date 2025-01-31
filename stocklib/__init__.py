@@ -17,7 +17,7 @@ class Initialize:
         # APIPassword_production=XXXX
         # OrderPassword=YYYY
         # IPAddress=127.0.0.1（または localhost）
-        # Port=:18080
+        # Port=18080
 
         load_dotenv()
 
@@ -54,7 +54,7 @@ class Initialize:
             print(e)
 
         # エンドポイントの設定
-        self.base_url = "http://" + self.ip_address + self.port + "/kabusapi/"
+        self.base_url = "http://" + self.ip_address + ":" +self.port + "/kabusapi/"
 
         # APIトークンの取得
         url = self.base_url + "/token"

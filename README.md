@@ -16,7 +16,15 @@ stocklib ディレクトリの直下に、下記のようにパスワード等�
 APIPassword_production=XXXX
 OrderPassword=YYYY
 IPAddress=127.0.0.1
-Port=:18080
+Port=18080
+```
+
+### 仮想環境の作成
+
+仮想環境を作ってください。
+
+```
+$ python -m venv env
 ```
 
 ### パッケージのインストールと実行
@@ -24,7 +32,7 @@ Port=:18080
 仮想環境に入って ```make install``` した後、```make``` すればプログラムが動きます。
 
 ```
-$ source env/bin/activate
+$ source ./env/bin/activate
 (env) $ make install
 (env) $ make
 ```

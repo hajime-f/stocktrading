@@ -9,13 +9,13 @@ class RegisterProcessor:
         self.token = token
 
         
-    def register(self, code, exchange=1):
+    def register(self, symbol, exchange=1):
 
         # ある銘柄を登録銘柄リストに登録する
         url = self.base_url + '/register'
         obj = { 'Symbols':
                 [ 
-                    {'Symbol': str(code), 'Exchange': exchange},
+                    {'Symbol': str(symbol), 'Exchange': exchange},
                 ] }
         content = self.put_request(url, obj)
         return content

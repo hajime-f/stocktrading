@@ -17,10 +17,10 @@ class InformationProcessor:
         return content['StockAccountWallet']
 
 
-    def fetch_information(self, code, exchange):
+    def fetch_information(self, symbol, exchange):
 
         # ある銘柄の情報を得る
-        url = self.base_url + '/symbol/' + str(code) + '@' + str(exchange)
+        url = self.base_url + '/symbol/' + str(symbol) + '@' + str(exchange)
         content = self.get_request(url)
         return content
     
