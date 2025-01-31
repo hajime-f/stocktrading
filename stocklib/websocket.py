@@ -14,7 +14,7 @@ class WebSocketStreamProcessor:
         async def stream(func):
             
             async with websockets.connect(self.uri, ping_timeout=None) as ws:
-                while not ws.closed:
+                while not ws.close_reason is not None:
                     response = await ws.recv()
                     try:
                         func(json.loads(response))
@@ -23,10 +23,12 @@ class WebSocketStreamProcessor:
                         traceback.print_exc()
                         self.loop.stop()
             
-            self.loop = asyncio.get_event_loop()
-            self.loop.create_task(stream(func))
-            return stream
+        self.loop = asyncio.get_event_loop()
+        self.loop.create_task(stream(func))
+        return stream
 
     def run(self):
         self.loop.run_forever()
 
+
+        

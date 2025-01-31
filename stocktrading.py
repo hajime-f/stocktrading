@@ -21,25 +21,23 @@ if __name__ == '__main__':
     # 登録できる銘柄の上限数は50のため数を絞る
     codes = codes[0:50]
 
-    bar = tqdm(total = len(codes))
-    bar.set_description('ポートフォリオを初期化しています')
+    # bar = tqdm(total = len(codes))
+    # bar.set_description('ポートフォリオを初期化しています')
     
     # Stockクラスをインスタンス化してリストに入れる
     stocks = []
     for c in codes:
         st = Stock(c, lib)
-        st.register_to_stock_list()  # 銘柄登録
+        st.register_to_list()  # 銘柄登録
         st.set_infomation()  # 銘柄情報の設定
         stocks.append(st)
-        bar.update(1)
+        # bar.update(1)
     
+
     @lib.websocket
     def receive(msg):
         print(msg)
 
-    lib.websocket.run()
-    
-    
-    
+    lib.websocket.run()    
     
     

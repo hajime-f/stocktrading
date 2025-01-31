@@ -15,7 +15,7 @@ class Stock:
         self.data = pd.DataFrame(index = [], columns = self.columns)
 
         
-    def register_to_stock_list(self):
+    def register_to_list(self):
         
         # この銘柄を登録銘柄リストに登録する
         content = self.lib.register.register(self.code, self.exchange)
