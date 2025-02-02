@@ -3,3 +3,8 @@ python-dotenv
 jpholiday
 tqdm
 websockets
+sktime
+numpy
+statsmodels
+matplotlib
+seaborn

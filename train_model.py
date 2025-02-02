@@ -1,16 +1,11 @@
-from tqdm import tqdm
-
+from datetime import datetime
 import stocklib
-from Stock import Stock
+import model
 
 if __name__ == '__main__':
 
     # ライブラリを初期化する
     lib = stocklib.Initialize()
-
-    # 預金残高（現物の買付余力）を問い合わせる
-    deposit = lib.information.deposit()
-    print(f"\033[33m買付余力：{int(deposit):,} 円\033[0m")
 
     # 登録銘柄リストからすべての銘柄を削除する
     lib.register.unregister_all()
@@ -21,36 +16,40 @@ if __name__ == '__main__':
     # 登録できる銘柄の上限数は50のため数を絞る
     symbols = symbols[0:50]
 
-    # bar = tqdm(total = len(symbols))
-    # bar.set_description('ポートフォリオを初期化しています')
-    
-    # Stockクラスをインスタンス化してリストに入れる
-    stocks = []
+    # モデルライブラリを初期化する
+    n_symbols = len(symbols)
+    model = model.Initialize(n_symbols)
+    lib.websocket.set_model(model)
+
+    # 銘柄登録
     for s in symbols:
-        st = Stock(s, lib)
-        st.register_to_list()  # 銘柄登録
-        st.set_infomation()  # 銘柄情報の設定
-        stocks.append(st)
-        # bar.update(1)
+        lib.register.register(s, 1)
     
     @lib.websocket
     def receive(data):
 
-        # 受信したデータに対応する銘柄のインスタンスを取得する
-        received_stock = next(filter(lambda st: st.symbol == data['Symbol'], stocks), None)
-
-        # 受信したデータを銘柄のデータに追加する
-        if received_stock:
-            received_stock.append_data(data)
-            print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
-        else:
+        # 受信したデータに対応する銘柄のインデクスを取得する
+        try:
+            index = symbols.index(data['Symbol'])
+        except ValueError:
             print("受信したデータに対応する銘柄が見つかりません。")
+            exit()
 
-        breakpoint()
+        # データを受信した時刻を取得する
+        try:
+            dt_object = datetime.strptime(date['CurrentPriceTime'], "%Y-%m-%dT%H:%M:%S%z")  
+            formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            print("文字列のフォーマットが異なります。")
+            exit()
+
+        # データを追加する
+        model.train.append_data(formatted_datetime, data['CurrentPrice'], index)
 
     try:
         lib.websocket.run()
     except KeyboardInterrupt:
+        breakpoint()
         exit()
     
     
