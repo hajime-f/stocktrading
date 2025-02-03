@@ -1,6 +1,7 @@
 from model import train
 
-class Initialize:
+
+class Model:
 
     def __init__(self, n_symbols):
 

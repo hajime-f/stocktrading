@@ -6,7 +6,7 @@ from Stock import Stock
 if __name__ == '__main__':
 
     # ライブラリを初期化する
-    lib = stocklib.Initialize()
+    lib = stocklib.StockLibrary()
 
     # 預金残高（現物の買付余力）を問い合わせる
     deposit = lib.information.deposit()

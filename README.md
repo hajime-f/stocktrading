@@ -27,15 +27,20 @@ Port=18080
 $ python -m venv env
 ```
 
-### パッケージのインストールと実行
+### パッケージのインストール
 
-仮想環境に入って ```make install``` した後、```make``` すればプログラムが動きます。
+仮想環境に入って ```make install``` してください。
 
 ```
 $ source ./env/bin/activate
 (env) $ make install
-(env) $ make
 ```
 
+### 予測モデルの学習
 
+予測モデルを学習させます。下記のコマンドを打って、丸１日放置してください。
+
+```
+(env) $ make train
+```
 
