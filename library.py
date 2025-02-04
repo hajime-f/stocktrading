@@ -8,7 +8,9 @@ import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 
-from sktime.utils.plotting import plot_series
+# from sktime.utils.plotting import plot_series
+# from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.arima import AutoARIMA
 
 class StockLibrary:
 
@@ -202,8 +204,10 @@ class StockLibrary:
             else:
                 self.training_data[i] = pd.concat([self.training_data[i], df], ignore_index=True)
             self.training_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-            self.training_data[i] = self.training_data[i].set_index('DateTime')
+            self.training_data[i] = self.training_data[i].set_index('DateTime').asfreq('min')
             self.training_data[i].index = pd.to_datetime(self.training_data[i].index)
+            # freq = pd.infer_freq(self.training_data[i].index)
+            # self.training_data[i].index = self.training_data[i].index.asfreq(freq)
         
         # fig, ax = plot_series(training_data[0])
         # ax.set_xlim([training_data[0].index.min(), training_data[0].index.max()])
@@ -212,7 +216,20 @@ class StockLibrary:
 
 
     def train_model(self):
-        breakpoint()
+
+        # 予測器をインスタンス化する
+        self.forecaster = AutoARIMA(start_p = 8, start_q = 8)
+
+        # 学習
+        for i in range(self.n_symbols):
+            if self.forecaster.is_fitted:
+                self.forecaster.update(self.training_data[i])
+            else:
+                self.forecaster.fit(self.training_data[i])
+            
+
+
+            
         
 
     def register(self, symbol, exchange=1):
