@@ -4,8 +4,11 @@ import json
 import websockets
 import asyncio
 import traceback
+import pandas as pd
+from datetime import datetime
 from dotenv import load_dotenv
 
+from sktime.utils.plotting import plot_series
 
 class StockLibrary:
 
@@ -135,9 +138,9 @@ class StockLibrary:
         async def wait_and_train():
             await self.closed.wait()  # 接続が閉じるまで待つ
             print("学習を開始します。")
+            self.prepare_training_data()
             self.train_model()
             print("学習が完了しました。")
-            exit()
 
         self.loop.create_task(wait_and_train())
         self.loop.run_forever()
@@ -146,37 +149,69 @@ class StockLibrary:
     def initialize_data(self, n_symbols):
         
         self.n_symbols = n_symbols
+        
         self.data = []
-        for i in range(n_symbols):
+        self.high_price = []
+        self.low_price = []
+        
+        for _ in range(n_symbols):
             self.data.append([])
+            self.high_price.append(0)
+            self.low_price.append(1000000)
 
 
     def append_data(self, new_data, index):
 
-        # # データを受信した時刻を取得する
-        # try:
-        #     dt_object = datetime.strptime(data['CurrentPriceTime'], "%Y-%m-%dT%H:%M:%S%z")  
-        #     formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
-        # except ValueError:
-        #     print("文字列のフォーマットが異なります。")
-        #     exit()
-
         self.data[index].append(new_data)
+
+        if self.high_price[index] < new_data['HighPrice']:
+            self.high_price[index] = new_data['HighPrice']
+        if self.low_price[index] > new_data['LowPrice']:
+            self.low_price[index] = new_data['LowPrice']
     
         
-    def train_model(self):
+    def prepare_training_data(self):
 
-        # columns = ['DateTime', 'Price']
-        # training_data = []
+        columns = ['DateTime', 'Price']
+        self.training_data = []
+
+        df_data = []
+        for i in range(self.n_symbols):
+            df_data.append([])
+            max_val = self.high_price[i]
+            min_val = self.low_price[i]
+            for d in self.data[i]:
+                try:
+                    dt_object = datetime.fromisoformat(d['CurrentPriceTime'].replace('Z', '+00:00'))
+                    formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
+                except ValueError:
+                    print("文字列のフォーマットが異なります。")
+                    exit()
+
+                # 数値が-1〜1に収まるように正規化する
+                price = (2 * (d['CurrentPrice'] - min_val) / (max_val - min_val)) - 1
+                df_data[i].append([formatted_datetime, price])
         
-        # for i in range(self.n_symbols):
-        #     training_data.append(pd.DataFrame(index = [], columns = columns))
-        #     training_data[i] = pd.to_datetime(training_data[i]['DateTime'])
-        #     training_data[i] = pd.concat([training_data[i], pd.DataFrame(self.data[i], columns = columns)], ignore_index = True)
-        #     training_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-        #     training_data[i] = training_data[i].set_index('DateTime')
-        #     training_data[i] = training_data[i]['Price']
+        for _ in range(self.n_symbols):
+            self.training_data.append(pd.DataFrame(index = [], columns = columns))
+            
+        for i in range(self.n_symbols):
+            df = pd.DataFrame(df_data[i], columns = columns)
+            if self.training_data[i].empty:
+                self.training_data[i] = df
+            else:
+                self.training_data[i] = pd.concat([self.training_data[i], df], ignore_index=True)
+            self.training_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
+            self.training_data[i] = self.training_data[i].set_index('DateTime')
+            self.training_data[i].index = pd.to_datetime(self.training_data[i].index)
         
+        # fig, ax = plot_series(training_data[0])
+        # ax.set_xlim([training_data[0].index.min(), training_data[0].index.max()])
+        # ax.set_ylim([-1, 1])
+        # fig.show()
+
+
+    def train_model(self):
         breakpoint()
         
 
