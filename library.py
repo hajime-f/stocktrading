@@ -4,6 +4,7 @@ import json
 import websockets
 import asyncio
 import traceback
+import pickle
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
@@ -135,15 +136,25 @@ class StockLibrary:
         return stream
 
 
+    def set_library_mode(self, mode):
+        
+        # ライブラリの動作モードを設定する
+        # 1 → データを収集するモード
+        # 2 → 株を売買するモード
+        self.mode = mode
+
+
     def run(self):
 
         async def wait_and_train():
             await self.closed.wait()  # 接続が閉じるまで待つ
-            print("学習を開始します。")
-            self.prepare_training_data()
-            self.train_model()
-            print("学習が完了しました。")
-
+            if self.mode == 1:
+                self.save_data()
+            elif self.mode == 2:
+                pass
+            else:
+                pass
+        
         self.loop.create_task(wait_and_train())
         self.loop.run_forever()
 
@@ -151,26 +162,26 @@ class StockLibrary:
     def initialize_data(self, n_symbols):
         
         self.n_symbols = n_symbols
-        
         self.data = []
-        self.high_price = []
-        self.low_price = []
-        
         for _ in range(n_symbols):
             self.data.append([])
-            self.high_price.append(0)
-            self.low_price.append(1000000)
 
 
     def append_data(self, new_data, index):
 
         self.data[index].append(new_data)
 
-        if self.high_price[index] < new_data['HighPrice']:
-            self.high_price[index] = new_data['HighPrice']
-        if self.low_price[index] > new_data['LowPrice']:
-            self.low_price[index] = new_data['LowPrice']
-    
+
+    def save_data(self):
+        
+        with open('./training_data.pkl', 'wb') as f:
+            pickle.dump(self.data, f)
+
+
+    def set_data(self, data):
+
+        self.data = data
+            
         
     def prepare_training_data(self):
 
