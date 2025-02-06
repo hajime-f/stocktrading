@@ -5,13 +5,19 @@ import websockets
 import asyncio
 import traceback
 import pickle
-import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+
 # from sktime.utils.plotting import plot_series
 # from sktime.forecasting.ets import AutoETS
-from sktime.forecasting.arima import AutoARIMA
+# from sktime.forecasting.arima import AutoARIMA
 
 class StockLibrary:
 
@@ -73,8 +79,8 @@ class StockLibrary:
 
         # Websocketの設定
         self.ws_uri = "ws://" + self.ip_address + ":" + self.port + "/kabusapi/websocket"
-        self.timeout_sec = 3600
-        self.ping_interval = 60
+        self.timeout_sec = 36000
+        self.ping_interval = 180
         self.closed = asyncio.Event()
 
     
@@ -178,9 +184,10 @@ class StockLibrary:
             pickle.dump(self.data, f)
 
 
-    def set_data(self, data):
+    def set_data(self, data, n_symbols):
 
         self.data = data
+        self.n_symbols = n_symbols
             
         
     def prepare_training_data(self):
@@ -191,8 +198,6 @@ class StockLibrary:
         df_data = []
         for i in range(self.n_symbols):
             df_data.append([])
-            max_val = self.high_price[i]
-            min_val = self.low_price[i]
             for d in self.data[i]:
                 try:
                     dt_object = datetime.fromisoformat(d['CurrentPriceTime'].replace('Z', '+00:00'))
@@ -200,43 +205,44 @@ class StockLibrary:
                 except ValueError:
                     print("文字列のフォーマットが異なります。")
                     exit()
+                df_data[i].append([formatted_datetime, d['CurrentPrice']])
 
-                # 数値が-1〜1に収まるように正規化する
-                price = (2 * (d['CurrentPrice'] - min_val) / (max_val - min_val)) - 1
-                df_data[i].append([formatted_datetime, price])
-        
-        for _ in range(self.n_symbols):
-            self.training_data.append(pd.DataFrame(index = [], columns = columns))
-            
         for i in range(self.n_symbols):
-            df = pd.DataFrame(df_data[i], columns = columns)
-            if self.training_data[i].empty:
-                self.training_data[i] = df
-            else:
-                self.training_data[i] = pd.concat([self.training_data[i], df], ignore_index=True)
-            self.training_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-            self.training_data[i] = self.training_data[i].set_index('DateTime').asfreq('min')
-            self.training_data[i].index = pd.to_datetime(self.training_data[i].index)
-            # freq = pd.infer_freq(self.training_data[i].index)
-            # self.training_data[i].index = self.training_data[i].index.asfreq(freq)
-        
-        # fig, ax = plot_series(training_data[0])
-        # ax.set_xlim([training_data[0].index.min(), training_data[0].index.max()])
-        # ax.set_ylim([-1, 1])
-        # fig.show()
+            self.training_data.append(pd.DataFrame(df_data[i], columns = columns))
 
+        # 重複を落とす
+        for t in self.training_data:
+            t.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
+
+        # -1〜1の間で正規化する
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+        scaled_data = []
+        for i in range(self.n_symbols):
+            scaled_data.append(scaler.fit_transform(self.training_data[i][['Price']]))
+        
+
+        breakpoint()
+            
+        # self.training_data[i] = self.training_data[i].set_index('DateTime')
+        # self.training_data[i].index = pd.to_datetime(self.training_data[i].index)
+
+        # plt.figure(figsize=(16,6))
+        # plt.plot(self.training_data[0]['Price'])
+        # plt.show()
+        
 
     def train_model(self):
+        pass
 
-        # 予測器をインスタンス化する
-        self.forecaster = AutoARIMA(start_p = 8, start_q = 8)
+        # # 予測器をインスタンス化する
+        # self.forecaster = AutoARIMA(start_p = 8, start_q = 8)
 
-        # 学習
-        for i in range(self.n_symbols):
-            if self.forecaster.is_fitted:
-                self.forecaster.update(self.training_data[i])
-            else:
-                self.forecaster.fit(self.training_data[i])
+        # # 学習
+        # for i in range(self.n_symbols):
+        #     if self.forecaster.is_fitted:
+        #         self.forecaster.update(self.training_data[i])
+        #     else:
+        #         self.forecaster.fit(self.training_data[i])
             
 
 

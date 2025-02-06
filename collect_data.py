@@ -19,6 +19,7 @@ if __name__ == '__main__':
     n_symbols = len(symbols)
     if n_symbols > 50:
         symbols = random.sample(symbols, 50)
+        n_symbols = 50
 
     # 銘柄登録
     for s in symbols:

@@ -8,4 +8,4 @@ numpy
 statsmodels
 matplotlib
 seaborn
-pmdarima
+scikit-learn

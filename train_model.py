@@ -11,8 +11,11 @@ if __name__ == '__main__':
         data = pickle.load(f)
 
     # データをライブラリにセットする
-    lib.set_data(data)
-        
+    lib.set_data(data, len(data))
+
+    # データを整える
+    lib.prepare_training_data()
+    
 
 
     breakpoint()
