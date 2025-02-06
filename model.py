@@ -1,3 +1,4 @@
+import os
 import pickle
 from datetime import datetime
 import pandas as pd
@@ -20,8 +21,12 @@ class ModelLibrary:
 
 
     def save_data(self):
+
+        now = datetime.now()
+        filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
+        filepath = os.path.join("./", filename)
         
-        with open('./training_data.pkl', 'wb') as f:
+        with open(filepath, 'wb') as f:
             pickle.dump(self.data, f)
 
 

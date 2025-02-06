@@ -3,8 +3,10 @@ from model import ModelLibrary
 
 if __name__ == '__main__':
 
+    filename = 'training_data2.pkl'
+    
     # データを読み込む
-    with open('./training_data.pkl', 'rb') as f:
+    with open(filename, 'rb') as f:
         data = pickle.load(f)
     n_symbols = len(data)
         
