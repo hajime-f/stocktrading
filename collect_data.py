@@ -32,13 +32,6 @@ if __name__ == '__main__':
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
 
-    # 株ライブラリのモードを設定する
-    # ここではデータを収集するモード(1)に設定する
-    lib.set_library_mode(1)
-
-    # 株ライブラリにモデルを設定する
-    lib.set_model(model)
-    
     @lib
     def receive(data):
 
@@ -56,7 +49,8 @@ if __name__ == '__main__':
         model.append_data(data, index)
 
     try:
-        lib.run()
+        if lib.run():
+            model.save_data()
     except KeyboardInterrupt:
         model.save_data()
     

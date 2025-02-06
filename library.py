@@ -87,7 +87,8 @@ class StockLibrary:
                         try:
                             if asyncio.get_event_loop().time() - last_message_time > self.timeout_sec:
                                 print("タイムアウトしました。接続を閉じます。")
-                                await ws.close(code=1011, reason="Timeout")
+                                # await ws.close(code=1011, reason="Timeout")
+                                self.closed.set()
                                 break
 
                             if asyncio.get_event_loop().time() - last_ping_time > self.ping_interval:
@@ -102,15 +103,18 @@ class StockLibrary:
 
                         except asyncio.TimeoutError:
                             print("タイムアウトしました。接続を閉じます。")
-                            await ws.close()
+                            # await ws.close(code=1011, reason="Timeout")
+                            self.closed.set()
                             break
 
                         except websockets.exceptions.ConnectionClosedError as e:
                             print(f"接続が閉じられました: {e}")
+                            self.closed.set()
                             break
                     
                         except websockets.exceptions.ConnectionClosedOK:
                             print("サーバーから切断されました。")
+                            self.closed.set()
                             break
 
                         except Exception as e:
@@ -124,38 +128,29 @@ class StockLibrary:
 
             finally:
                 self.closed.set()
-            
+                # try:
+                #     # await ws.close(code=1011, reason="Connection Closed")
+                #     self.closed.set()
+                # except Exception as e:
+                #     pass
+                #     # print(f"クローズ処理中にエラーが発生しました: {e}")
+                #     # traceback.print_exc()
+                        
         self.loop = asyncio.get_event_loop()
         self.loop.create_task(stream(func))
         return stream
 
 
-    def set_library_mode(self, mode):
-        
-        # ライブラリの動作モードを設定する
-        # 1 → データを収集するモード
-        # 2 → 株を売買するモード
-        self.mode = mode
-
-
-    def set_model(self, model):
-
-        self.model = model
-        
-        
     def run(self):
 
         async def wait_and_train():
             await self.closed.wait()  # 接続が閉じるまで待つ
-            if self.mode == 1:
-                self.model.save_data()
-            elif self.mode == 2:
-                pass
-            else:
-                pass
+            self.loop.stop()
         
         self.loop.create_task(wait_and_train())
         self.loop.run_forever()
+
+        return True
 
         
     def register(self, symbol, exchange=1):

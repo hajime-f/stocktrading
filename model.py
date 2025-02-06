@@ -2,6 +2,7 @@ import pickle
 from datetime import datetime
 import pandas as pd
 
+from sklearn.preprocessing import MinMaxScaler
 
 class ModelLibrary:
 
@@ -24,11 +25,10 @@ class ModelLibrary:
             pickle.dump(self.data, f)
 
 
-    def set_data(self, data, n_symbols):
+    def set_data(self, data):
 
         self.data = data
-        self.n_symbols = n_symbols
-            
+        
         
     def prepare_training_data(self):
 
@@ -39,6 +39,8 @@ class ModelLibrary:
         for i in range(self.n_symbols):
             df_data.append([])
             for d in self.data[i]:
+                if d['CurrentPriceTime'] is None:
+                    continue
                 try:
                     dt_object = datetime.fromisoformat(d['CurrentPriceTime'].replace('Z', '+00:00'))
                     formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
@@ -60,6 +62,6 @@ class ModelLibrary:
         for i in range(self.n_symbols):
             scaled_data.append(scaler.fit_transform(self.training_data[i][['Price']]))
             
-
+        breakpoint()
 
 

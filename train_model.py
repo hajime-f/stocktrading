@@ -12,7 +12,7 @@ if __name__ == '__main__':
     model = ModelLibrary(n_symbols)
     
     # データをライブラリにセットする
-    model.set_data(data, n_symbols)
+    model.set_data(data)
 
     # データを準備する
     model.prepare_training_data()
