@@ -1,20 +1,21 @@
 import pickle
-from library import StockLibrary
+from model import ModelLibrary
 
 if __name__ == '__main__':
-
-    # ライブラリを初期化する
-    lib = StockLibrary()
 
     # データを読み込む
     with open('./training_data.pkl', 'rb') as f:
         data = pickle.load(f)
-
+    n_symbols = len(data)
+        
+    # モデルライブラリを初期化する
+    model = ModelLibrary(n_symbols)
+    
     # データをライブラリにセットする
-    lib.set_data(data, len(data))
+    model.set_data(data, n_symbols)
 
-    # データを整える
-    lib.prepare_training_data()
+    # データを準備する
+    model.prepare_training_data()
     
 
 
