@@ -1,8 +1,11 @@
 import os
 import pickle
 from datetime import datetime
-import pandas as pd
 
+import pandas as pd
+pd.set_option('display.max_rows', None)
+
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 class ModelLibrary:
@@ -37,12 +40,20 @@ class ModelLibrary:
         
     def prepare_training_data(self):
 
-        columns = ['DateTime', 'Price']
-        self.training_data = []
+        original_data = self.prepare_original_data()
+        original_data = self.calc_moving_average(original_data)
 
-        df_data = []
+        breakpoint()
+
+
+    # 元のデータを用意する
+    def prepare_original_data(self):
+        
+        price_list = []
+        volume_list = []
         for i in range(self.n_symbols):
-            df_data.append([])
+            price_list.append([])
+            volume_list.append([])
             for d in self.data[i]:
                 if d['CurrentPriceTime'] is None:
                     continue
@@ -52,21 +63,39 @@ class ModelLibrary:
                 except ValueError:
                     print("文字列のフォーマットが異なります。")
                     exit()
-                df_data[i].append([formatted_datetime, d['CurrentPrice']])
+                price_list[i].append([formatted_datetime, d['CurrentPrice']])
+                volume_list[i].append([formatted_datetime, d['TradingVolume']])
 
+        price_data = []
+        volume_data = []
+        original_data = []
         for i in range(self.n_symbols):
-            self.training_data.append(pd.DataFrame(df_data[i], columns = columns))
-
-        # 重複を落とす
-        for t in self.training_data:
-            t.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-
-        # -1〜1の間で正規化する
-        scaler = MinMaxScaler(feature_range=(-1, 1))
-        scaled_data = []
-        for i in range(self.n_symbols):
-            scaled_data.append(scaler.fit_transform(self.training_data[i][['Price']]))
             
-        breakpoint()
+            price_data.append(pd.DataFrame(price_list[i], columns = ['DateTime', 'Price']))
+            price_data[i] = price_data[i].set_index('DateTime')
+            price_data[i].index = pd.to_datetime(price_data[i].index)
+            price_data[i] = price_data[i].resample('1Min').ohlc().dropna()
+            price_data[i].columns = price_data[i].columns.get_level_values(1)
+            
+            volume_data.append(pd.DataFrame(volume_list[i], columns = ['DateTime', 'Volume']))
+            volume_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
+            volume_data[i] = volume_data[i].set_index('DateTime')
+            volume_data[i].index = pd.to_datetime(volume_data[i].index)
+            volume_data[i]['Volume'] = volume_data[i]['Volume'].diff(1).fillna(volume_data[i]['Volume'].iloc[0])
+
+            original_data.append(pd.concat([price_data[i], volume_data[i]], axis = 1))
+            
+        return original_data
 
 
+    def calc_moving_average(self, original_data):
+
+        for i in range(self.n_symbols):
+            original_data[i]['MA5'] = original_data[i]['close'].rolling(window=5).mean()
+            original_data[i]['MA25'] = original_data[i]['close'].rolling(window=25).mean()
+
+        return original_data
+
+
+
+    

@@ -19,7 +19,5 @@ if __name__ == '__main__':
     # データを準備する
     model.prepare_training_data()
     
-
-
-    breakpoint()
-        
+    
+    

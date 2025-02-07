@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .DS_Store
-training_data.pkl
+training_data*.pkl
+data_*.pkl
 
 # C extensions
 *.so
