@@ -17,7 +17,7 @@ if __name__ == '__main__':
     model.set_data(data)
 
     # データを準備する
-    model.prepare_training_data()
+    raw_data = model.prepare_raw_data()
     
     
     

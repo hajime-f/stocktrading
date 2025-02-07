@@ -5,6 +5,8 @@ __pycache__/
 .DS_Store
 training_data*.pkl
 data_*.pkl
+*.csv
+debug.png
 
 # C extensions
 *.so

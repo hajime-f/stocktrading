@@ -38,7 +38,7 @@ class ModelLibrary:
         self.data = data
         
         
-    def prepare_training_data(self):
+    def prepare_raw_data(self):
 
         ## 入力データを準備する
 
@@ -60,7 +60,18 @@ class ModelLibrary:
         # RSIを計算する
         input_data = self.calc_rsi(input_data)
 
-        breakpoint()
+        # ストキャスティクスを計算する
+        input_data = self.calc_stochastic(input_data)
+        
+        ## 出力データを準備する        
+        output_data = self.calc_output_data(input_data)
+
+        ## 入力データと出力データを結合して学習用の生データを作成する
+        raw_data = []
+        for i in range(self.n_symbols):
+            raw_data.append(self.concat_dataframes(input_data[i], output_data[i]).dropna())
+
+        return raw_data
 
 
     # 元のデータを用意する
@@ -94,66 +105,145 @@ class ModelLibrary:
             price_data[i] = price_data[i].resample('1Min').ohlc().dropna()
             price_data[i].columns = price_data[i].columns.get_level_values(1)
             
-            volume_data.append(pd.DataFrame(volume_list[i], columns = ['DateTime', 'Volume']))
+            volume_data.append(pd.DataFrame(volume_list[i], columns = ['DateTime', 'volume']))
             volume_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
             volume_data[i] = volume_data[i].set_index('DateTime')
             volume_data[i].index = pd.to_datetime(volume_data[i].index)
-            volume_data[i]['Volume'] = volume_data[i]['Volume'].diff(1).fillna(volume_data[i]['Volume'].iloc[0])
+            volume_data[i]['volume'] = volume_data[i]['volume'].diff(1).fillna(volume_data[i]['volume'].iloc[0])
 
             original_data.append(pd.concat([price_data[i], volume_data[i]], axis = 1))
             
         return original_data
 
 
-    def calc_moving_average(self, original_data):
+    def calc_moving_average(self, data):
 
         for i in range(self.n_symbols):
-            original_data[i]['MA5'] = original_data[i]['close'].rolling(window=5).mean()
-            original_data[i]['MA25'] = original_data[i]['close'].rolling(window=25).mean()
+            data[i]['MA5'] = data[i]['close'].rolling(window=5).mean()
+            data[i]['MA25'] = data[i]['close'].rolling(window=25).mean()
 
-        return original_data
+        return data
 
 
-    def calc_macd(self, original_data):
+    def calc_macd(self, data):
 
         for i in range(self.n_symbols):
-            original_data[i]['MACD'] = original_data[i]['close'].ewm(span=12).mean() - original_data[i]['close'].ewm(span=26).mean()
-            original_data[i]['SIGNAL'] = original_data[i]['MACD'].ewm(span=9).mean()
-            original_data[i]['HISTOGRAM'] = original_data[i]['MACD'] - original_data[i]['SIGNAL']
+            data[i]['MACD'] = data[i]['close'].ewm(span=12).mean() - data[i]['close'].ewm(span=26).mean()
+            data[i]['SIGNAL'] = data[i]['MACD'].ewm(span=9).mean()
+            data[i]['HISTOGRAM'] = data[i]['MACD'] - data[i]['SIGNAL']
 
-        return original_data
+        return data
 
 
-    def calc_bollinger_band(self, original_data):
+    def calc_bollinger_band(self, data):
         
         for i in range(self.n_symbols):
-            sma20 = original_data[i]['close'].rolling(window=20).mean()
-            std20 = original_data[i]['close'].rolling(window=20).std()
-            original_data[i]['Upper'] = sma20 + (std20 * 2)
-            original_data[i]['Lower'] = sma20 - (std20 * 2)
+            sma20 = data[i]['close'].rolling(window=20).mean()
+            std20 = data[i]['close'].rolling(window=20).std()
+            data[i]['Upper'] = sma20 + (std20 * 2)
+            data[i]['Lower'] = sma20 - (std20 * 2)
             
-        return original_data
+        return data
 
 
-    def calc_ichimoku(self, original_data):
+    def calc_ichimoku(self, data):
 
         for i in range(self.n_symbols):
-            original_data[i]['ConversionLine'] = (original_data[i]['high'].rolling(window=9).max() + original_data[i]['low'].rolling(window=9).min()) / 2
-            original_data[i]['BaseLine'] = (original_data[i]['high'].rolling(window=26).max() + original_data[i]['low'].rolling(window=26).min()) / 2
-            original_data[i]['LeadingSpanA'] = ((original_data[i]['ConversionLine'] + original_data[i]['BaseLine']) / 2).shift(26)
-            original_data[i]['LeadingSpanB'] = ((original_data[i]['high'].rolling(window=52).max() + original_data[i]['low'].rolling(window=52).min()) / 2).shift(26)
-            original_data[i]['LaggingSpan'] = original_data[i]['close'].shift(-26)
+            data[i]['ConversionLine'] = (data[i]['high'].rolling(window=9).max() + data[i]['low'].rolling(window=9).min()) / 2
+            data[i]['BaseLine'] = (data[i]['high'].rolling(window=26).max() + data[i]['low'].rolling(window=26).min()) / 2
+            data[i]['LeadingSpanA'] = ((data[i]['ConversionLine'] + data[i]['BaseLine']) / 2).shift(26)
+            data[i]['LeadingSpanB'] = ((data[i]['high'].rolling(window=52).max() + data[i]['low'].rolling(window=52).min()) / 2).shift(26)
+            data[i]['LaggingSpan'] = data[i]['close'].shift(-26)
             
-        return original_data
+        return data
 
 
-    def calc_rsi(self, original_data):
+    def calc_rsi(self, data):
         
         for i in range(self.n_symbols):
-            delta = original_data[i]['close'].diff()
+            delta = data[i]['close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
-            original_data[i]['RSI'] = 100 - (100 / (1 + rs))
+            data[i]['RSI'] = 100 - (100 / (1 + rs))
             
-        return original_data
+        return data
+
+
+    def calc_stochastic(self, data):
+        
+        for i in range(self.n_symbols):
+            data[i]['%K'] = 100 * (data[i]['close'] - data[i]['low'].rolling(window=14).min()) / (data[i]['high'].rolling(window=14).max() - data[i]['low'].rolling(window=14).min())
+            data[i]['%D'] = data[i]['%K'].rolling(window=3).mean()
+            
+        return data
+
+
+    def calc_output_data(self, input_data):
+
+        output_data = []
+        
+        for i in range(self.n_symbols):
+            close_price = input_data[i]['close']
+            tmp1 = self.check_price_change(close_price, 0.5)
+            tmp2 = self.check_price_change(close_price, -0.5)
+            output_data.append(tmp1 + tmp2)
+
+        return output_data
+    
+
+    # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
+    def check_price_change(self, stock_price, percentage, time_window = 20):
+
+        result = []
+        
+        for i in range(len(stock_price) - time_window):
+            base_price = stock_price.iloc[i]  # 基準時刻の株価
+            target_price = base_price * (1 + percentage / 100)  # 目標株価
+            
+            # 基準時刻からtime_window分後の株価を取得
+            future_prices = stock_price[i + 1:i + time_window + 1]
+            
+            # time_window分以内に目標株価に達しているか確認
+            if percentage > 0:                
+                if (future_prices >= target_price).any():
+                    result.append(1)
+                else:
+                    result.append(0)
+            elif percentage < 0:
+                if (future_prices <= target_price).any():
+                    result.append(-1)
+                else:
+                    result.append(0)
+            else:
+                pass
+
+        return pd.DataFrame(result, columns = ['Result'])
+        
+    
+    def concat_dataframes(self, data1, data2):
+        
+        # 行数の多い方を取得
+        max_rows = max(len(data1), len(data2))
+        
+        # 行数が少ない方にNaNを追加
+        if len(data1) < max_rows:
+            data1 = pd.concat([data1, pd.DataFrame([[pd.NA] * len(data1.columns)] * (max_rows - len(data1)), columns=data1.columns)], ignore_index=True)
+            data1.index = data2.index
+        elif len(data2) < max_rows:
+            data2 = pd.concat([data2, pd.DataFrame([[pd.NA] * len(data2.columns)] * (max_rows - len(data2)), columns=data2.columns)], ignore_index=True)
+            data2.index = data1.index
+        else:
+            pass
+        
+        # 2つのDataFrameを結合
+        data_concat = pd.concat([data1, data2], axis = 1)
+        return data_concat
+
+
+    def _debug_plot_graph(self, data):
+
+        import mplfinance as mpf
+
+        mpf.plot(data[['open', 'high', 'low', 'close', 'volume']], type='candle', volume=True, figratio=(12, 4), style='charles', savefig='debug.png')
+    

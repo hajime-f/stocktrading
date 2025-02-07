@@ -9,3 +9,4 @@ statsmodels
 matplotlib
 seaborn
 scikit-learn
+mplfinance
