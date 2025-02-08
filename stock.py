@@ -1,5 +1,3 @@
-import pandas as pd
-
 class Stock:
 
     def __init__(self, symbol, lib, model, exchange=1):
@@ -8,7 +6,7 @@ class Stock:
         self.lib= lib
         self.model = model
         self.exchange = exchange
-        self.data = pd.DataFrame(index = [], columns = self.columns)
+        self.data = []
 
         
     def set_infomation(self):
@@ -23,3 +21,13 @@ class Stock:
             exit('\033[31m不明な例外により強制終了します。\033[0m')
         
         
+    def append_data(self, new_data):
+
+        data ={'CurrentPriceTime': new_data['CurrentPriceTime'],
+               'CurrentPrice': new_data['CurrentPrice'],
+               'TradingVolume': new_data['TradingVolume']}
+        self.data.append(data)
+
+
+    def polling(self):
+        pass

@@ -1,11 +1,19 @@
 import time
 import random
-from datetime import datetime
+import schedule
+import threading
 
 from library import StockLibrary
 from model import ModelLibrary
-from Stock import Stock
+from stock import Stock
 
+def run_scheduler():
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+        
 if __name__ == '__main__':
 
     # 株ライブラリを初期化する
@@ -34,8 +42,8 @@ if __name__ == '__main__':
     model = ModelLibrary(n_symbols)
 
     # 預金残高（現物の買付余力）を問い合わせる
-    deposit = lib.deposit()
-    print(f"\033[33m買付余力：{int(deposit):,} 円\033[0m")
+    deposit_before = lib.deposit()
+    print(f"\033[33m買付余力：{int(deposit_before):,} 円\033[0m")
     
     # Stockクラスをインスタンス化してリストに入れる
     stocks = []
@@ -55,8 +63,17 @@ if __name__ == '__main__':
         else:
             print("受信したデータに対応する銘柄が見つかりません。")
 
+    for st in stocks:
+        schedule.every(1).minutes.do(lambda: st.polling())
+
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+    
     try:
-        lib.run()
+        if lib.run():
+            deposit_after = lib.deposit()
+            print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
+            print(f"利益：{deposit_before - deposit_after} 円")
     except KeyboardInterrupt:
         exit()
     
