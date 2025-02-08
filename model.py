@@ -26,7 +26,10 @@ class ModelLibrary:
 
     def append_data(self, new_data, index):
 
-        self.data[index].append(new_data)
+        data ={'CurrentPriceTime': new_data['CurrentPriceTime'],
+               'CurrentPrice': new_data['CurrentPrice'],
+               'TradingVolume': new_data['TradingVolume']}
+        self.data[index].append(data)
 
 
     def save_data(self):
@@ -41,9 +44,14 @@ class ModelLibrary:
         return filename
 
 
-    def set_data(self, data):
+    def set_data(self, p_data):
 
-        self.data = data
+        concat_data = []
+
+        for d in p_data:
+            concat_data += d
+
+        self.data = concat_data
         
         
     def prepare_raw_data(self):

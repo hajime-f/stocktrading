@@ -4,18 +4,23 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename = 'training_data2.pkl'
-
-    print(f'{filename} からデータを読み込んでいます。')
-    with open(filename, 'rb') as f:
-        data = pickle.load(f)
-    n_symbols = len(data)
+    filename_list = ['training_data2.pkl']
+    data = []
+    n_symbols = 0
+    
+    for i, filename in enumerate(filename_list):
+        print(f'{filename} からデータを読み込んでいます。')
+        with open(filename, 'rb') as f:
+            data.append(pickle.load(f))
+        n_symbols += len(data[i])
     
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
     
     # データをライブラリにセットする
     model.set_data(data)
+
+    breakpoint()
 
     print('生データを準備しています。')
     raw_data = model.prepare_raw_data()
@@ -25,9 +30,6 @@ if __name__ == '__main__':
 
     print('モデルを評価しています。')
     max_clf = model.evaluate_model(X, Y)
-
-    # from sklearn.ensemble import AdaBoostClassifier
-    # max_clf = AdaBoostClassifier(n_estimators=180, random_state=1)
 
     print('モデルを検証しています。')
     trained_clf = model.validate_model(max_clf, X, Y)
