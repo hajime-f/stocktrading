@@ -5,6 +5,12 @@ from datetime import datetime
 import pandas as pd
 pd.set_option('display.max_rows', None)
 
+import numpy as np
+from sklearn.utils import all_estimators
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+import warnings
+
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
@@ -55,13 +61,13 @@ class ModelLibrary:
         input_data = self.calc_bollinger_band(input_data)
 
         # 一目均衡表を計算する
-        input_data = self.calc_ichimoku(input_data)
+        # input_data = self.calc_ichimoku(input_data)
 
         # RSIを計算する
         input_data = self.calc_rsi(input_data)
 
         # ストキャスティクスを計算する
-        input_data = self.calc_stochastic(input_data)
+        # input_data = self.calc_stochastic(input_data)
         
         ## 出力データを準備する        
         output_data = self.calc_output_data(input_data)
@@ -72,7 +78,7 @@ class ModelLibrary:
             raw_data.append(self.concat_dataframes(input_data[i], output_data[i]).dropna())
 
         return raw_data
-
+        
 
     # 元のデータを用意する
     def prepare_original_data(self):
@@ -241,6 +247,65 @@ class ModelLibrary:
         return data_concat
 
 
+    def prepare_training_data(self, raw_data, window = 10):
+
+        X = pd.DataFrame()
+        Y = pd.DataFrame()
+        
+        for r in raw_data:
+            for i in range(len(r) - window):
+                
+                tmp1 = r.drop(['open', 'high', 'low', 'Result'], axis = 1).iloc[i:i + window]
+                tmp2 = r.Result.iloc[i + window - 1]
+
+                X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
+                Y = pd.concat([Y, pd.DataFrame([tmp2])])
+
+        X = X.reset_index(drop = True)
+        Y = Y.reset_index(drop = True)
+
+        return X, Y
+    
+
+    def train_model(self, X, Y):
+
+        # クロスバリデーション用のオブジェクトをインスタンス化する
+        kfold_cv = KFold(n_splits=5, shuffle=False)
+        warnings.filterwarnings('ignore')
+        
+        # classifier のアルゴリズムをすべて取得する
+        all_Algorithms = all_estimators(type_filter="classifier")
+        warnings.filterwarnings('ignore')
+        
+        max_clf = None
+        max_score = -1
+
+        # 各分類アルゴリズムをクロスバリデーションで評価する
+        for (name, algorithm) in all_Algorithms:
+            try:
+                if (name == "LinearSVC"):
+                    clf = algorithm(max_iter = 10000)
+                else:
+                    clf = algorithm()
+                    
+                if hasattr(clf, "score"):
+                    scores = cross_val_score(clf, X, Y, cv=kfold_cv)
+                    print(name, "の正解率：")
+                    print(scores)
+                    if max_score < np.mean(scores):
+                        max_clf = clf
+                        max_score = np.mean(scores)
+            except Exception as e:
+                pass
+
+        breakpoint()
+
+        # 平均正解率が最高だったモデルをトレーニング
+        max_clf = max_clf.fit(X, Y)
+            
+        breakpoint()
+
+    
     def _debug_plot_graph(self, data):
 
         import mplfinance as mpf
