@@ -174,8 +174,24 @@ class StockLibrary:
         req.add_header('X-API-KEY', self.token)
         content = self.throw_request(req)
         return content
-        
 
+
+    def deposit(self):
+        
+        # 預金残高（現物の取引余力）を問い合わせる
+        url = self.base_url + '/wallet/cash'
+        content = self.get_request(url)
+        return content['StockAccountWallet']
+    
+
+    def fetch_information(self, symbol, exchange):
+
+        # ある銘柄の情報を得る
+        url = self.base_url + '/symbol/' + str(symbol) + '@' + str(exchange)
+        content = self.get_request(url)
+        return content
+
+    
     def put_request(self, url, obj):
 
         # PUT リクエストを url に送信する

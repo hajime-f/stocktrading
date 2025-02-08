@@ -50,7 +50,7 @@ $ source ./env/bin/activate
 予測モデルを学習させます。
 まず、```train_model.py``` の７行目に、集めたデータのファイル名を列挙してください。
 
-```
+```python
 filename_list = ['data_20250206_201528.pkl', 'data_20250207_201857.pkl', ... , 'data_20250212_192845.pkl']
 ```
 
