@@ -50,7 +50,8 @@ if __name__ == '__main__':
 
     try:
         if lib.run():
-            model.save_data()
+            filename = model.save_data()
+            print(f"{filename}にデータを保存しました。")
     except KeyboardInterrupt:
         model.save_data()
     

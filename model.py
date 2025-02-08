@@ -33,10 +33,12 @@ class ModelLibrary:
 
         now = datetime.now()
         filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
-        filepath = os.path.join("./", filename)
+        filename = os.path.join("./", filename)
         
-        with open(filepath, 'wb') as f:
+        with open(filename, 'wb') as f:
             pickle.dump(self.data, f)
+
+        return filename
 
 
     def set_data(self, data):
@@ -108,9 +110,10 @@ class ModelLibrary:
             price_data.append(pd.DataFrame(price_list[i], columns = ['DateTime', 'Price']))
             price_data[i] = price_data[i].set_index('DateTime')
             price_data[i].index = pd.to_datetime(price_data[i].index)
-            price_data[i] = price_data[i].resample('1Min').ohlc().dropna()
+            # price_data[i] = (price_data[i] - price_data[i].min()) / (price_data[i].max() - price_data[i].min())  # 正規化
+            price_data[i] = price_data[i].resample('1Min').ohlc().dropna()  # 1分足に変換
             price_data[i].columns = price_data[i].columns.get_level_values(1)
-            
+
             volume_data.append(pd.DataFrame(volume_list[i], columns = ['DateTime', 'volume']))
             volume_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
             volume_data[i] = volume_data[i].set_index('DateTime')
@@ -192,8 +195,9 @@ class ModelLibrary:
         for i in range(self.n_symbols):
             close_price = input_data[i]['close']
             tmp1 = self.check_price_change(close_price, 0.5)
-            tmp2 = self.check_price_change(close_price, -0.5)
-            output_data.append(tmp1 + tmp2)
+            # tmp2 = self.check_price_change(close_price, -0.5)
+            # output_data.append(tmp1 + tmp2)
+            output_data.append(tmp1)
 
         return output_data
     
@@ -267,10 +271,10 @@ class ModelLibrary:
         return X, Y
     
 
-    def train_model(self, X, Y):
+    def evaluate_model(self, X, Y):
 
         # クロスバリデーション用のオブジェクトをインスタンス化する
-        kfold_cv = KFold(n_splits=5, shuffle=False)
+        kfold_cv = KFold(n_splits=6, shuffle=False)
         warnings.filterwarnings('ignore')
         
         # classifier のアルゴリズムをすべて取得する
@@ -279,32 +283,68 @@ class ModelLibrary:
         
         max_clf = None
         max_score = -1
-
+        
+        negative_list = ["RadiusNeighborsClassifier", "CategoricalNB", "ClassifierChain", "ComplementNB", "FixedThresholdClassifier", "GaussianProcessClassifier", "GradientBoostingClassifier", "MLPClassifier", "MultiOutputClassifier", "MultinomialNB", "NuSVC", "OneVsOneClassifier", "OneVsRestClassifier", "OutputCodeClassifier", "StackingClassifier", "VotingClassifier", "TunedThresholdClassifierCV", "RadiusNeighborsClassifier", "LinearSVC"]
+        
         # 各分類アルゴリズムをクロスバリデーションで評価する
         for (name, algorithm) in all_Algorithms:
+            
             try:
-                if (name == "LinearSVC"):
-                    clf = algorithm(max_iter = 10000)
-                else:
-                    clf = algorithm()
+                if name in negative_list:
+                    continue
+                
+                clf = algorithm()
                     
                 if hasattr(clf, "score"):
                     scores = cross_val_score(clf, X, Y, cv=kfold_cv)
-                    print(name, "の正解率：")
-                    print(scores)
-                    if max_score < np.mean(scores):
+                    m = round(np.mean(scores) * 100, 2)
+                    print(name, "の正解率：", m, "％")
+                    if max_score < m:
                         max_clf = clf
-                        max_score = np.mean(scores)
+                        max_score = m
+                        
             except Exception as e:
-                pass
+                print(e)
 
-        breakpoint()
+        return max_clf
 
-        # 平均正解率が最高だったモデルをトレーニング
-        max_clf = max_clf.fit(X, Y)
+
+    def validate_model(self, clf, X, Y):
+
+        # データを学習用データとテスト用データに分割する
+        n_train = int(len(X) * 0.8)
+        X_train, Y_train = X[:n_train], Y[:n_train]
+        X_test, Y_test = X[n_train:], Y[n_train:]
+
+        # モデルを学習する
+        clf = clf.fit(X_train, Y_train)
+
+        # モデルを評価する
+        score = clf.score(X_test, Y_test)
+        print(f'正解率：{score}')
+
+        return clf
+
+
+    def save_model(self, model):
+
+        now = datetime.now()
+        filename = now.strftime("model_%Y%m%d_%H%M%S.pkl")
+        filename = os.path.join("./", filename)
+        
+        with open(filename, 'wb') as f:
+            pickle.dump(model, f)
+
+        return filename
+
+
+    def load_model(self, filename):
+
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+
+        return model
             
-        breakpoint()
-
     
     def _debug_plot_graph(self, data):
 
