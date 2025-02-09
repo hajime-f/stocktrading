@@ -20,8 +20,6 @@ if __name__ == '__main__':
     # データをライブラリにセットする
     model.set_data(data)
 
-    breakpoint()
-
     print('生データを準備しています。')
     raw_data = model.prepare_raw_data()
 
@@ -42,9 +40,4 @@ if __name__ == '__main__':
 
     print('モデルを再度検証しています。')
     trained_clf = model.validate_model(clf, X, Y)
-    
-    
-    breakpoint()
-    
-    
     

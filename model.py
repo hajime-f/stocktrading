@@ -22,6 +22,7 @@ class ModelLibrary:
         self.data = []
         for _ in range(n_symbols):
             self.data.append([])
+        self.model = None
 
 
     def append_data(self, new_data, index):
@@ -118,7 +119,6 @@ class ModelLibrary:
             price_data.append(pd.DataFrame(price_list[i], columns = ['DateTime', 'Price']))
             price_data[i] = price_data[i].set_index('DateTime')
             price_data[i].index = pd.to_datetime(price_data[i].index)
-            # price_data[i] = (price_data[i] - price_data[i].min()) / (price_data[i].max() - price_data[i].min())  # 正規化
             price_data[i] = price_data[i].resample('1Min').ohlc().dropna()  # 1分足に変換
             price_data[i].columns = price_data[i].columns.get_level_values(1)
 
@@ -210,9 +210,10 @@ class ModelLibrary:
         return output_data
     
 
-    # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
     def check_price_change(self, stock_price, percentage, time_window = 20):
 
+        # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
+        
         result = []
         
         for i in range(len(stock_price) - time_window):
@@ -267,7 +268,8 @@ class ModelLibrary:
         for r in raw_data:
             for i in range(len(r) - window):
                 
-                tmp1 = r.drop(['open', 'high', 'low', 'Result'], axis = 1).iloc[i:i + window]
+                # tmp1 = r.drop(['open', 'high', 'low', 'Result'], axis = 1).iloc[i:i + window]
+                tmp1 = r.drop(['Result'], axis = 1).iloc[i:i + window]
                 tmp2 = r.Result.iloc[i + window - 1]
 
                 X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
@@ -291,7 +293,8 @@ class ModelLibrary:
         
         max_clf = None
         max_score = -1
-        
+
+        # 面倒なモデルは全部スキップする
         negative_list = ["RadiusNeighborsClassifier", "CategoricalNB", "ClassifierChain", "ComplementNB", "FixedThresholdClassifier", "GaussianProcessClassifier", "GradientBoostingClassifier", "MLPClassifier", "MultiOutputClassifier", "MultinomialNB", "NuSVC", "OneVsOneClassifier", "OneVsRestClassifier", "OutputCodeClassifier", "StackingClassifier", "VotingClassifier", "TunedThresholdClassifierCV", "RadiusNeighborsClassifier", "LinearSVC"]
         
         # 各分類アルゴリズムをクロスバリデーションで評価する
@@ -349,9 +352,9 @@ class ModelLibrary:
     def load_model(self, filename):
 
         with open(filename, 'rb') as f:
-            model = pickle.load(f)
+            self.model = pickle.load(f)
 
-        return model
+        return self.model
             
     
     def _debug_plot_graph(self, data):

@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
+    model.load_model('./model_20250209_215833.pkl')
 
     # 預金残高（現物の買付余力）を問い合わせる
     deposit_before = lib.deposit()
@@ -50,10 +51,11 @@ if __name__ == '__main__':
     def receive(data):
 
         # 受信したデータに対応する銘柄のインスタンスを取得する
-        received_stock = next(filter(lambda st: st.symbol == data['Symbol'], stocks), None)
-
+        received_stock = next(filter(lambda st: st.symbol == data['Symbol'], stocks), None)        
+        
         if received_stock:
             print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
+            received_stock.append_data(data)
         else:
             print("受信したデータに対応する銘柄が見つかりません。")
 
@@ -67,7 +69,7 @@ if __name__ == '__main__':
             schedule.run_pending()
             time.sleep(1)
 
-    # １分間隔でStockクラスのpolling関数を呼ぶ
+    # １分間隔でStockクラスのpolling関数を呼ぶように設定する
     for st in stocks:
         schedule.every(1).minutes.do(lambda: st.polling())
 
