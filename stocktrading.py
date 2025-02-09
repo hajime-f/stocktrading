@@ -7,12 +7,6 @@ from library import StockLibrary
 from model import ModelLibrary
 from stock import Stock
 
-def run_scheduler():
-    
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
         
 if __name__ == '__main__':
 
@@ -51,8 +45,8 @@ if __name__ == '__main__':
         st = Stock(s, lib, model)
         st.set_infomation()  # 銘柄情報の設定
         stocks.append(st)
-    
-    @lib
+
+    # PUSH配信を受信した時に呼ばれる関数
     def receive(data):
 
         # 受信したデータに対応する銘柄のインスタンスを取得する
@@ -63,6 +57,17 @@ if __name__ == '__main__':
         else:
             print("受信したデータに対応する銘柄が見つかりません。")
 
+    # 受信関数を登録
+    lib.register_receiver(receive)
+
+    # スケジューラの定義
+    def run_scheduler():
+        
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    # １分間隔でStockクラスのpolling関数を呼ぶ
     for st in stocks:
         schedule.every(1).minutes.do(lambda: st.polling())
 
