@@ -32,7 +32,6 @@ if __name__ == '__main__':
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
 
-    @lib
     def receive(data):
 
         # 受信したデータに対応する銘柄のインデクスを取得する
@@ -48,6 +47,9 @@ if __name__ == '__main__':
         # データを追加する
         model.append_data(data, index)
 
+    # 受信関数を登録
+    lib.register_receiver(receive)
+        
     try:
         if lib.run():
             filename = model.save_data()

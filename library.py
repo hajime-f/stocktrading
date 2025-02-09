@@ -71,87 +71,55 @@ class StockLibrary:
         self.ping_interval = 180
         self.closed = asyncio.Event()
 
-    
-    def __call__(self, func):
 
-        async def stream(func):
-            
+    def __call__(self, func):
+        return func
+        
+    
+    def register_receiver(self, func):
+
+        # 受信関数を登録
+        self.receive_func = func
+        
+        
+    async def stream(func):
+        
+        while True:
             try:
                 async with websockets.connect(self.ws_uri, ping_timeout=self.timeout_sec) as ws:
-
-                    # 最後にメッセージを受信した時刻を記録
-                    last_message_time = asyncio.get_event_loop().time()
-                    last_ping_time = last_message_time
-
-                    while True:
+                    self.closed.clear()
+                    while not self.closed.is_set():
                         try:
-                            if asyncio.get_event_loop().time() - last_message_time > self.timeout_sec:
-                                print("タイムアウトしました。接続を閉じます。")
-                                # await ws.close(code=1011, reason="Timeout")
-                                self.closed.set()
-                                break
-
-                            if asyncio.get_event_loop().time() - last_ping_time > self.ping_interval:
-                                await ws.ping()
-                                last_ping_time = asyncio.get_event_loop().time()
-                            
                             response = await asyncio.wait_for(ws.recv(), timeout=self.timeout_sec)
                             func(json.loads(response))
-
-                            # 受信時刻を更新
-                            last_message_time = asyncio.get_event_loop().time()  
-
-                        except asyncio.TimeoutError:
-                            print("タイムアウトしました。接続を閉じます。")
-                            # await ws.close(code=1011, reason="Timeout")
-                            self.closed.set()
-                            break
-
-                        except websockets.exceptions.ConnectionClosedError as e:
+                        except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e:
                             print(f"接続が閉じられました: {e}")
-                            self.closed.set()
                             break
-                    
-                        except websockets.exceptions.ConnectionClosedOK:
-                            print("サーバーから切断されました。")
-                            self.closed.set()
+                        except asyncio.TimeoutError:
+                            print("タイムアウトしました。再接続を試みます。")
                             break
-
                         except Exception as e:
                             print(f"エラーが発生しました: {e}")
                             traceback.print_exc()
-                            break
-                        
+                            break                        
             except Exception as e:
                 print(f"接続エラーが発生しました: {e}")
                 traceback.print_exc()
-
             finally:
                 self.closed.set()
-                # try:
-                #     # await ws.close(code=1011, reason="Connection Closed")
-                #     self.closed.set()
-                # except Exception as e:
-                #     pass
-                #     # print(f"クローズ処理中にエラーが発生しました: {e}")
-                #     # traceback.print_exc()
-                        
-        self.loop = asyncio.get_event_loop()
-        self.loop.create_task(stream(func))
-        return stream
 
+                
+    async def _run(self):
+        await self.stream(self.receive_func)
 
-    def run(self):
-
-        async def wait_and_train():
-            await self.closed.wait()  # 接続が閉じるまで待つ
-            self.loop.stop()
         
-        self.loop.create_task(wait_and_train())
-        self.loop.run_forever()
+    def run(self):
+        
+        self.loop = asyncio.get_event_loop()
+        self.loop.run_until_complete(self._run())
 
-        return True
-
+        return True        
+                
         
     def register(self, symbol, exchange=1):
 
