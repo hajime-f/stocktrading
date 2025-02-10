@@ -4,7 +4,7 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename_list = ['training_data2.pkl']
+    filename_list = ['data_20250210_155746.pkl']
     data = []
     n_symbols = 0
     
