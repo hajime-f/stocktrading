@@ -22,7 +22,7 @@ class ModelLibrary:
         self.data = []
         for _ in range(n_symbols):
             self.data.append([])
-        self.model = None
+        self.clf = None
 
 
     def append_data(self, new_data, index):
@@ -353,9 +353,9 @@ class ModelLibrary:
     def load_model(self, filename):
 
         with open(filename, 'rb') as f:
-            self.model = pickle.load(f)
+            self.clf = pickle.load(f)
 
-        return self.model
+        return self.clf
             
     
     def _debug_plot_graph(self, data):

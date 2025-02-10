@@ -42,19 +42,20 @@ class Stock:
     def polling(self):
 
         # １分間隔で呼ばれる関数
+
+        if self.time:            
+            price_df = pd.DataFrame([self.time, self.price], columns = ['DateTime', 'Price'])
+            price_df = price_df.set_index('DateTime')
+            price_df.index = pd.to_datetime(price_df.index)
+            price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
+            price_df.columns = price_df.columns.get_level_values(1)
             
-        price_df = pd.DataFrame([self.time, self.price], columns = ['DateTime', 'Price'])
-        price_df = price_df.set_index('DateTime')
-        price_df.index = pd.to_datetime(price_df.index)
-        price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
-        price_df.columns = price_df.columns.get_level_values(1)
-
-        volume_df = pd.DataFrame([self.time, self.volume], columns = ['DateTime', 'volume'])
-        volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-        volume_df = volume_df.set_index('DateTime')
-        volume_df.index = pd.to_datetime(volume_df.index)
-
-        self.data.concat(pd.concat([price_df, volume_df], axis = 1))
+            volume_df = pd.DataFrame([self.time, self.volume], columns = ['DateTime', 'volume'])
+            volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
+            volume_df = volume_df.set_index('DateTime')
+            volume_df.index = pd.to_datetime(volume_df.index)
+            
+            self.data.concat(pd.concat([price_df, volume_df], axis = 1))
 
         self.time = []
         self.price = []
