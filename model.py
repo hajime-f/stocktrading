@@ -64,19 +64,23 @@ class ModelLibrary:
         input_data = self.prepare_original_data()
 
         # 移動平均を計算する
-        input_data = self.calc_moving_average(input_data)
+        for i in range(self.n_symbols):
+            input_data[i] = self.calc_moving_average(input_data[i])
 
         # MACDを計算する
-        input_data = self.calc_macd(input_data)
+        for i in range(self.n_symbols):
+            input_data[i] = self.calc_macd(input_data[i])
 
         # ボリンジャーバンドを計算する
-        input_data = self.calc_bollinger_band(input_data)
+        for i in range(self.n_symbols):
+            input_data[i] = self.calc_bollinger_band(input_data[i])
 
         # 一目均衡表を計算する
         # input_data = self.calc_ichimoku(input_data)
 
         # RSIを計算する
-        input_data = self.calc_rsi(input_data)
+        for i in range(self.n_symbols):        
+            input_data[i] = self.calc_rsi(input_data[i])
 
         # ストキャスティクスを計算する
         # input_data = self.calc_stochastic(input_data)
@@ -136,30 +140,27 @@ class ModelLibrary:
 
     def calc_moving_average(self, data):
 
-        for i in range(self.n_symbols):
-            data[i]['MA5'] = data[i]['close'].rolling(window=5).mean()
-            data[i]['MA25'] = data[i]['close'].rolling(window=25).mean()
+        data['MA5'] = data['close'].rolling(window=5).mean()
+        data['MA25'] = data['close'].rolling(window=25).mean()
 
         return data
 
 
     def calc_macd(self, data):
 
-        for i in range(self.n_symbols):
-            data[i]['MACD'] = data[i]['close'].ewm(span=12).mean() - data[i]['close'].ewm(span=26).mean()
-            data[i]['SIGNAL'] = data[i]['MACD'].ewm(span=9).mean()
-            data[i]['HISTOGRAM'] = data[i]['MACD'] - data[i]['SIGNAL']
+        data['MACD'] = data['close'].ewm(span=12).mean() - data['close'].ewm(span=26).mean()
+        data['SIGNAL'] = data['MACD'].ewm(span=9).mean()
+        data['HISTOGRAM'] = data['MACD'] - data['SIGNAL']
 
         return data
 
 
     def calc_bollinger_band(self, data):
         
-        for i in range(self.n_symbols):
-            sma20 = data[i]['close'].rolling(window=20).mean()
-            std20 = data[i]['close'].rolling(window=20).std()
-            data[i]['Upper'] = sma20 + (std20 * 2)
-            data[i]['Lower'] = sma20 - (std20 * 2)
+        sma20 = data['close'].rolling(window=20).mean()
+        std20 = data['close'].rolling(window=20).std()
+        data['Upper'] = sma20 + (std20 * 2)
+        data['Lower'] = sma20 - (std20 * 2)
             
         return data
 
@@ -178,12 +179,11 @@ class ModelLibrary:
 
     def calc_rsi(self, data):
         
-        for i in range(self.n_symbols):
-            delta = data[i]['close'].diff()
-            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-            rs = gain / loss
-            data[i]['RSI'] = 100 - (100 / (1 + rs))
+        delta = data['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        data['RSI'] = 100 - (100 / (1 + rs))
             
         return data
 
