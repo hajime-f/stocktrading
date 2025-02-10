@@ -56,12 +56,10 @@ class Stock:
             volume_df = volume_df.set_index('DateTime')
             volume_df.index = pd.to_datetime(volume_df.index)
             
-            self.data.concat(pd.concat([price_df, volume_df], axis = 1))
-
         self.time = []
         self.price = []
         self.volume = []
         
-        
+        breakpoint()
         
         
