@@ -1,4 +1,5 @@
 from datetime import datetime
+import pandas as pd
 
 
 class Stock:
@@ -60,7 +61,6 @@ class Stock:
         self.time = []
         self.price = []
         self.volume = []
-        
         
         
         

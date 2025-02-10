@@ -10,3 +10,4 @@ matplotlib
 seaborn
 scikit-learn
 mplfinance
+schedule

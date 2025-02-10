@@ -172,6 +172,17 @@ class StockLibrary:
         content = self.throw_request(req)
         return content
 
+
+    def get_request(self, url):
+        
+        # GETリクエストをurlに送信する
+        req = urllib.request.Request(url, method='GET')
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('X-API-KEY', self.token)
+
+        content = self.throw_request(req)
+        return content
+
     
     def throw_request(self, req):
 

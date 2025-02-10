@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
-    model.load_model('./model_20250209_215833.pkl')
+    model.load_model('./model_20250210_165310.pkl')
 
     # 預金残高（現物の買付余力）を問い合わせる
     deposit_before = lib.deposit()
@@ -46,19 +46,19 @@ if __name__ == '__main__':
         st = Stock(s, lib, model)
         st.set_infomation()  # 銘柄情報の設定
         stocks.append(st)
-
+    
     # PUSH配信を受信した時に呼ばれる関数
     def receive(data):
 
         # 受信したデータに対応する銘柄のインスタンスを取得する
-        received_stock = next(filter(lambda st: st.symbol == data['Symbol'], stocks), None)        
+        received_stock = next(filter(lambda st: st.symbol == int(data['Symbol']), stocks), None)
         
         if received_stock:
             print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
             received_stock.append_data(data)
         else:
-            print("受信したデータに対応する銘柄が見つかりません。")
-
+            print(f"{data['Symbol']}：受信したデータに対応する銘柄が見つかりません。")
+        
     # 受信関数を登録
     lib.register_receiver(receive)
 
