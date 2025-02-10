@@ -31,17 +31,18 @@ class Stock:
         
         
     def append_data(self, new_data):
-        
-        dt_object = datetime.fromisoformat(new_data['CurrentPriceTime'].replace('Z', '+00:00'))
-        self.time.append(dt_object.strftime("%Y-%m-%d %H:%M"))
-        self.price.append(new_data['CurrentPrice'])
-        self.volume.append(new_data['TradingVolume'])
+
+        if new_data['CurrentPriceTime'] is not None:
+            dt_object = datetime.fromisoformat(new_data['CurrentPriceTime'].replace('Z', '+00:00'))
+            self.time.append(dt_object.strftime("%Y-%m-%d %H:%M"))
+            self.price.append(new_data['CurrentPrice'])
+            self.volume.append(new_data['TradingVolume'])
         
 
     def polling(self):
 
         # １分間隔で呼ばれる関数
-        
+            
         price_df = pd.DataFrame([self.time, self.price], columns = ['DateTime', 'Price'])
         price_df = price_df.set_index('DateTime')
         price_df.index = pd.to_datetime(price_df.index)

@@ -82,7 +82,7 @@ class StockLibrary:
         self.receive_func = func
         
         
-    async def stream(func):
+    async def stream(self, func):
         
         while True:
             try:

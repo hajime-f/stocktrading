@@ -27,10 +27,11 @@ class ModelLibrary:
 
     def append_data(self, new_data, index):
 
-        data ={'CurrentPriceTime': new_data['CurrentPriceTime'],
-               'CurrentPrice': new_data['CurrentPrice'],
-               'TradingVolume': new_data['TradingVolume']}
-        self.data[index].append(data)
+        if new_data['CurrentPriceTime'] is not None:        
+            data ={'CurrentPriceTime': new_data['CurrentPriceTime'],
+                   'CurrentPrice': new_data['CurrentPrice'],
+                   'TradingVolume': new_data['TradingVolume']}
+            self.data[index].append(data)
 
 
     def save_data(self):
