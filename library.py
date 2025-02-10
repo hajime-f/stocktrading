@@ -68,7 +68,6 @@ class StockLibrary:
         # Websocketの設定
         self.ws_uri = "ws://" + self.ip_address + ":" + self.port + "/kabusapi/websocket"
         self.timeout_sec = 36000
-        self.ping_interval = 180
         self.closed = asyncio.Event()
 
 
@@ -94,18 +93,20 @@ class StockLibrary:
                             func(json.loads(response))
                         except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e:
                             print(f"接続が閉じられました: {e}")
+                            self.closed.set()
                             break
                         except asyncio.TimeoutError:
-                            print("タイムアウトしました。再接続を試みます。")
+                            print("タイムアウトしました。")
+                            self.closed.set()
                             break
                         except Exception as e:
                             print(f"エラーが発生しました: {e}")
                             traceback.print_exc()
+                            self.closed.set()
                             break                        
             except Exception as e:
                 print(f"接続エラーが発生しました: {e}")
                 traceback.print_exc()
-            finally:
                 self.closed.set()
 
                 
