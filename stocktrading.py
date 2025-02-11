@@ -77,14 +77,15 @@ if __name__ == '__main__':
     scheduler_thread.start()
     
     try:
-        if lib.run():
-            deposit_after = lib.deposit()
-            print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
-            print(f"利益：{deposit_before - deposit_after} 円")
-            filename = model.save_data()
-            print(f"{filename}にデータを保存しました。")
+        lib.run()
     except KeyboardInterrupt:
-        filename = model.save_data()
-        print(f"{filename}にデータを保存しました。")
+        pass
+
+    deposit_after = lib.deposit()
+    print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
+    print(f"利益：{deposit_before - deposit_after} 円")
     
+    filename = model.save_data()
+    print(f"{filename}にデータを保存しました。")
+        
     

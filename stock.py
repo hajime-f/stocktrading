@@ -55,11 +55,13 @@ class Stock:
             volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
             volume_df = volume_df.set_index('DateTime')
             volume_df.index = pd.to_datetime(volume_df.index)
+
+            print(f"\033[33m{self.symbol}：{self.disp_name}\033[0m")
+            print(f"\033[33m{price_df}\033[0m")
             
         self.time = []
         self.price = []
         self.volume = []
         
-        breakpoint()
         
         

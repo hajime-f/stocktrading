@@ -358,6 +358,14 @@ class ModelLibrary:
         return self.clf
             
     
+    def predict(self, data):
+
+        predict_value = self.clf.predict(data)
+        result = 0 if predict_value < 0.5 else 1
+
+        return result
+        
+    
     def _debug_plot_graph(self, data):
 
         import mplfinance as mpf
