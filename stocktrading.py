@@ -54,7 +54,7 @@ if __name__ == '__main__':
         received_stock = next(filter(lambda st: st.symbol == int(data['Symbol']), stocks), None)
         
         if received_stock:
-            print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
+            # print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
             received_stock.append_data(data)
         else:
             print(f"{data['Symbol']}：受信したデータに対応する銘柄が見つかりません。")
@@ -62,19 +62,18 @@ if __name__ == '__main__':
     # 受信関数を登録
     lib.register_receiver(receive)
 
-    # スケジューラの定義
-    def run_scheduler():
+    # １分間隔でstockクラスのpolling関数を呼ぶように設定する
+    def run_polling(st):
         
         while True:
-            schedule.run_pending()
-            time.sleep(1)
+            st.polling()
+            time.sleep(60)
 
-    # １分間隔でStockクラスのpolling関数を呼ぶように設定する
+    threads = []
     for st in stocks:
-        schedule.every(1).minutes.do(lambda: st.polling())
-
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
+        thread = threading.Thread(target=run_polling, args=(st,))
+        threads.append(thread)
+        thread.start()    
     
     try:
         lib.run()
@@ -84,8 +83,5 @@ if __name__ == '__main__':
     deposit_after = lib.deposit()
     print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
     print(f"利益：{deposit_before - deposit_after} 円")
-    
-    filename = model.save_data()
-    print(f"{filename}にデータを保存しました。")
-        
+            
     

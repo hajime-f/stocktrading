@@ -32,7 +32,7 @@ class Stock:
         
         
     def append_data(self, new_data):
-
+        
         if new_data['CurrentPriceTime'] is not None:
             dt_object = datetime.fromisoformat(new_data['CurrentPriceTime'].replace('Z', '+00:00'))
             self.time.append(dt_object.strftime("%Y-%m-%d %H:%M"))
@@ -43,21 +43,35 @@ class Stock:
     def polling(self):
 
         # １分間隔で呼ばれる関数
+        if self.time is not None:
 
-        if self.time:            
-            price_df = pd.DataFrame([self.time, self.price], columns = ['DateTime', 'Price'])
+            price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price})
             price_df = price_df.set_index('DateTime')
             price_df.index = pd.to_datetime(price_df.index)
             price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
             price_df.columns = price_df.columns.get_level_values(1)
-            
-            volume_df = pd.DataFrame([self.time, self.volume], columns = ['DateTime', 'volume'])
+
+            volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume})
             volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
             volume_df = volume_df.set_index('DateTime')
             volume_df.index = pd.to_datetime(volume_df.index)
 
-            print(f"\033[33m{self.symbol}：{self.disp_name}\033[0m")
-            print(f"\033[33m{price_df}\033[0m")
+            self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
+
+            # 移動平均を計算する
+            self.data = self.model.calc_moving_average(self.data)
+
+            # MACDを計算する
+            self.data = self.model.calc_macd(self.data)
+
+            # ボリンジャーバンドを計算する
+            self.data = self.model.calc_bollinger_band(self.data)
+
+            # RSIを計算する
+            self.data = self.model.calc_rsi(self.data)
+
+            print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
+            print(f"\033[32m{self.data}\033[0m")
             
         self.time = []
         self.price = []
