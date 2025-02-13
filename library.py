@@ -183,6 +183,19 @@ class StockLibrary:
         content = self.throw_request(req)
         return content
 
+
+    def post_request(self, url, obj):
+
+        # POST リクエストを url に送信する
+
+        json_data = json.dumps(obj).encode('utf-8')
+        req = urllib.request.Request(url, json_data, method='POST')
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('X-API-KEY', self.token)
+
+        content = self.throw_request(req)
+        return content
+
     
     def throw_request(self, req):
 
