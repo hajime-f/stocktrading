@@ -243,4 +243,27 @@ class StockLibrary:
         
         return content
     
+
+    def sell_at_limit_price(self, symbol, count, limit_price, exchange=1):
+
+        # 現物を指値で売る
+        url = self.base_url + '/sendorder'
+
+        obj = { 'Symbol': symbol,       # 銘柄コード
+                'Exchange': exchange,   # 市場
+                'SecurityType': 1,      # 株式
+                'Side': '1',            # 売り
+                'CashMargin': 1,        # 現物
+                'DelivType': 0,         # 預かり金
+                'FundType': '  ',       # 現物売
+                'AccountType': 4,       # 特定口座
+                'Qty': count,           # 注文数量
+                'FrontOrderType': 20,   # 執行条件（指値）
+                'Price': limit_price,   # 指値
+                'ExpireDay': 0,         # 当日中
+               }
         
+        content = self.push_post_request(url, obj)
+
+        return content
+    

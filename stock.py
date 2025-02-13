@@ -20,6 +20,9 @@ class Stock:
         self.data = pd.DataFrame()
         self.window = window
 
+        self.buy_order_list = []
+        self.sell_order_list = []
+
         
     def set_infomation(self):
         
@@ -92,7 +95,14 @@ class Stock:
     
     def polling(self):
 
-        # １分間隔で呼ばれる関数
+        ## １分間隔で呼ばれる関数
+        
+        # 買い注文が約定したか否かをチェックする
+
+
+        # 売り注文が約定したか否かをチェックする
+        
+        
         if self.time is not None:
 
             # データを準備する
@@ -107,17 +117,8 @@ class Stock:
             # 上がると予測された場合
             if result:
 
-                # 取引価格を計算する
-                transaction_price = self.lib.fetch_price(self.symbol, self.exchange) * self.transaction_unit
-                print(f"\033[34m取引価格：{int(transaction_price):,} 円\033[0m")
-
-                # 買付余力が取引価格を上回っている（買える）場合
-                if self.lib.deposit() > transaction_price:
-                    
-                    # 成行で買い注文を入れる
-
-                    
-                    pass
+                # 取引を実行する
+                self.execute_transaction()
                 
                 
                 
@@ -126,3 +127,31 @@ class Stock:
         self.price = []
         self.volume = []
                 
+
+    def execute_transaction(self):
+        
+        # 取引価格を計算する
+        price = self.lib.fetch_price(self.symbol, self.exchange)
+        transaction_price = price * self.transaction_unit
+        print(f"\033[34m取引価格：{int(transaction_price):,} 円\033[0m")
+        
+        # 買付余力が取引価格を上回っている（買える）場合
+        if self.lib.deposit() > transaction_price:
+            
+            # 成行で買い注文を入れる
+            content = buy_at_market_price_with_cash(self.symbol, self.transaction_unit, self.exchange)
+            order_result = content['OrderId']
+            if order_result == 0:
+                self.buy_order_list.append(order_result)
+                
+                # 指値で売り注文を入れる
+                content = sell_at_limit_price(self.symbol, self.transaction_unit, price * 1.05, self.exchange)
+                order_result = content['OrderId']
+                if order_result == 0:
+                    self.sell_order_list.append(order_result)
+                else:
+                    print('売り注文の発注に失敗しました。')
+                    
+            else:
+                print('買い注文の発注に失敗しました。')
+            
