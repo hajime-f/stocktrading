@@ -85,5 +85,4 @@ if __name__ == '__main__':
     deposit_after = lib.deposit()
     print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
     print(f"利益：{deposit_before - deposit_after} 円")
-            
     

@@ -57,23 +57,26 @@ class Stock:
         volume_df.index = pd.to_datetime(volume_df.index)
         
         self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
+        raw_data = self.data
         
         # 移動平均を計算する
-        self.data = self.model.calc_moving_average(self.data)
+        raw_data = self.model.calc_moving_average(raw_data)
         
         # MACDを計算する
-        self.data = self.model.calc_macd(self.data)
+        raw_data = self.model.calc_macd(raw_data)
         
         # ボリンジャーバンドを計算する
-        self.data = self.model.calc_bollinger_band(self.data)
+        raw_data = self.model.calc_bollinger_band(raw_data)
         
         # RSIを計算する
-        self.data = self.model.calc_rsi(self.data)
+        raw_data = self.model.calc_rsi(raw_data)
+
+        return raw_data
         
 
-    def predict(self):
+    def predict(self, raw_data):
 
-        tmp = self.data.tail(self.window)
+        tmp = raw_data.tail(self.window)
         if np.nan in tmp.values:
             return False     # データにNaNが含まれていたら何もしない
         elif len(tmp) < self.window:
@@ -93,13 +96,13 @@ class Stock:
         if self.time is not None:
 
             # データを準備する
-            self.prepare_data()
+            raw_data = self.prepare_data()
             
             print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
             print(f"\033[32m{self.data}\033[0m")
             
             # 株価が上がるか否かを予測する
-            result = self.predict()
+            result = self.predict(raw_data)
 
             # 上がると予測された場合
             if result:
@@ -110,7 +113,10 @@ class Stock:
 
                 # 買付余力が取引価格を上回っている（買える）場合
                 if self.lib.deposit() > transaction_price:
+                    
+                    # 成行で買い注文を入れる
 
+                    
                     pass
                 
                 
