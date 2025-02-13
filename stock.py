@@ -24,6 +24,7 @@ class Stock:
         self.buy_order_id = None
         self.sell_order_flag = False
         self.sell_order_id = None
+        self.purchase_price = 0
 
         
     def set_infomation(self):
@@ -104,11 +105,14 @@ class Stock:
         
         # 買い注文が約定したか否かをチェックし、約定している場合はフラグを更新する
         if self.buy_order_flag:
-            self.check_and_update_buy_order()
+            self.check_and_update_buy_order_status()
                 
         # 売り注文が約定したか否かをチェックし、約定している場合はフラグを更新する
         if self.sell_order_flag:
-            self.check_and_update_sell_order()
+            self.check_and_update_sell_order_status()
+
+            # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
+            
                 
         if self.time is not None:
 
@@ -131,11 +135,11 @@ class Stock:
         self.volume = []
 
 
-    def check_and_update_buy_order(self):
+    def check_and_update_buy_order_status(self):
         pass
 
 
-    def check_and_update_sell_order(self):
+    def check_and_update_sell_order_status(self):
         pass
         
 
@@ -149,8 +153,8 @@ class Stock:
         # 買付余力が取引価格を上回っている（買える）場合
         if self.lib.deposit() > transaction_price:
 
-            # すでに買い注文を入れている場合は買わない
-            if self.buy_order_flag:
+            # まだ売り注文が残っている場合は買わない
+            if self.sell_order_flag:
                 print(f"\033[32m値上がりが予測され、買付余力もありましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
                 return False
 
@@ -169,9 +173,10 @@ class Stock:
             if order_result1 == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = order_id1
+                self.purchase_price = price
                 
                 # 指値で売り注文を入れる
-                content = sell_at_limit_price(self.symbol, self.transaction_unit, price * 1.05, self.exchange)
+                content = sell_at_limit_price(self.symbol, self.transaction_unit, self.purchase_price * 1.05, self.exchange)
                 order_result2 = content['Result']
                 order_id2 = content['OrderId']
                 if order_result2 == 0:
