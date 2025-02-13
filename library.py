@@ -121,15 +121,17 @@ class StockLibrary:
 
         return True        
                 
-        
-    def register(self, symbol, exchange=1):
+    
+    def register(self, symbol_list, exchange=1):
 
-        # ある銘柄を登録銘柄リストに登録する
+        # リストに含まれる銘柄を登録銘柄として登録する
         url = self.base_url + '/register'
-        obj = { 'Symbols':
-                [ 
-                    {'Symbol': str(symbol), 'Exchange': exchange},
-                ] }
+
+        obj = {"Symbols": []}
+        for symbol in symbol_list:
+            obj["Symbols"].append({"Symbol": str(symbol), "Exchange": 1})
+        json_data = json.dumps(obj)
+
         content = self.put_request(url, obj)
         return content
 
