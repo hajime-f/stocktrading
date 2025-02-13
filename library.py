@@ -212,4 +212,27 @@ class StockLibrary:
         return content
 
 
+    def buy_at_market_price_with_cash(self, symbol, count, exchange=1):
+        
+        # 現物を預かり金で成行買いする
+        
+        url = self.base_url + '/sendorder'
+        
+        obj = { 'Symbol': symbol,        # 銘柄コード
+                'Exchange': exchange,    # 市場
+                'SecurityType': 1,       # 株式
+                'Side': '2',             # 買い
+                'CashMargin': 1,         # 現物
+                'DelivType': 2,          # 預り金
+                'FundType': 'AA',        # 信用代用
+                'AccountType': 4,        # 特定口座
+                'Qty': count,            # 注文数量
+                'FrontOrderType': 10,    # 執行条件（成行）
+                'Price': 0,              # 注文価格（成行なのでゼロ）
+                'ExpireDay': 0,          # 当日中
+               }
+        content = self.push_post_request(url, obj)
+        
+        return content
+    
         

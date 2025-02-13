@@ -5,11 +5,12 @@ import numpy as np
 
 class Stock:
 
-    def __init__(self, symbol, lib, model, exchange = 1, window = 10):
+    def __init__(self, symbol, lib, model, base_transaction, exchange = 1, window = 10):
 
         self.symbol = symbol
         self.lib= lib
         self.model = model
+        self.base_transaction = base_transaction
         self.exchange = exchange
         
         self.time = []
@@ -26,6 +27,7 @@ class Stock:
         try:
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
+            self.transaction_unit = self.unit * self.base_transaction
         except KeyError:
             exit('\033[31m銘柄略称・売買単位を取得できませんでした。\033[0m')
         except Exception:

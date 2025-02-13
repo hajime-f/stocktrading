@@ -9,7 +9,13 @@ from stock import Stock
 
         
 if __name__ == '__main__':
-
+    
+    # 取引のベース単位
+    # このシステムでは、ベース単位（base_transaction）×単元株（stock.unit）だけ取引を実行する。
+    # 例えば、ベース単位を５に設定すると、単元株が100株の銘柄であれば、毎回500株取引することになる。
+    # 当然、ベース単位を引き上げるほど取引価格が上がっていくので、注意が必要。
+    base_transaction = 1
+    
     # 株ライブラリを初期化する
     lib = StockLibrary()
 
@@ -43,7 +49,7 @@ if __name__ == '__main__':
     # Stockクラスをインスタンス化してリストに入れる
     stocks = []
     for s in symbols:
-        st = Stock(s, lib, model)
+        st = Stock(s, lib, model, base_transaction)
         st.set_infomation()  # 銘柄情報の設定
         stocks.append(st)
     
