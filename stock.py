@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 
 class Stock:
@@ -40,42 +41,66 @@ class Stock:
             self.volume.append(new_data['TradingVolume'])
         
 
+    def prepare_data(self):
+
+        price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price})
+        price_df = price_df.set_index('DateTime')
+        price_df.index = pd.to_datetime(price_df.index)
+        price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
+        price_df.columns = price_df.columns.get_level_values(1)
+        
+        volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume})
+        volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
+        volume_df = volume_df.set_index('DateTime')
+        volume_df.index = pd.to_datetime(volume_df.index)
+        
+        self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
+        
+        # 移動平均を計算する
+        self.data = self.model.calc_moving_average(self.data)
+        
+        # MACDを計算する
+        self.data = self.model.calc_macd(self.data)
+        
+        # ボリンジャーバンドを計算する
+        self.data = self.model.calc_bollinger_band(self.data)
+        
+        # RSIを計算する
+        self.data = self.model.calc_rsi(self.data)
+        
+
+    def predict(self):
+
+        tmp = self.data.tail(self.window)
+        if np.nan in tmp.values:
+            return False     # データにNaNが含まれていたら何もしない
+        elif len(tmp) < self.window:
+            return False     # データが足らない場合も何もしない
+        else:
+            input_data = pd.DataFrame([tmp.values.reshape(-1)])
+            print(f"\033[31m{input_data}\033[0m")
+            predict_value = self.model.predict(input_data)
+            print(predict_value)
+            result = False if predict_value < 0.7 else True
+            return result
+            
+    
     def polling(self):
 
         # １分間隔で呼ばれる関数
         if self.time is not None:
 
-            price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price})
-            price_df = price_df.set_index('DateTime')
-            price_df.index = pd.to_datetime(price_df.index)
-            price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
-            price_df.columns = price_df.columns.get_level_values(1)
-
-            volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume})
-            volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-            volume_df = volume_df.set_index('DateTime')
-            volume_df.index = pd.to_datetime(volume_df.index)
-
-            self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
-
-            # 移動平均を計算する
-            self.data = self.model.calc_moving_average(self.data)
-
-            # MACDを計算する
-            self.data = self.model.calc_macd(self.data)
-
-            # ボリンジャーバンドを計算する
-            self.data = self.model.calc_bollinger_band(self.data)
-
-            # RSIを計算する
-            self.data = self.model.calc_rsi(self.data)
-
+            # データを準備する
+            self.prepare_data()
+            
             print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
             print(f"\033[32m{self.data}\033[0m")
+            
+            # 株価が上がるか否かを予測する
+            result = self.predict()
+            
             
         self.time = []
         self.price = []
         self.volume = []
-        
-        
-        
+                

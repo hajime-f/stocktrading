@@ -3,16 +3,11 @@ import pickle
 from datetime import datetime
 
 import pandas as pd
-pd.set_option('display.max_rows', None)
-
 import numpy as np
 from sklearn.utils import all_estimators
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 import warnings
-
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
 
 class ModelLibrary:
 
@@ -360,15 +355,5 @@ class ModelLibrary:
     
     def predict(self, data):
 
-        predict_value = self.clf.predict(data)
-        result = 0 if predict_value < 0.5 else 1
-
-        return result
-        
-    
-    def _debug_plot_graph(self, data):
-
-        import mplfinance as mpf
-
-        mpf.plot(data[['open', 'high', 'low', 'close', 'volume']], type='candle', volume=True, figratio=(12, 4), style='charles', savefig='debug.png')
-    
+        return self.clf.predict(data)
+                    

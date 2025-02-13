@@ -56,8 +56,6 @@ if __name__ == '__main__':
         if received_stock:
             # print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
             received_stock.append_data(data)
-        else:
-            print(f"{data['Symbol']}：受信したデータに対応する銘柄が見つかりません。")
         
     # 受信関数を登録
     lib.register_receiver(receive)
