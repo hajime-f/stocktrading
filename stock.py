@@ -20,8 +20,10 @@ class Stock:
         self.data = pd.DataFrame()
         self.window = window
 
-        self.buy_order_list = []
-        self.sell_order_list = []
+        self.buy_order_flag = False
+        self.buy_order_id = None
+        self.sell_order_flag = False
+        self.sell_order_id = None
 
         
     def set_infomation(self):
@@ -88,9 +90,9 @@ class Stock:
         elif len(tmp) < self.window:
             return False     # データが足らない場合も何もしない
         else:
-            input_data = pd.DataFrame([tmp.values.reshape(-1)])
+            input_data = tmp.values.reshape(-1)
             print(f"\033[31m{input_data}\033[0m")
-            predict_value = self.model.predict(input_data)
+            predict_value = self.model.predict([input_data])
             print(predict_value)
             result = False if predict_value < 0.7 else True
             return result
@@ -100,12 +102,14 @@ class Stock:
 
         ## １分間隔で呼ばれる関数
         
-        # 買い注文が約定したか否かをチェックする
-
-
-        # 売り注文が約定したか否かをチェックする
-        
-        
+        # 買い注文が約定したか否かをチェックし、約定している場合はフラグを更新する
+        if self.buy_order_flag:
+            self.check_and_update_buy_order()
+                
+        # 売り注文が約定したか否かをチェックし、約定している場合はフラグを更新する
+        if self.sell_order_flag:
+            self.check_and_update_sell_order()
+                
         if self.time is not None:
 
             # データを準備する
@@ -125,7 +129,15 @@ class Stock:
         self.time = []
         self.price = []
         self.volume = []
-                
+
+
+    def check_and_update_buy_order(self):
+        pass
+
+
+    def check_and_update_sell_order(self):
+        pass
+        
 
     def execute_transaction(self):
         
@@ -136,6 +148,11 @@ class Stock:
         
         # 買付余力が取引価格を上回っている（買える）場合
         if self.lib.deposit() > transaction_price:
+
+            # すでに買い注文を入れている場合は買わない
+            if self.buy_order_flag:
+                print(f"\033[32m値上がりが予測され、買付余力もありましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
+                return False
 
             # 15:30まで20分を切っている場合は買わない
             now = datetime.now()
@@ -150,14 +167,16 @@ class Stock:
             order_result1 = content['Result']
             order_id1 = content['OrderId']
             if order_result1 == 0:
-                self.buy_order_list.append(order_id1)
+                self.buy_order_flag = True
+                self.buy_order_id = order_id1
                 
                 # 指値で売り注文を入れる
                 content = sell_at_limit_price(self.symbol, self.transaction_unit, price * 1.05, self.exchange)
                 order_result2 = content['Result']
                 order_id2 = content['OrderId']
                 if order_result2 == 0:
-                    self.sell_order_list.append(order_id2)
+                    self.sell_order_flag = True
+                    self.sell_order_id = order_id2
 
             if order_result1 == 0 and order_result2 == 0:
                 print(f"\033[32m{self.symbol}：{self.disp_name} の買い注文・売り注文が正常に発注されました。\033[0m")
