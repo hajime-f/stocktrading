@@ -35,7 +35,7 @@ if __name__ == '__main__':
         
     # 銘柄登録
     lib.register(symbols)
-
+    
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
     model.load_model('./model_20250210_165310.pkl')
