@@ -100,7 +100,21 @@ class Stock:
             
             # 株価が上がるか否かを予測する
             result = self.predict()
-            
+
+            # 上がると予測された場合
+            if result:
+
+                # 取引価格を計算する
+                transaction_price = self.lib.fetch_price(self.symbol, self.exchange) * self.transaction_unit
+                print(f"\033[34m取引価格：{int(transaction_price):,} 円\033[0m")
+
+                # 買付余力が取引価格を上回っている（買える）場合
+                if self.lib.deposit() > transaction_price:
+
+                    pass
+                
+                
+                
             
         self.time = []
         self.price = []

@@ -130,7 +130,6 @@ class StockLibrary:
         obj = {"Symbols": []}
         for symbol in symbol_list:
             obj["Symbols"].append({"Symbol": str(symbol), "Exchange": 1})
-        json_data = json.dumps(obj)
 
         content = self.put_request(url, obj)
         return content
@@ -155,6 +154,13 @@ class StockLibrary:
         return content['StockAccountWallet']
     
 
+    def fetch_price(self, symbol, exchange):
+
+        # ある銘柄の時価を得る
+        content = fetch_information(symbol, exchange)
+        return content['CurrentPrice']
+
+    
     def fetch_information(self, symbol, exchange):
 
         # ある銘柄の情報を得る
