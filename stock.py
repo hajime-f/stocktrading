@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, time
 import pandas as pd
 import numpy as np
 
@@ -74,6 +74,9 @@ class Stock:
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
 
+        print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
+        print(f"\033[32m{self.data}\033[0m")
+            
         return raw_data
         
 
@@ -108,9 +111,6 @@ class Stock:
             # データを準備する
             raw_data = self.prepare_data()
             
-            print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
-            print(f"\033[32m{self.data}\033[0m")
-            
             # 株価が上がるか否かを予測する
             result = self.predict(raw_data)
 
@@ -118,8 +118,7 @@ class Stock:
             if result:
 
                 # 取引を実行する
-                self.execute_transaction()
-                
+                result = self.execute_transaction()
                 
                 
             
@@ -137,21 +136,37 @@ class Stock:
         
         # 買付余力が取引価格を上回っている（買える）場合
         if self.lib.deposit() > transaction_price:
+
+            # 15:30まで20分を切っている場合は買わない
+            now = datetime.now()
+            target_time = datetime.combine(now.date(), time(15, 30))
+            time_limit = target_time - timedelta(minutes=20)
+            if now < time_limit:
+                print(f"\033[32m値上がりが予測され、買付余力もありましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
+                return False
             
             # 成行で買い注文を入れる
             content = buy_at_market_price_with_cash(self.symbol, self.transaction_unit, self.exchange)
-            order_result = content['OrderId']
-            if order_result == 0:
-                self.buy_order_list.append(order_result)
+            order_result1 = content['Result']
+            order_id1 = content['OrderId']
+            if order_result1 == 0:
+                self.buy_order_list.append(order_id1)
                 
                 # 指値で売り注文を入れる
                 content = sell_at_limit_price(self.symbol, self.transaction_unit, price * 1.05, self.exchange)
-                order_result = content['OrderId']
-                if order_result == 0:
-                    self.sell_order_list.append(order_result)
-                else:
-                    print('売り注文の発注に失敗しました。')
-                    
+                order_result2 = content['Result']
+                order_id2 = content['OrderId']
+                if order_result2 == 0:
+                    self.sell_order_list.append(order_id2)
+
+            if order_result1 == 0 and order_result2 == 0:
+                print(f"\033[32m{self.symbol}：{self.disp_name} の買い注文・売り注文が正常に発注されました。\033[0m")
+                return True
             else:
-                print('買い注文の発注に失敗しました。')
+                print(f"\033[32m値上がりが予測され、買付余力もありましたが、なんらかの原因により発注できませんでした。\033[0m")
+                return False
+
+        else:
+            print(f"\033[32m値上がりが予測されましたが、買付余力がありませんでした。\033[0m")
+            return False
             
