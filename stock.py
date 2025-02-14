@@ -63,6 +63,7 @@ class Stock:
         volume_df.index = pd.to_datetime(volume_df.index)
         
         self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
+        self.data.drop_duplicates(keep = 'last', inplace = True)
         raw_data = self.data.copy()
         
         # 移動平均を計算する
@@ -76,13 +77,6 @@ class Stock:
         
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
-
-        # # 重複行を削除する
-        # if raw_data.index is not None:
-        #     raw_data.drop_duplicates(subset=raw_data.index.name, keep = 'last')
-
-        print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
-        print(f"\033[32m{raw_data}\033[0m")
             
         return raw_data
         
@@ -96,9 +90,7 @@ class Stock:
             return False     # データにNaNが含まれている場合も何もしない
         else:
             input_data = tmp.values.reshape(-1)
-            print(f"\033[31m{input_data}\033[0m")
             predict_value = self.model.predict([input_data])
-            print(predict_value)
             result = False if predict_value < 0.7 else True
             return result
             
@@ -117,18 +109,19 @@ class Stock:
 
             # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
             
-                
-        if self.time is not None:
 
+        if self.time is not None:
+            
             # データを準備する
             raw_data = self.prepare_data()
+            print(f"\033[32mデータを更新しました：\033[0m{self.disp_name}（{self.symbol}）")
             
             # 株価が上がるか否かを予測する
             result = self.predict(raw_data)
-
+            
             # 上がると予測された場合
             if result:
-
+                
                 # 取引を実行する
                 result = self.execute_transaction()
                 
