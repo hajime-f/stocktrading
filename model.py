@@ -8,6 +8,7 @@ from sklearn.utils import all_estimators
 from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
+from sklearn.metrics import classification_report
 import warnings
 
 class ModelLibrary:
@@ -333,6 +334,9 @@ class ModelLibrary:
         # モデルを評価する
         score = clf.score(X_test, Y_test)
         print(f'正解率：{score}')
+
+        Y_pred = clf.predict(X_test)
+        print(classification_report(Y_test, Y_pred))
 
         return clf
 
