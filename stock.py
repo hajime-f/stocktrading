@@ -63,7 +63,7 @@ class Stock:
         volume_df.index = pd.to_datetime(volume_df.index)
         
         self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
-        raw_data = self.data
+        raw_data = self.data.copy()
         
         # 移動平均を計算する
         raw_data = self.model.calc_moving_average(raw_data)
@@ -77,8 +77,12 @@ class Stock:
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
 
+        # # 重複行を削除する
+        # if raw_data.index is not None:
+        #     raw_data.drop_duplicates(subset=raw_data.index.name, keep = 'last')
+
         print(f"\033[32m{self.symbol}：{self.disp_name}\033[0m")
-        print(f"\033[32m{self.data}\033[0m")
+        print(f"\033[32m{raw_data}\033[0m")
             
         return raw_data
         
@@ -86,10 +90,10 @@ class Stock:
     def predict(self, raw_data):
 
         tmp = raw_data.tail(self.window)
-        if np.nan in tmp.values:
-            return False     # データにNaNが含まれていたら何もしない
-        elif len(tmp) < self.window:
-            return False     # データが足らない場合も何もしない
+        if len(tmp) < self.window:
+            return False     # データが足らない場合は何もしない
+        elif tmp.isnull().values.any():
+            return False     # データにNaNが含まれている場合も何もしない
         else:
             input_data = tmp.values.reshape(-1)
             print(f"\033[31m{input_data}\033[0m")
