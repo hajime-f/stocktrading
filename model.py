@@ -5,6 +5,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 from sklearn.utils import all_estimators
+from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 import warnings
@@ -318,10 +319,13 @@ class ModelLibrary:
 
     def validate_model(self, clf, X, Y):
 
+        # データをシャッフルする
+        X_shuffled, Y_shuffled = shuffle(X, Y, random_state = 42)
+        
         # データを学習用データとテスト用データに分割する
-        n_train = int(len(X) * 0.8)
-        X_train, Y_train = X[:n_train], Y[:n_train]
-        X_test, Y_test = X[n_train:], Y[n_train:]
+        n_train = int(len(X_shuffled) * 0.8)
+        X_train, Y_train = X_shuffled[:n_train], Y_shuffled[:n_train]
+        X_test, Y_test = X_shuffled[n_train:], Y_shuffled[n_train:]
 
         # モデルを学習する
         clf = clf.fit(X_train, Y_train)

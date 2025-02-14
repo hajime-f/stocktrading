@@ -38,7 +38,7 @@ if __name__ == '__main__':
     
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
-    model.load_model('./model_20250210_165310.pkl')
+    model.load_model('./model_20250214_234719.pkl')
 
     # 預金残高（現物の買付余力）を問い合わせる
     deposit_before = lib.deposit()
