@@ -47,13 +47,13 @@ if __name__ == '__main__':
 
     # 受信関数を登録
     lib.register_receiver(receive)
-        
+
     try:
-        if lib.run():
-            filename = model.save_data()
-            print(f"{filename}にデータを保存しました。")
+        lib.run()
     except KeyboardInterrupt:
-        filename = model.save_data()
-        print(f"{filename}にデータを保存しました。")
+        pass
+
+    filename = model.save_data()
+    print(f"{filename}にデータを保存しました。")
     
         
