@@ -51,6 +51,12 @@ class Stock:
 
     def prepare_data(self):
 
+
+        # price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price}).set_index('DateTime')
+        # volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume}).set_index('DateTime')
+        # self.data = pd.merge_asof(self.data, price_df.resample('1Min').ohlc().dropna(), left_index=True, right_index=True, direction='nearest')
+        # self.data = pd.merge_asof(self.data, volume_df.drop_duplicates(keep='first'), left_index=True, right_index=True, direction='nearest')
+        
         price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price})
         price_df = price_df.set_index('DateTime')
         price_df.index = pd.to_datetime(price_df.index)
