@@ -51,26 +51,16 @@ class Stock:
 
     def prepare_data(self):
 
-
-        # price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price}).set_index('DateTime')
-        # volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume}).set_index('DateTime')
-        # self.data = pd.merge_asof(self.data, price_df.resample('1Min').ohlc().dropna(), left_index=True, right_index=True, direction='nearest')
-        # self.data = pd.merge_asof(self.data, volume_df.drop_duplicates(keep='first'), left_index=True, right_index=True, direction='nearest')
-        
-        price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price})
-        price_df = price_df.set_index('DateTime')
+        price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price}).set_index('DateTime')
         price_df.index = pd.to_datetime(price_df.index)
-        price_df = price_df.resample('1Min').ohlc().dropna()  # 1分足に変換
+        price_df = price_df.resample('1Min').ohlc().dropna()
         price_df.columns = price_df.columns.get_level_values(1)
-        
-        volume_df = pd.DataFrame({'DateTime': self.time, 'volume': self.volume})
-        volume_df.drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-        volume_df = volume_df.set_index('DateTime')
-        volume_df.index = pd.to_datetime(volume_df.index)
-        
-        self.data = pd.concat([self.data, pd.concat([price_df, volume_df], axis = 1)])
-        self.data.drop_duplicates(keep = 'last', inplace = True)
+
+        self.data = pd.concat([self.data, price_df])
         raw_data = self.data.copy()
+
+        # データを正規化する
+        raw_data = self.model.normalize_data(raw_data)
         
         # 移動平均を計算する
         raw_data = self.model.calc_moving_average(raw_data)
