@@ -26,6 +26,9 @@ if __name__ == '__main__':
     print('学習データを準備しています。')
     X, Y = model.prepare_training_data(XY)
 
+    print('XGBoostモデルを評価しています。')
+    bst = model.evaluate_xgboost(X, Y)
+    
     print('モデルを評価しています。')
     best_clf = model.evaluate_model(X, Y)
 
