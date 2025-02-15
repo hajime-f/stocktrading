@@ -21,15 +21,10 @@ if __name__ == '__main__':
     model.set_data(data)
 
     print('生データを準備しています。')
-    model.prepare_dataframe_list()
-
-    
-    
-    
-    raw_data = model.prepare_raw_data()
+    XY = model.prepare_dataframe_list()
 
     print('学習データを準備しています。')
-    X, Y = model.prepare_training_data(raw_data)
+    X, Y = model.prepare_training_data(XY)
 
     print('モデルを評価しています。')
     max_clf = model.evaluate_model(X, Y)

@@ -73,11 +73,14 @@ class ModelLibrary:
         # RSIを計算する
         df_list = [self.calc_rsi(df) for df in df_list]
 
-                
+        # 正解ラベルを作成する
+        label_list = [self.check_price_change(df['close'], 1.0) for df in df_list]
+
+        # データを結合する
+        XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
         
-        breakpoint()
-        
-        
+        return XY
+
         
     def convert_to_dataframe(self, original_data):
 
@@ -105,90 +108,7 @@ class ModelLibrary:
         max_value = data.iloc[0]['high']
         min_value = data.iloc[0]['low']
 
-        return (data - min_value) / (max_value - min_value)
-
-    
-        
-    def prepare_raw_data(self):
-
-        ## 入力データを準備する
-
-        # 元のデータを用意する
-        input_data = self.prepare_original_data()
-
-        # 移動平均を計算する
-        for i in range(self.n_symbols):
-            input_data[i] = self.calc_moving_average(input_data[i])
-
-        # MACDを計算する
-        for i in range(self.n_symbols):
-            input_data[i] = self.calc_macd(input_data[i])
-
-        # ボリンジャーバンドを計算する
-        for i in range(self.n_symbols):
-            input_data[i] = self.calc_bollinger_band(input_data[i])
-
-        # 一目均衡表を計算する
-        # input_data = self.calc_ichimoku(input_data)
-
-        # RSIを計算する
-        for i in range(self.n_symbols):        
-            input_data[i] = self.calc_rsi(input_data[i])
-
-        # ストキャスティクスを計算する
-        # input_data = self.calc_stochastic(input_data)
-        
-        ## 出力データを準備する        
-        output_data = self.calc_output_data(input_data)
-
-        ## 入力データと出力データを結合して学習用の生データを作成する
-        raw_data = []
-        for i in range(self.n_symbols):
-            raw_data.append(self.concat_dataframes(input_data[i], output_data[i]).dropna())
-
-        return raw_data
-        
-
-    # 元のデータを用意する
-    def prepare_original_data(self):
-        
-        price_list = []
-        volume_list = []
-        for i in range(self.n_symbols):
-            price_list.append([])
-            volume_list.append([])
-            for d in self.data[i]:
-                if d['CurrentPriceTime'] is None:
-                    continue
-                try:
-                    dt_object = datetime.fromisoformat(d['CurrentPriceTime'].replace('Z', '+00:00'))
-                    formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
-                except ValueError:
-                    print("文字列のフォーマットが異なります。")
-                    exit()
-                price_list[i].append([formatted_datetime, d['CurrentPrice']])
-                volume_list[i].append([formatted_datetime, d['TradingVolume']])
-
-        price_data = []
-        volume_data = []
-        original_data = []
-        for i in range(self.n_symbols):
-            
-            price_data.append(pd.DataFrame(price_list[i], columns = ['DateTime', 'Price']))
-            price_data[i] = price_data[i].set_index('DateTime')
-            price_data[i].index = pd.to_datetime(price_data[i].index)
-            price_data[i] = price_data[i].resample('1Min').ohlc().dropna()  # 1分足に変換
-            price_data[i].columns = price_data[i].columns.get_level_values(1)
-
-            volume_data.append(pd.DataFrame(volume_list[i], columns = ['DateTime', 'volume']))
-            volume_data[i].drop_duplicates(subset = 'DateTime', keep = 'first', inplace = True)
-            volume_data[i] = volume_data[i].set_index('DateTime')
-            volume_data[i].index = pd.to_datetime(volume_data[i].index)
-            volume_data[i]['volume'] = volume_data[i]['volume'].diff(1).fillna(volume_data[i]['volume'].iloc[0])
-
-            original_data.append(pd.concat([price_data[i], volume_data[i]], axis = 1))
-            
-        return original_data
+        return (data - min_value) / (max_value - min_value)        
 
 
     def calc_moving_average(self, data):
@@ -248,20 +168,6 @@ class ModelLibrary:
             data[i]['%D'] = data[i]['%K'].rolling(window=3).mean()
             
         return data
-
-
-    def calc_output_data(self, input_data):
-
-        output_data = []
-        
-        for i in range(self.n_symbols):
-            close_price = input_data[i]['close']
-            tmp1 = self.check_price_change(close_price, 0.5)
-            # tmp2 = self.check_price_change(close_price, -0.5)
-            # output_data.append(tmp1 + tmp2)
-            output_data.append(tmp1)
-
-        return output_data
     
 
     def check_price_change(self, stock_price, percentage, time_window = 20):
@@ -322,7 +228,6 @@ class ModelLibrary:
         for r in raw_data:
             for i in range(len(r) - window):
                 
-                # tmp1 = r.drop(['open', 'high', 'low', 'Result'], axis = 1).iloc[i:i + window]
                 tmp1 = r.drop(['Result'], axis = 1).iloc[i:i + window]
                 tmp2 = r.Result.iloc[i + window - 1]
 
