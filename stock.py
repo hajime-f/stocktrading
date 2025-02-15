@@ -106,21 +106,19 @@ class Stock:
             # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
             
 
-        if self.time is not None:
+        # データを準備する
+        raw_data = self.prepare_data()
+        print(f"\033[32mデータを更新しました：\033[0m{self.disp_name}（{self.symbol}）")
+        
+        # 株価が上がるか否かを予測する
+        result = self.predict(raw_data)
+        
+        # 上がると予測された場合
+        if result:
             
-            # データを準備する
-            raw_data = self.prepare_data()
-            print(f"\033[32mデータを更新しました：\033[0m{self.disp_name}（{self.symbol}）")
+            # 株の購入を試みる
+            result = self.buy_at_market_price_with_cash()
             
-            # 株価が上がるか否かを予測する
-            result = self.predict(raw_data)
-            
-            # 上がると予測された場合
-            if result:
-                
-                # 取引を実行する
-                result = self.execute_transaction()
-                
                 
             
         self.time = []
@@ -136,54 +134,41 @@ class Stock:
         pass
         
 
-    def execute_transaction(self):
+    def buy_at_market_price_with_cash(self):
+
+        # まだ売り注文が残っている場合は買わない
+        if self.sell_order_flag:
+            print(f"\033[32m値上がりが予測されましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
+            return False
+        
+        # 15:30まで20分を切っている場合は買わない
+        now = datetime.now()
+        target_time = datetime.combine(now.date(), time(15, 30))
+        time_limit = target_time - timedelta(minutes = 20)
+        if now < time_limit:
+            print(f"\033[32m値上がりが予測されましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
+            return False
         
         # 取引価格を計算する
         price = self.lib.fetch_price(self.symbol, self.exchange)
         transaction_price = price * self.transaction_unit
-        print(f"\033[34m取引価格：{int(transaction_price):,} 円\033[0m")
         
         # 買付余力が取引価格を上回っている（買える）場合
         if self.lib.deposit() > transaction_price:
 
-            # まだ売り注文が残っている場合は買わない
-            if self.sell_order_flag:
-                print(f"\033[32m値上がりが予測され、買付余力もありましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
-                return False
-
-            # 15:30まで20分を切っている場合は買わない
-            now = datetime.now()
-            target_time = datetime.combine(now.date(), time(15, 30))
-            time_limit = target_time - timedelta(minutes=20)
-            if now < time_limit:
-                print(f"\033[32m値上がりが予測され、買付余力もありましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
-                return False
-            
             # 成行で買い注文を入れる
-            content = buy_at_market_price_with_cash(self.symbol, self.transaction_unit, self.exchange)
-            order_result1 = content['Result']
-            order_id1 = content['OrderId']
-            if order_result1 == 0:
+            content = self.lib.buy_at_market_price_with_cash(self.symbol, self.transaction_unit, self.exchange)
+            order_result = content['Result']
+            if order_result == 0:
                 self.buy_order_flag = True
-                self.buy_order_id = order_id1
-                self.purchase_price = price
-                
-                # 指値で売り注文を入れる
-                content = sell_at_limit_price(self.symbol, self.transaction_unit, self.purchase_price * 1.05, self.exchange)
-                order_result2 = content['Result']
-                order_id2 = content['OrderId']
-                if order_result2 == 0:
-                    self.sell_order_flag = True
-                    self.sell_order_id = order_id2
-
-            if order_result1 == 0 and order_result2 == 0:
-                print(f"\033[32m{self.symbol}：{self.disp_name} の買い注文・売り注文が正常に発注されました。\033[0m")
+                self.buy_order_id = content['OrderId']
                 return True
             else:
                 print(f"\033[32m値上がりが予測され、買付余力もありましたが、なんらかの原因により発注できませんでした。\033[0m")
-                return False
-
+                return False                            
+            
         else:
             print(f"\033[32m値上がりが予測されましたが、買付余力がありませんでした。\033[0m")
             return False
-            
+
+    
