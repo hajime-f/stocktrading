@@ -4,7 +4,7 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename_list = ['data_20250210_155746.pkl']
+    filename_list = ['data_20250210_155746.pkl',]
     data = []
     n_symbols = 0
     
@@ -21,6 +21,11 @@ if __name__ == '__main__':
     model.set_data(data)
 
     print('生データを準備しています。')
+    model.prepare_dataframe_list()
+
+    
+    
+    
     raw_data = model.prepare_raw_data()
 
     print('学習データを準備しています。')

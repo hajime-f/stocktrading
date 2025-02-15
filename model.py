@@ -51,7 +51,63 @@ class ModelLibrary:
             concat_data += d
 
         self.data = concat_data
+
+
+    def prepare_dataframe_list(self):
+
+        # 生データを分足のDataFrameに変換する
+        df_list = [self.convert_to_dataframe(d) for d in self.data]
+
+        # データを正規化する
+        df_list = [self.normalize_data(df) for df in df_list]
+
+        # 移動平均を計算する
+        df_list = [self.calc_moving_average(df) for df in df_list]
+
+        # MACDを計算する
+        df_list = [self.calc_macd(df) for df in df_list]
+
+        # ボリンジャーバンドを計算する
+        df_list = [self.calc_bollinger_band(df) for df in df_list]
+
+        # RSIを計算する
+        df_list = [self.calc_rsi(df) for df in df_list]
+
+                
         
+        breakpoint()
+        
+        
+        
+    def convert_to_dataframe(self, original_data):
+
+        price_list = []
+        
+        for d in original_data:
+
+            if d['CurrentPriceTime'] is None:
+                continue
+            
+            dt_object = datetime.fromisoformat(d['CurrentPriceTime'].replace('Z', '+00:00'))
+            formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")            
+            price_list.append([formatted_datetime, d['CurrentPrice']])
+
+        price_df = pd.DataFrame(price_list, columns = ['DateTime', 'Price']).set_index('DateTime')
+        price_df.index = pd.to_datetime(price_df.index)
+        price_df = price_df.resample('1Min').ohlc().dropna()
+        price_df.columns = price_df.columns.get_level_values(1)
+
+        return price_df
+
+
+    def normalize_data(self, data):
+
+        max_value = data.iloc[0]['high']
+        min_value = data.iloc[0]['low']
+
+        return (data - min_value) / (max_value - min_value)
+
+    
         
     def prepare_raw_data(self):
 
