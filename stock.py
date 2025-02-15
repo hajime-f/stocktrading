@@ -97,13 +97,21 @@ class Stock:
         
         # 買い注文が約定したか否かをチェックし、約定している場合はフラグを更新する
         if self.buy_order_flag:
-            self.check_and_update_buy_order_status()
+            
+            if self.check_and_update_buy_order_status():
+                
+                # 指値で売り注文を出す
+                result = self.sell_at_limit_price()
+
+
                 
         # 売り注文が約定したか否かをチェックし、約定している場合はフラグを更新する
         if self.sell_order_flag:
-            self.check_and_update_sell_order_status()
+            
+            if not self.check_and_update_sell_order_status():
 
-            # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
+                # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
+                pass
             
 
         # データを準備する
@@ -116,7 +124,7 @@ class Stock:
         # 上がると予測された場合
         if result:
             
-            # 買い注文を出す
+            # 成行で買い注文を出す
             result = self.buy_at_market_price_with_cash()
             
                 
@@ -138,16 +146,42 @@ class Stock:
             self.purchase_price = result['Price']
             print(f"\033[32m{self.disp_name}（{self.symbol}）を {self.purchase_price:,} 円で購入しました。\033[0m")
 
-            # 指値で売り注文を出す
-            self.sell_at_limit_price()
+            return True
+
+        return False
 
 
     def check_and_update_sell_order_status(self):
-        pass
+
+        # 売り注文の約定状況を確認する
+        result = self.lib.check_execution(self.sell_order_id)
+
+        # 約定している場合
+        if result['OrderState'] == 5:
+
+            self.sell_order_flag = False
+            price = result['Price']
+            print(f"\033[32m{self.disp_name}（{self.symbol}）を {price:,} 円で売却しました（損益：{price - self.purchase_price:,}）。\033[0m")
+            self.purchase_price = 0
+
+            return True
+
+        return False
         
 
     def sell_at_limit_price(self):
-        pass
+
+        # 指値で売り注文を出す
+        content = self.lib.sell_at_limit_price(self.symbol, self.transaction_unit, self.purchase_price * 1.005, self.exchange)
+        order_result = content['Result']
+        if order_result == 0:
+            self.sell_order_flag = True
+            self.sell_order_id = content['OrderId']
+            print(f"\033[32m売り注文を出しました。\033[0m")
+            return True
+        else:
+            print(f"\033[32m購入した株を売る注文を出せませんでした。\033[0m")
+            return False
     
     
     def buy_at_market_price_with_cash(self):
