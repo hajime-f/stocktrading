@@ -84,10 +84,37 @@ class ModelLibrary:
 
         # データを結合する
         XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
-        
-        return XY
 
+        # ラベル0のデータとラベル1のデータをバランスさせる
+        balanced_XY = []
+        for df in XY:
+            balanced_df = self.balance_dataframe(df)
+            balanced_XY.append(balanced_df)
+
+        return balanced_XY
+
+
+    def balance_dataframe(self, df, target_column = 'Result'):
         
+        # 値の出現回数をカウント
+        counts = df[target_column].value_counts()
+        
+        # 少数派の数を取得
+        minority_count = counts.min()
+        
+        # 各グループからランダムに minority_count 個のサンプルを抽出
+        balanced_df = []
+        for value in counts.index:
+            group = df[df[target_column] == value]
+            sampled_group = group.sample(n = minority_count, random_state = 42)  # random_stateで再現性を確保
+            balanced_df.append(sampled_group)
+            
+        # 抽出されたサンプルを結合
+        balanced_df = pd.concat(balanced_df)
+        
+        return balanced_df
+
+    
     def convert_to_dataframe(self, original_data):
 
         price_list = []
