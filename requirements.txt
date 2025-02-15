@@ -11,4 +11,3 @@ seaborn
 scikit-learn
 mplfinance
 schedule
-xgboost
