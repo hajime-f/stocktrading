@@ -101,7 +101,7 @@ class Stock:
             if self.check_and_update_buy_order_status():
                 
                 # 指値で売り注文を出す
-                result = self.sell_at_limit_price()
+                sell_result = self.sell_at_limit_price()
 
 
                 
@@ -113,19 +113,20 @@ class Stock:
                 # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
                 pass
             
-
-        # データを準備する
-        raw_data = self.prepare_data()
-        print(f"\033[32mデータを更新しました：\033[0m{self.disp_name}（{self.symbol}）")
-        
-        # 株価が上がるか否かを予測する
-        result = self.predict(raw_data)
-        
-        # 上がると予測された場合
-        if result:
+        if self.time is not None:
             
-            # 成行で買い注文を出す
-            result = self.buy_at_market_price_with_cash()
+            # データを準備する
+            raw_data = self.prepare_data()
+            print(f"\033[32mデータを更新しました：\033[0m{self.disp_name}（{self.symbol}）")
+            
+            # 株価が上がるか否かを予測する
+            predict_result = self.predict(raw_data)
+            
+            # 上がると予測された場合
+            if predict_result:
+                
+                # 成行で買い注文を出す
+                buy_result = self.buy_at_market_price_with_cash()
             
                 
             
@@ -144,7 +145,7 @@ class Stock:
             
             self.buy_order_flag = False
             self.purchase_price = result['Price']
-            print(f"\033[32m{self.disp_name}（{self.symbol}）を {self.purchase_price:,} 円で購入しました。\033[0m")
+            print(f"\033[33m{self.disp_name}（{self.symbol}）を {self.purchase_price:,} 円で購入しました。\033[0m")
 
             return True
 
@@ -160,8 +161,8 @@ class Stock:
         if result['OrderState'] == 5:
 
             self.sell_order_flag = False
-            price = result['Price']
-            print(f"\033[32m{self.disp_name}（{self.symbol}）を {price:,} 円で売却しました（損益：{price - self.purchase_price:,}）。\033[0m")
+            sold_price = result['Price']
+            print(f"\033[33m{self.disp_name}（{self.symbol}）を {sold_price:,} 円で売却しました（損益：{(sold_price - self.purchase_price) * self.transaction_unit:,}）。\033[0m")
             self.purchase_price = 0
 
             return True
@@ -177,10 +178,10 @@ class Stock:
         if order_result == 0:
             self.sell_order_flag = True
             self.sell_order_id = content['OrderId']
-            print(f"\033[32m売り注文を出しました。\033[0m")
+            print(f"\033[34m売り注文を出しました。\033[0m")
             return True
         else:
-            print(f"\033[32m購入した株を売る注文を出せませんでした。\033[0m")
+            print(f"\033[34m購入した株を売る注文を出せませんでした。\033[0m")
             return False
     
     
@@ -188,7 +189,7 @@ class Stock:
 
         # まだ売り注文が残っている場合は買わない
         if self.sell_order_flag:
-            print(f"\033[32m値上がりが予測されましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
+            print(f"\033[34m値上がりが予測されましたが、すでにこの銘柄を買っているので発注しませんでした。\033[0m")
             return False
         
         # 15:30まで20分を切っている場合は買わない
@@ -196,7 +197,7 @@ class Stock:
         target_time = datetime.combine(now.date(), time(15, 30))
         time_limit = target_time - timedelta(minutes = 20)
         if now < time_limit:
-            print(f"\033[32m値上がりが予測されましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
+            print(f"\033[34m値上がりが予測されましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
             return False
         
         # 取引価格を計算する
@@ -212,14 +213,14 @@ class Stock:
             if order_result == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = content['OrderId']
-                print(f"\033[32m買い注文を出しました。\033[0m")
+                print(f"\033[34m買い注文を出しました。\033[0m")
                 return True
             else:
-                print(f"\033[32m値上がりが予測され、買付余力もありましたが、なんらかの原因により発注できませんでした。\033[0m")
+                print(f"\033[34m値上がりが予測され、買付余力もありましたが、なんらかの原因により発注できませんでした。\033[0m")
                 return False                            
             
         else:
-            print(f"\033[32m値上がりが予測されましたが、買付余力がありませんでした。\033[0m")
+            print(f"\033[34m値上がりが予測されましたが、買付余力がありませんでした。\033[0m")
             return False
 
     
