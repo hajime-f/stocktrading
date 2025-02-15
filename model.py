@@ -80,7 +80,7 @@ class ModelLibrary:
         df_list = [self.calc_rsi(df) for df in df_list]
 
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df['close'], 100) for df in df_list]
+        label_list = [self.check_price_change(df['close'], 150) for df in df_list]
 
         # データを結合する
         XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
@@ -88,6 +88,8 @@ class ModelLibrary:
         # ラベル0のデータの数とラベル1のデータの数をバランスさせる
         XY = [self.balance_dataframe(df) for df in XY]
 
+        breakpoint()
+        
         return XY
 
     
@@ -191,31 +193,17 @@ class ModelLibrary:
         for i in range(len(stock_price) - time_window):
 
             base_price = stock_price.iloc[i]  # 基準時刻の株価
-
-            # 基準株価が0の場合は何もしない
-            if base_price == 0:
-                result.append(0)
-                continue
-            
             target_price = base_price * (1 + percentage / 100)  # 目標株価
 
             # 基準時刻からtime_window分後の株価を取得
             end_index = min(i + time_window + 1, len(stock_price))
             future_prices = stock_price.iloc[i + 1:end_index]
-
-            if base_price > 0:  # 株価が正の場合
-                if (future_prices >= target_price).any():
-                    result.append(1)  # 上昇
-                else:
-                    result.append(0)  # 上昇せず
-            elif base_price < 0:  # 株価が負の場合
-                if (future_prices <= target_price).any():
-                    result.append(1)  # 上昇（絶対値は減少）
-                else:
-                    result.append(0)  # 上昇せず
+            
+            if (abs(future_prices) > abs(target_price)).any():
+                result.append(1)
             else:
-                pass
-
+                result.append(0)
+            
         return pd.DataFrame(result, columns = ['Result'])
         
     
@@ -243,7 +231,7 @@ class ModelLibrary:
         
         # 値の出現回数をカウント
         counts = df[target_column].value_counts()
-        
+
         # 少数派の数を取得
         minority_count = counts.min()
         
