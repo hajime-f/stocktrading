@@ -41,7 +41,7 @@ class ModelLibrary:
 
         now = datetime.now()
         filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
-        filename = os.path.join("./", filename)
+        filename = os.path.join("./data/", filename)
         
         with open(filename, 'wb') as f:
             pickle.dump(self.data, f)
@@ -373,7 +373,7 @@ class ModelLibrary:
 
         now = datetime.now()
         filename = now.strftime("model_%Y%m%d_%H%M%S.pkl")
-        filename = os.path.join("./", filename)
+        filename = os.path.join("./model/", filename)
         
         with open(filename, 'wb') as f:
             pickle.dump(model, f)

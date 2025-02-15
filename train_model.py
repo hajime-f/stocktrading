@@ -1,3 +1,4 @@
+import os
 import pickle
 from model import ModelLibrary
 
@@ -10,6 +11,7 @@ if __name__ == '__main__':
     
     for i, filename in enumerate(filename_list):
         print(f'{filename} からデータを読み込んでいます。')
+        filename = os.path.join("./data/", filename)
         with open(filename, 'rb') as f:
             data.append(pickle.load(f))
         n_symbols += len(data[i])
