@@ -116,7 +116,7 @@ class Stock:
         # 上がると予測された場合
         if result:
             
-            # 株の購入を試みる
+            # 買い注文を出す
             result = self.buy_at_market_price_with_cash()
             
                 
@@ -127,13 +127,29 @@ class Stock:
 
 
     def check_and_update_buy_order_status(self):
-        pass
+
+        # 買い注文の約定状況を確認する
+        result = self.lib.check_execution(self.buy_order_id)
+
+        # 約定している場合
+        if result['OrderState'] == 5:
+            
+            self.buy_order_flag = False
+            self.purchase_price = result['Price']
+            print(f"\033[32m{self.disp_name}（{self.symbol}）を {self.purchase_price:,} 円で購入しました。\033[0m")
+
+            # 指値で売り注文を出す
+            self.sell_at_limit_price()
 
 
     def check_and_update_sell_order_status(self):
         pass
         
 
+    def sell_at_limit_price(self):
+        pass
+    
+    
     def buy_at_market_price_with_cash(self):
 
         # まだ売り注文が残っている場合は買わない
@@ -162,6 +178,7 @@ class Stock:
             if order_result == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = content['OrderId']
+                print(f"\033[32m買い注文を出しました。\033[0m")
                 return True
             else:
                 print(f"\033[32m値上がりが予測され、買付余力もありましたが、なんらかの原因により発注できませんでした。\033[0m")

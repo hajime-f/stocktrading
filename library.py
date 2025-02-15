@@ -181,10 +181,13 @@ class StockLibrary:
         return content
 
 
-    def get_request(self, url):
+    def get_request(self, url, obj = None):
         
         # GETリクエストをurlに送信する
-        req = urllib.request.Request(url, method='GET')
+        if obj is None:
+            req = urllib.request.Request(url, method='GET')
+        else:
+            req = urllib.request.Request('{}?{}'.format(url, urllib.parse.urlencode(obj)), method='GET')
         req.add_header('Content-Type', 'application/json')
         req.add_header('X-API-KEY', self.token)
 
@@ -239,7 +242,7 @@ class StockLibrary:
                 'Price': 0,              # 注文価格（成行なのでゼロ）
                 'ExpireDay': 0,          # 当日中
                }
-        content = self.push_post_request(url, obj)
+        content = self.post_request(url, obj)
         
         return content
     
@@ -263,7 +266,18 @@ class StockLibrary:
                 'ExpireDay': 0,         # 当日中
                }
         
-        content = self.push_post_request(url, obj)
+        content = self.post_request(url, obj)
+
+        return content
+
+
+    def check_execution(self, id):
+
+        # 注文のステータスを確認する
+        url = self.base_url + '/orders'
+
+        obj = { 'id': id, }
+        content = self.get_request(url, obj)
 
         return content
     
