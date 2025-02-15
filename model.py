@@ -3,6 +3,8 @@ import pickle
 from datetime import datetime
 
 import pandas as pd
+pd.set_option('display.max_rows', None)
+
 import numpy as np
 from sklearn.utils import all_estimators
 from sklearn.utils import shuffle
@@ -74,7 +76,7 @@ class ModelLibrary:
         df_list = [self.calc_rsi(df) for df in df_list]
 
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df['close'], 1.0) for df in df_list]
+        label_list = [self.check_price_change(df['close'], 50) for df in df_list]
 
         # データを結合する
         XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
@@ -176,24 +178,34 @@ class ModelLibrary:
         
         result = []
         
+        if percentage == 0:
+            raise ValueError("percentageは0以外の値を指定してください。")
+
         for i in range(len(stock_price) - time_window):
+
             base_price = stock_price.iloc[i]  # 基準時刻の株価
+
+            # 基準株価が0の場合は何もしない
+            if base_price == 0:
+                result.append(0)
+                continue
+            
             target_price = base_price * (1 + percentage / 100)  # 目標株価
-            
+
             # 基準時刻からtime_window分後の株価を取得
-            future_prices = stock_price[i + 1:i + time_window + 1]
-            
-            # time_window分以内に目標株価に達しているか確認
-            if percentage > 0:                
+            end_index = min(i + time_window + 1, len(stock_price))
+            future_prices = stock_price.iloc[i + 1:end_index]
+
+            if base_price > 0:  # 株価が正の場合
                 if (future_prices >= target_price).any():
-                    result.append(1)
+                    result.append(1)  # 上昇
                 else:
-                    result.append(0)
-            elif percentage < 0:
+                    result.append(0)  # 上昇せず
+            elif base_price < 0:  # 株価が負の場合
                 if (future_prices <= target_price).any():
-                    result.append(-1)
+                    result.append(1)  # 上昇（絶対値は減少）
                 else:
-                    result.append(0)
+                    result.append(0)  # 上昇せず
             else:
                 pass
 
@@ -250,7 +262,7 @@ class ModelLibrary:
         all_Algorithms = all_estimators(type_filter="classifier")
         warnings.filterwarnings('ignore')
         
-        max_clf = None
+        best_clf = None
         max_score = -1
 
         # 面倒なモデルは全部スキップする
@@ -270,13 +282,13 @@ class ModelLibrary:
                     m = round(np.mean(scores) * 100, 2)
                     print(name, "の正解率：", m, "％")
                     if max_score < m:
-                        max_clf = clf
+                        best_clf = clf
                         max_score = m
                         
             except Exception as e:
                 print(e)
 
-        return max_clf
+        return best_clf
 
 
     def validate_model(self, clf, X, Y):

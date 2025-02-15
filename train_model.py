@@ -27,13 +27,13 @@ if __name__ == '__main__':
     X, Y = model.prepare_training_data(XY)
 
     print('モデルを評価しています。')
-    max_clf = model.evaluate_model(X, Y)
+    best_clf = model.evaluate_model(X, Y)
 
     print('モデルを検証しています。')
-    trained_clf = model.validate_model(max_clf, X, Y)
+    clf = model.validate_model(best_clf, X, Y)
     
     print('学習済みモデルを保存しています。')
-    filename = model.save_model(trained_clf)
+    filename = model.save_model(clf)
 
     print('学習済みモデルを復元しています。')
     clf = model.load_model(filename)
