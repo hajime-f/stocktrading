@@ -87,8 +87,6 @@ class ModelLibrary:
 
         # ラベル0のデータの数とラベル1のデータの数をバランスさせる
         XY = [self.balance_dataframe(df) for df in XY]
-
-        breakpoint()
         
         return XY
 
@@ -232,9 +230,12 @@ class ModelLibrary:
         # 値の出現回数をカウント
         counts = df[target_column].value_counts()
 
+        if len(counts) == 1:
+            return pd.DataFrame(columns=df.columns)
+        
         # 少数派の数を取得
         minority_count = counts.min()
-        
+    
         # 各グループからランダムに minority_count 個のサンプルを抽出
         balanced_df = []
         for value in counts.index:
