@@ -271,6 +271,30 @@ class StockLibrary:
         return content
 
 
+    def sell_at_market_price(self, symbol, count, exchange=1):
+
+        # 現物を成行で売る（ロスカット）
+        url = self.base_url + '/sendorder'
+
+        obj = { 'Symbol': symbol,       # 銘柄コード
+                'Exchange': exchange,   # 市場
+                'SecurityType': 1,      # 株式
+                'Side': '1',            # 売り
+                'CashMargin': 1,        # 現物
+                'DelivType': 0,         # 預かり金
+                'FundType': '  ',       # 現物売
+                'AccountType': 4,       # 特定口座
+                'Qty': count,           # 注文数量
+                'FrontOrderType': 10,   # 執行条件（成行）
+                'Price': 0,             # 注文価格（成行なのでゼロ）
+                'ExpireDay': 0,         # 当日中
+               }
+        
+        content = self.post_request(url, obj)
+
+        return content    
+
+    
     def check_execution(self, id):
 
         # 注文のステータスを確認する
