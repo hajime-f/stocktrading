@@ -94,22 +94,20 @@ class Stock:
 
         ## １分間隔で呼ばれる関数
         
-        # 買い注文が約定したか否かをチェックし、約定している場合はフラグを更新する
         if self.buy_order_flag:
-            
+
+            # 買い注文が約定したか否かをチェックし、約定している場合はフラグを更新する
             if self.check_and_update_buy_order_status():
                 
                 # 指値で売り注文を出す
                 sell_result = self.sell_at_limit_price()
-
-
-                
-        # 売り注文が約定したか否かをチェックし、約定している場合はフラグを更新する
+                        
         if self.sell_order_flag:
-            
+
+            # 売り注文が約定したか否かをチェックし、約定している場合はフラグを更新する
             if not self.check_and_update_sell_order_status():
 
-                # 売り注文が残っているとき、以下の条件を満たす場合は成行で売り注文を出す（ロスカット）
+                # 売り注文が残っているとき、以下のいずれかの条件を満たす場合は成行で売り注文を出す（ロスカット）
                 # (1) 時価が買った時の値段の95％を下回っている
                 # (2) 15:30まで2分を切っている
                 cond_result = self.conditional_market_sell()
