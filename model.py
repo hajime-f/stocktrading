@@ -7,14 +7,9 @@ pd.set_option('display.max_rows', None)
 
 import numpy as np
 from sklearn.utils import all_estimators
-from sklearn.utils import shuffle
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.metrics import classification_report
 import warnings
-
-import xgboost as xgb
-from sklearn.model_selection import train_test_split
 
 
 class ModelLibrary:
@@ -85,7 +80,7 @@ class ModelLibrary:
         df_list = [self.calc_rsi(df) for df in df_list]
 
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df['close'], 150) for df in df_list]
+        label_list = [self.check_price_change(df['close'], 100) for df in df_list]
 
         # データを結合する
         XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
@@ -152,18 +147,6 @@ class ModelLibrary:
         return data
 
 
-    def calc_ichimoku(self, data):
-
-        for i in range(self.n_symbols):
-            data[i]['ConversionLine'] = (data[i]['high'].rolling(window=9).max() + data[i]['low'].rolling(window=9).min()) / 2
-            data[i]['BaseLine'] = (data[i]['high'].rolling(window=26).max() + data[i]['low'].rolling(window=26).min()) / 2
-            data[i]['LeadingSpanA'] = ((data[i]['ConversionLine'] + data[i]['BaseLine']) / 2).shift(26)
-            data[i]['LeadingSpanB'] = ((data[i]['high'].rolling(window=52).max() + data[i]['low'].rolling(window=52).min()) / 2).shift(26)
-            data[i]['LaggingSpan'] = data[i]['close'].shift(-26)
-            
-        return data
-
-
     def calc_rsi(self, data):
         
         delta = data['close'].diff()
@@ -174,15 +157,6 @@ class ModelLibrary:
             
         return data
 
-
-    def calc_stochastic(self, data):
-        
-        for i in range(self.n_symbols):
-            data[i]['%K'] = 100 * (data[i]['close'] - data[i]['low'].rolling(window=14).min()) / (data[i]['high'].rolling(window=14).max() - data[i]['low'].rolling(window=14).min())
-            data[i]['%D'] = data[i]['%K'].rolling(window=3).mean()
-            
-        return data
-    
 
     def check_price_change(self, stock_price, percentage, time_window = 20):
 
@@ -315,14 +289,9 @@ class ModelLibrary:
 
     def validate_model(self, clf, X, Y):
 
-        # データをシャッフルする
-        X_shuffled, Y_shuffled = shuffle(X, Y, random_state = 42)
-        
         # データを学習用データとテスト用データに分割する
-        n_train = int(len(X_shuffled) * 0.8)
-        X_train, Y_train = X_shuffled[:n_train], Y_shuffled[:n_train]
-        X_test, Y_test = X_shuffled[n_train:], Y_shuffled[n_train:]
-
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+        
         # モデルを学習する
         clf = clf.fit(X_train, Y_train)
 
@@ -336,33 +305,6 @@ class ModelLibrary:
         return clf
 
 
-    def evaluate_xgboost(self, X, Y):
-
-        # データを学習用データとテスト用データに分割する
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-
-        # データをDMatrix形式に変換する
-        dtrain = xgb.DMatrix(X_train, label=Y_train)
-        dtest = xgb.DMatrix(X_test, label=Y_test)
-
-        # パラメータを設定する
-        param = {'max_depth': 2, 'eta': 1, 'objective': 'binary:logistic'}
-        param['nthread'] = 4
-        param['eval_metric'] = 'logloss'
-
-        # モデルを学習する
-        evallist = [(dtest, 'eval'), (dtrain, 'train')]
-        num_round = 10
-        bst = xgb.train(param, dtrain, num_round, evallist)
-
-        # モデルを評価する
-        preds = bst.predict(dtest)
-        labels = dtest.get_label()
-        print(classification_report(labels, preds > 0.5))        
-
-        return bst
-    
-    
     def save_model(self, model):
 
         now = datetime.now()

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
-    filename = os.path.join("./model/", 'model_20250215_233856.pkl')
+    filename = os.path.join("./model/", 'model_20250216_172618.pkl')
     model.load_model(filename)
 
     # 預金残高（現物の買付余力）を問い合わせる
