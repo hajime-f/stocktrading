@@ -41,13 +41,12 @@ class Stock:
         
         
     def append_data(self, new_data):
-        
+
         if new_data['CurrentPriceTime'] is not None:
             dt_object = datetime.fromisoformat(new_data['CurrentPriceTime'].replace('Z', '+00:00'))
             self.time.append(dt_object.strftime("%Y-%m-%d %H:%M"))
             self.price.append(new_data['CurrentPrice'])
             self.volume.append(new_data['TradingVolume'])
-        
 
     def prepare_data(self):
 
@@ -110,8 +109,10 @@ class Stock:
             
             if not self.check_and_update_sell_order_status():
 
-                # 売り注文が残っている場合は時価が買った時の値段を下回っていないか否かをチェックする
-                pass
+                # 売り注文が残っているとき、以下の条件を満たす場合は成行で売り注文を出す（ロスカット）
+                # (1) 時価が買った時の値段の95％を下回っている
+                # (2) 15:30まで2分を切っている
+                cond_result = self.conditional_market_sell()
             
         if self.time is not None:
             
@@ -135,6 +136,35 @@ class Stock:
         self.volume = []
 
 
+    def conditional_market_sell(self):
+
+        # 時価が買った時の値段の95％を下回っているか否かをチェックする
+        price = self.lib.fetch_price(self.symbol, self.exchange)
+        condition1 = price < self.purchase_price * 0.95
+
+        # 15:30まで10分を切っているか否かをチェックする
+        now = datetime.now()
+        target_time = datetime.combine(now.date(), time(15, 30))
+        time_limit = target_time - timedelta(minutes = 2)
+        condition2 = now < time_limit
+        
+        if condition1 or condition2:
+            
+            # 成行で売り注文を出す
+            content = self.lib.sell_at_market_price(self.symbol, self.transaction_unit, self.exchange)
+            order_result = content['Result']
+            if order_result == 0:
+                self.sell_order_flag = True
+                self.sell_order_id = content['OrderId']
+                print(f"\033[34m成行で売り注文を出しました（ロスカット）。\033[0m")
+                return True
+            else:
+                print(f"\033[34m条件により売り注文を出せませんでした。\033[0m")
+                return False
+
+        return False
+            
+        
     def check_and_update_buy_order_status(self):
 
         # 買い注文の約定状況を確認する
