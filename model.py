@@ -196,13 +196,13 @@ class ModelLibrary:
         for i in range(len(stock_price) - time_window):
 
             base_price = stock_price.iloc[i]  # 基準時刻の株価
-            target_price = base_price * (1 + percentage / 100)  # 目標株価
+            target_price = base_price + abs(base_price) * (percentage / 100)  # 目標株価
 
             # 基準時刻からtime_window分後の株価を取得
-            end_index = min(i + time_window + 1, len(stock_price))
+            end_index = min(i + time_window, len(stock_price))
             future_prices = stock_price.iloc[i + 1:end_index]
             
-            if (abs(future_prices) > abs(target_price)).any():
+            if (future_prices > target_price).any():
                 result.append(1)
             else:
                 result.append(0)
