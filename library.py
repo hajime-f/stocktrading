@@ -305,3 +305,17 @@ class StockLibrary:
 
         return content
     
+
+    def cancel_order(self, id):
+        
+        # 注文をキャンセルする
+        url = self.base_url + '/cancelorder'
+        
+        obj = { 'OrderId': id, }
+        content = self.put_request(url, obj)
+
+        return content
+    
+
+
+    

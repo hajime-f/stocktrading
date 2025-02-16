@@ -25,6 +25,7 @@ class Stock:
         self.sell_order_flag = False
         self.sell_order_id = None
         self.purchase_price = 0
+        self.loss_cut = False
 
         
     def set_infomation(self):
@@ -136,6 +137,10 @@ class Stock:
 
     def conditional_market_sell(self):
 
+        # すでにロスカット中の場合は何もしない
+        if self.loss_cut:
+            return False
+
         # 時価が買った時の値段の95％を下回っているか否かをチェックする
         price = self.lib.fetch_price(self.symbol, self.exchange)
         condition1 = price < self.purchase_price * 0.95
@@ -148,11 +153,15 @@ class Stock:
         
         if condition1 or condition2:
             
+            # 先の売り注文をキャンセルする
+            self.lib.cancel_order(self.sell_order_id)
+            
             # 成行で売り注文を出す
             content = self.lib.sell_at_market_price(self.symbol, self.transaction_unit, self.exchange)
             order_result = content['Result']
             if order_result == 0:
                 self.sell_order_flag = True
+                self.loss_cut = True
                 self.sell_order_id = content['OrderId']
                 print(f"\033[34m成行で売り注文を出しました（ロスカット）。\033[0m")
                 return True
@@ -189,8 +198,8 @@ class Stock:
         if result['OrderState'] == 5:
 
             self.sell_order_flag = False
-            sold_price = result['Price']
-            print(f"\033[33m{self.disp_name}（{self.symbol}）を {sold_price:,} 円で売却しました（損益：{(sold_price - self.purchase_price) * self.transaction_unit:,}）。\033[0m")
+            self.loss_cut = False
+            print(f"\033[33m{self.disp_name}（{self.symbol}）を {result['Price']:,} 円で売却しました（損益：{(result['Price'] - self.purchase_price) * self.transaction_unit:,}）。\033[0m")
             self.purchase_price = 0
 
             return True
