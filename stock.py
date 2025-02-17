@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, time
 import pandas as pd
 import numpy as np
+
 from rich.console import Console
+console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
+
+from crawler import Crawler
 
 
 class Stock:
@@ -18,9 +22,6 @@ class Stock:
         self.price = []
         self.volume = []
 
-        self.max_value = 0
-        self.min_value = 0
-        
         self.data = pd.DataFrame()
         self.window = window
 
@@ -31,7 +32,13 @@ class Stock:
         self.purchase_price = 0
         self.loss_cut = False
 
-        self.console = Console()
+        crawler =Crawler(self.symbol)
+        values = crawler.fetch_stock_data()
+        max_value, min_value = crawler.extract_first_row_data(values)
+        try:
+            self.max_value, self.min_value = float(max_value), float(min_value)
+        except ValueError:
+            self.max_value, self.min_value = 0, 0
 
         
     def set_infomation(self):
@@ -42,10 +49,10 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * self.base_transaction
         except KeyError:
-            self.console.log(f":warning:[red] {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f":warning:[red] {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         except Exception:
-            self.console.log(f":warning:[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f":warning:[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         
         
@@ -143,7 +150,7 @@ class Stock:
             
             # データを準備する
             raw_data = self.prepare_data()
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データを更新しました。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データを更新しました。[/]")
             
             # 株価が上がるか否かを予測する
             predict_result = self.predict(raw_data)
@@ -189,10 +196,10 @@ class Stock:
                 self.sell_order_flag = True
                 self.loss_cut = True
                 self.sell_order_id = content['OrderId']
-                self.console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で売り注文を出しました（ロスカット）[/]\U0001F602")
+                console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で売り注文を出しました（ロスカット）[/]\U0001F602")
                 return True
             else:
-                self.console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]条件により売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]条件により売り注文を出せませんでした。[/]")
                 return False
 
         return False
@@ -208,7 +215,7 @@ class Stock:
             
             self.buy_order_flag = False
             self.purchase_price = result['Price']
-            self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B8")
+            console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B8")
 
             return True
 
@@ -226,11 +233,11 @@ class Stock:
             self.sell_order_flag = False
             self.loss_cut = False
             price = result['Price']
-            pf = (price - self.purchase_price) * self.transaction_unit
-            if pf >= 0:
-                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pf:,} 円でした \U0001F60F\U0001F4B0")
+            pl = (price - self.purchase_price) * self.transaction_unit
+            if pl >= 0:
+                console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pl:,} 円でした \U0001F60F\U0001F4B0")
             else:
-                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pf:,} 円でした \U0001F622\U0001F4B8")
+                console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pl:,} 円でした \U0001F622\U0001F4B8")
             self.purchase_price = 0
 
             return True
@@ -246,10 +253,10 @@ class Stock:
         if order_result == 0:
             self.sell_order_flag = True
             self.sell_order_id = content['OrderId']
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/] \U0001F4B0")
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/] \U0001F4B0")
             return True
         else:
-            self.console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]売り注文を出せませんでした。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]売り注文を出せませんでした。[/]")
             return False
     
     
@@ -257,7 +264,7 @@ class Stock:
 
         # まだ売り注文が残っている場合は買わない
         if self.sell_order_flag:
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
             return False
         
         # 15:30まで20分を切っている場合は買わない
@@ -265,7 +272,7 @@ class Stock:
         target_time = datetime.combine(now.date(), time(15, 30))
         time_difference = target_time - now
         if time_difference <= timedelta(minutes = 20):
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
             return False
         
         # 取引価格を計算する
@@ -281,14 +288,14 @@ class Stock:
             if order_result == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = content['OrderId']
-                self.console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/] \U0001F4B8")
+                console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/] \U0001F4B8")
                 return True
             else:
-                self.console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]買い注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]買い注文を出せませんでした。[/]")
                 return False                            
             
         else:
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]値上がりが予測されましたが、買付余力がありませんでした[/] \U0001F614")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]値上がりが予測されましたが、買付余力がありませんでした[/] \U0001F614")
             return False
 
     
