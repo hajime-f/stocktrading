@@ -78,8 +78,6 @@ class Stock:
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
 
-        print(raw_data)
-        
         return raw_data
 
 
@@ -255,8 +253,8 @@ class Stock:
         # 15:30まで20分を切っている場合は買わない
         now = datetime.now()
         target_time = datetime.combine(now.date(), time(15, 30))
-        time_limit = target_time - timedelta(minutes = 20)
-        if now < time_limit:
+        time_difference = target_time - now
+        if time_difference <= timedelta(minutes = 20):
             print(f"\033[34m値上がりが予測されましたが、15:30まで20分を切っているので発注しませんでした。\033[0m")
             return False
         

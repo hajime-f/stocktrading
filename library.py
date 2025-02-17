@@ -157,7 +157,7 @@ class StockLibrary:
     def fetch_price(self, symbol, exchange):
 
         # ある銘柄の時価を得る
-        content = fetch_information(symbol, exchange)
+        content = self.fetch_information(symbol, exchange)
         return content['CurrentPrice']
 
     
