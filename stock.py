@@ -42,9 +42,11 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * self.base_transaction
         except KeyError:
-            exit('\033[31m銘柄略称・売買単位を取得できませんでした。\033[0m')
+            self.console.log(f":warning:[red] {self.symbol} の情報を取得できませんでした。[/]")
+            exit()
         except Exception:
-            exit('\033[31m不明な例外により強制終了します。\033[0m')
+            self.console.log(f":warning:[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
+            exit()
         
         
     def append_data(self, new_data):
@@ -206,7 +208,7 @@ class Stock:
             
             self.buy_order_flag = False
             self.purchase_price = result['Price']
-            self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B0")
+            self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B8")
 
             return True
 
@@ -226,9 +228,9 @@ class Stock:
             price = result['Price']
             pf = (price - self.purchase_price) * self.transaction_unit
             if pf >= 0:
-                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pf:,} 円でした \U0001F60F")
+                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pf:,} 円でした \U0001F60F\U0001F4B0")
             else:
-                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pf:,} 円でした \U0001F622")
+                self.console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pf:,} 円でした \U0001F622\U0001F4B8")
             self.purchase_price = 0
 
             return True
@@ -255,7 +257,7 @@ class Stock:
 
         # まだ売り注文が残っている場合は買わない
         if self.sell_order_flag:
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした。[/]")
+            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
             return False
         
         # 15:30まで20分を切っている場合は買わない
@@ -263,7 +265,7 @@ class Stock:
         target_time = datetime.combine(now.date(), time(15, 30))
         time_difference = target_time - now
         if time_difference <= timedelta(minutes = 20):
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした。[/]")
+            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした[/] \U0001F645\U0001F3FC\u200d\u2642\ufe0f")
             return False
         
         # 取引価格を計算する
@@ -279,14 +281,14 @@ class Stock:
             if order_result == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = content['OrderId']
-                self.console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/] \U0001F4B0")
+                self.console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/] \U0001F4B8")
                 return True
             else:
                 self.console.log(f"{self.disp_name}（{self.symbol}）：:warning:[red]買い注文を出せませんでした。[/]")
                 return False                            
             
         else:
-            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]値上がりが予測されましたが、買付余力がありませんでした。[/]")
+            self.console.log(f"{self.disp_name}（{self.symbol}）：[red]値上がりが予測されましたが、買付余力がありませんでした[/] \U0001F614")
             return False
 
     
