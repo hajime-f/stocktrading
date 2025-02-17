@@ -34,7 +34,7 @@ class ModelLibrary:
             self.data[index].append(data)
 
 
-    def save_data(self, data):
+    def save_data(self, data_list):
 
         now = datetime.now()
         filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
@@ -46,7 +46,7 @@ class ModelLibrary:
         filename = os.path.join(dirname, filename)
         
         with open(filename, 'wb') as f:
-            pickle.dump(data, f)
+            pickle.dump(data_list, f)
 
         return filename
 

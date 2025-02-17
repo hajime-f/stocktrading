@@ -1,6 +1,8 @@
 import os
 import pickle
+
 from model import ModelLibrary
+
 
 if __name__ == '__main__':
 
@@ -13,20 +15,15 @@ if __name__ == '__main__':
         print(f'{filename} からデータを読み込んでいます。')
         filename = os.path.join("./data/", filename)
         with open(filename, 'rb') as f:
-            data.append(pickle.load(f))
-        n_symbols += len(data[i])
+            tmp = pickle.load(f)
+            data += tmp
+        n_symbols += len(tmp)
     
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
     
-    # データをライブラリにセットする
-    model.set_data(data)
-
-    print('生データを準備しています。')
-    XY = model.prepare_dataframe_list()
-
     print('学習データを準備しています。')
-    X, Y = model.prepare_training_data(XY)
+    X, Y = model.prepare_training_data(data)
 
     print('モデルを評価しています。')
     best_clf = model.evaluate_model(X, Y)

@@ -5,6 +5,7 @@ from datetime import datetime
 from library import StockLibrary
 from model import ModelLibrary
 
+
 if __name__ == '__main__':
 
     # 株ライブラリを初期化する
@@ -54,10 +55,10 @@ if __name__ == '__main__':
         pass
 
     # データを整理する
-    data = model.prepare_dataframe_list(symbols)    
+    data_list = model.prepare_dataframe_list(symbols)
 
     #データを保存する
-    filename = model.save_data()
+    filename = model.save_data(data_list)
     print(f"{filename} にデータを保存しました。")
     
         
