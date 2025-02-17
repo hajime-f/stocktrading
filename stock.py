@@ -16,6 +16,9 @@ class Stock:
         self.time = []
         self.price = []
         self.volume = []
+
+        self.max_value = 0
+        self.min_value = 0
         
         self.data = pd.DataFrame()
         self.window = window
@@ -49,6 +52,7 @@ class Stock:
             self.price.append(new_data['CurrentPrice'])
             self.volume.append(new_data['TradingVolume'])
 
+            
     def prepare_data(self):
 
         price_df = pd.DataFrame({'DateTime': self.time, 'Price': self.price}).set_index('DateTime')
@@ -60,7 +64,7 @@ class Stock:
         raw_data = self.data.copy()
 
         # データを正規化する
-        raw_data = self.model.normalize_data(raw_data)
+        raw_data = self.normalize_data(raw_data)
         
         # 移動平均を計算する
         raw_data = self.model.calc_moving_average(raw_data)
@@ -73,9 +77,30 @@ class Stock:
         
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
-            
-        return raw_data
+
+        print(raw_data)
         
+        return raw_data
+
+
+    def normalize_data(self, data):
+        
+        if self.max_value == 0 or self.min_value == 0:
+
+            if len(data) >= 1:
+                
+                self.max_value = data.iloc[0]['high']
+                self.min_value = data.iloc[0]['low']
+                if self.max_value - self.min_value == 0:
+                    self.max_value += 1
+                return (data - self.min_value) / (self.max_value - self.min_value)
+
+            return data
+
+        else:
+
+            return (data - self.min_value) / (self.max_value - self.min_value)
+                
 
     def predict(self, raw_data):
 
@@ -86,9 +111,7 @@ class Stock:
             return False     # データにNaNが含まれている場合も何もしない
         else:
             input_data = tmp.values.reshape(-1)
-            predict_value = self.model.predict([input_data])
-            result = False if predict_value < 0.7 else True
-            return result
+            return self.model.predict([input_data])
             
     
     def polling(self):

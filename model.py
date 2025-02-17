@@ -114,10 +114,16 @@ class ModelLibrary:
 
     def normalize_data(self, data):
 
-        max_value = data.iloc[0]['high']
-        min_value = data.iloc[0]['low']
+        if len(data) > 0:
+            
+            max_value = data.iloc[0]['high']
+            min_value = data.iloc[0]['low']
+            
+            return (data - min_value) / (max_value - min_value)
 
-        return (data - min_value) / (max_value - min_value)        
+        else:
+            
+            return data
 
 
     def calc_moving_average(self, data):
@@ -261,18 +267,11 @@ class ModelLibrary:
         best_clf = None
         max_score = -1
 
-        # 面倒なモデルは全部スキップする
-        negative_list = ["RadiusNeighborsClassifier", "CategoricalNB", "ClassifierChain", "ComplementNB", "FixedThresholdClassifier", "GaussianProcessClassifier", "GradientBoostingClassifier", "MLPClassifier", "MultiOutputClassifier", "MultinomialNB", "NuSVC", "OneVsOneClassifier", "OneVsRestClassifier", "OutputCodeClassifier", "StackingClassifier", "VotingClassifier", "TunedThresholdClassifierCV", "RadiusNeighborsClassifier", "LinearSVC"]
-        
         # 各分類アルゴリズムをクロスバリデーションで評価する
         for (name, algorithm) in all_Algorithms:
             
             try:
-                if name in negative_list:
-                    continue
-                
-                clf = algorithm()
-                    
+                clf = algorithm()                    
                 if hasattr(clf, "score"):
                     scores = cross_val_score(clf, X, Y, cv=kfold_cv)
                     m = round(np.mean(scores) * 100, 2)
@@ -282,7 +281,7 @@ class ModelLibrary:
                         max_score = m
                         
             except Exception as e:
-                print(e)
+                pass
 
         return best_clf
 
@@ -296,9 +295,6 @@ class ModelLibrary:
         clf = clf.fit(X_train, Y_train)
 
         # モデルを評価する
-        score = clf.score(X_test, Y_test)
-        print(f'正解率：{score}')
-
         Y_pred = clf.predict(X_test)
         print(classification_report(Y_test, Y_pred))
 
