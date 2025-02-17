@@ -6,6 +6,9 @@ import asyncio
 import traceback
 from dotenv import load_dotenv
 
+from rich.console import Console
+console = Console(log_time_format = "%Y-%m-%d %H:%M:%S")
+
 
 class StockLibrary:
 
@@ -18,36 +21,32 @@ class StockLibrary:
         try:
             self.api_password = os.getenv("APIPassword_production")
         except KeyError:
-            exit("APIパスワードが環境変数に設定されていません。")
-        except Exception as e:
-            print(e)
+            console.log(":warning:[red]APIパスワードが環境変数に設定されていません。[/]")
+            exit()
         
         # 取引パスワードの設定
         try:
             self.order_password = os.getenv("OrderPassword")
         except KeyError:
-            exit("取引パスワードが環境変数に設定されていません。")
-        except Exception as e:
-            print(e)
+            console.log(":warning:[red]取引パスワードが環境変数に設定されていません。[/]")
+            exit()
 
         # IPアドレスの設定
         try:
             self.ip_address = os.getenv("IPAddress")
         except KeyError:
-            exit("IPアドレスが環境変数に設定されていません。")
-        except Exception as e:
-            print(e)
+            console.log(":warning:[red]IPアドレスが環境変数に設定されていません。[/]")
+            exit()
 
         # ポート番号の設定
         try:
             self.port = os.getenv("Port")
         except KeyError:
-            exit("ポート番号が環境変数に設定されていません。")
-        except Exception as e:
-            print(e)
+            console.log(":warning:[red]ポート番号が環境変数に設定されていません。[/]")
+            exit()
 
         # エンドポイントの設定
-        self.base_url = "http://" + self.ip_address + ":" +self.port + "/kabusapi/"
+        self.base_url = f"http://{self.ip_address}:{self.port}/kabusapi/"
 
         # APIトークンの取得
         url = self.base_url + "/token"
@@ -61,12 +60,12 @@ class StockLibrary:
         try:
             self.token = content["Token"]
         except KeyError:
-            exit("\033[31mAPIトークンを取得できませんでした。\033[0m")
-        except Exception:
-            exit("\033[31m不明な例外により強制終了します。\033[0m")
+            console.log(":warning:[red]APIトークンを取得できませんでした。[/]")
+            exit()
 
         # Websocketの設定
-        self.ws_uri = "ws://" + self.ip_address + ":" + self.port + "/kabusapi/websocket"
+        self.ws_uri = f"ws://{self.ip_address}:{self.port}/kabusapi/websocket"
+        # self.ws_uri = "ws://" + self.ip_address + ":" + self.port + "/kabusapi/websocket"
         self.timeout_sec = 36000
         self.closed = asyncio.Event()
 
@@ -310,7 +309,7 @@ class StockLibrary:
         obj = { 'id': id, }
         content = self.get_request(url, obj)
 
-        print(content)
+        console.log(content)
         
         return content
     
