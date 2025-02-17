@@ -53,7 +53,11 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
+    # データを整理する
+    data = model.prepare_dataframe_list(symbols)    
+
+    #データを保存する
     filename = model.save_data()
-    print(f"{filename}にデータを保存しました。")
+    print(f"{filename} にデータを保存しました。")
     
         

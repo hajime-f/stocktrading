@@ -11,6 +11,8 @@ from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.metrics import classification_report
 import warnings
 
+from crawler import Crawler
+
 
 class ModelLibrary:
 
@@ -32,7 +34,7 @@ class ModelLibrary:
             self.data[index].append(data)
 
 
-    def save_data(self):
+    def save_data(self, data):
 
         now = datetime.now()
         filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
@@ -44,7 +46,7 @@ class ModelLibrary:
         filename = os.path.join(dirname, filename)
         
         with open(filename, 'wb') as f:
-            pickle.dump(self.data, f)
+            pickle.dump(data, f)
 
         return filename
 
@@ -59,13 +61,13 @@ class ModelLibrary:
         self.data = concat_data
 
 
-    def prepare_dataframe_list(self):
+    def prepare_dataframe_list(self, symbols):
 
         # 生データを分足のDataFrameに変換する
         df_list = [self.convert_to_dataframe(d) for d in self.data]
 
         # データを正規化する
-        df_list = [self.normalize_data(df) for df in df_list]
+        df_list = [self.normalize_data(df, symbol) for df, symbol in zip(df_list, symbols)]
 
         # 移動平均を計算する
         df_list = [self.calc_moving_average(df) for df in df_list]
@@ -112,18 +114,17 @@ class ModelLibrary:
         return price_df
 
 
-    def normalize_data(self, data):
-
-        if len(data) > 0:
-            
-            max_value = data.iloc[0]['high']
-            min_value = data.iloc[0]['low']
-            
-            return (data - min_value) / (max_value - min_value)
-
-        else:
-            
-            return data
+    def normalize_data(self, data, symbol):
+        
+        crawler = Crawler(symbol)
+        values = crawler.fetch_stock_data()
+        max_value, min_value = crawler.extract_first_row_data(values)
+        try:
+            max_value, min_value = float(max_value), float(min_value)
+        except ValueError:
+            max_value, min_value = data.iloc[0]['high'], data.iloc[0]['low']
+                    
+        return (data - min_value) / (max_value - min_value)
 
 
     def calc_moving_average(self, data):
