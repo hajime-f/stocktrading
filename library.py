@@ -310,6 +310,8 @@ class StockLibrary:
         obj = { 'id': id, }
         content = self.get_request(url, obj)
 
+        print(content)
+        
         return content
     
 
