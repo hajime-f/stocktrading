@@ -120,7 +120,7 @@ class ModelLibrary:
         values = crawler.fetch_stock_data()
         max_value, min_value = crawler.extract_first_row_data(values)
         try:
-            max_value, min_value = float(max_value), float(min_value)
+            max_value, min_value = float(max_value.replace(',', '')), float(min_value.replace(',', ''))
         except ValueError:
             max_value, min_value = data.iloc[0]['high'], data.iloc[0]['low']
                     

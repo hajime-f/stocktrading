@@ -4,7 +4,7 @@ install:
 	pip3 install -r requirements.txt
 train:
 	python3 train_model.py
-data:
+collect:
 	python3 collect_data.py
 clear:
 	rm -rf stocklib/__pycache__
