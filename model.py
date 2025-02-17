@@ -80,7 +80,7 @@ class ModelLibrary:
         df_list = [self.calc_rsi(df) for df in df_list]
 
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df['close'], 100) for df in df_list]
+        label_list = [self.check_price_change(df['close'], 150) for df in df_list]
 
         # データを結合する
         XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
