@@ -12,3 +12,4 @@ scikit-learn
 mplfinance
 schedule
 rich
+bs4
