@@ -52,16 +52,15 @@ if __name__ == '__main__':
         st = Stock(s, lib, model, base_transaction)
         st.set_infomation()  # 銘柄情報の設定
         stocks.append(st)
-        time.sleep(0.1)
     
     # PUSH配信を受信した時に呼ばれる関数
     def receive(data):
 
         # 受信したデータに対応する銘柄のインスタンスを取得する
         received_stock = next(filter(lambda st: st.symbol == int(data['Symbol']), stocks), None)
-        
+
+        # データを追加する
         if received_stock:
-            # print(f"{data['CurrentPriceTime']}: {data['Symbol']} {received_stock.disp_name} {data['CurrentPrice']} {data['TradingVolume']}")
             received_stock.append_data(data)
         
     # 受信関数を登録
@@ -72,13 +71,11 @@ if __name__ == '__main__':
         
         while True:
             st.polling()
-            time.sleep(50)
+            time.sleep(60)
 
-    threads = []
     for st in stocks:
-        thread = threading.Thread(target=run_polling, args=(st,))
-        threads.append(thread)
-        thread.start()    
+        thread = threading.Thread(target = run_polling, args = (st,))
+        thread.start()
     
     try:
         lib.run()
