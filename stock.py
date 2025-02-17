@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 from rich.console import Console
-console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
+console = Console(log_time_format = "%Y-%m-%d %H:%M:%S")
 
 from crawler import Crawler
 
@@ -32,7 +32,7 @@ class Stock:
         self.purchase_price = 0
         self.loss_cut = False
 
-        crawler =Crawler(self.symbol)
+        crawler = Crawler(self.symbol)
         values = crawler.fetch_stock_data()
         max_value, min_value = crawler.extract_first_row_data(values)
         try:

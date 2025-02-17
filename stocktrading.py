@@ -72,7 +72,7 @@ if __name__ == '__main__':
         
         while True:
             st.polling()
-            time.sleep(60)
+            time.sleep(50)
 
     threads = []
     for st in stocks:

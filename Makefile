@@ -6,7 +6,5 @@ train:
 	python3 train_model.py
 data:
 	python3 collect_data.py
-crawl:
-	python3 crawler.py
 clear:
 	rm -rf stocklib/__pycache__

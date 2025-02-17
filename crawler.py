@@ -54,12 +54,3 @@ class Crawler:
             return None, None
         
     
-if __name__ == '__main__':
-
-    crawler = Crawler('1925')
-    
-    values = crawler.fetch_stock_data()
-    target_date, high, low = crawler.extract_first_row_data(values)
-
-    breakpoint()
-
