@@ -69,6 +69,11 @@ class ModelLibrary:
         # データを正規化する
         df_list = [self.normalize_data(df, symbol) for df, symbol in zip(df_list, symbols)]
 
+        return df_list
+
+
+    def add_technical_indicators(self, df_list):
+        
         # 移動平均を計算する
         df_list = [self.calc_moving_average(df) for df in df_list]
 
@@ -81,6 +86,11 @@ class ModelLibrary:
         # RSIを計算する
         df_list = [self.calc_rsi(df) for df in df_list]
 
+        return df_list
+        
+
+    def add_label(self, df_list):
+    
         # 正解ラベルを作成する
         label_list = [self.check_price_change(df['close'], 180) for df in df_list]
 

@@ -36,7 +36,7 @@ class Stock:
         values = crawler.fetch_stock_data()
         max_value, min_value = crawler.extract_first_row_data(values)
         try:
-            self.max_value, self.min_value = float(max_value), float(min_value)
+            max_value, min_value = float(max_value.replace(',', '')), float(min_value.replace(',', ''))
         except ValueError:
             self.max_value, self.min_value = 0, 0
 

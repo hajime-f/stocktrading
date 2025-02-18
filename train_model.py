@@ -7,8 +7,8 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename_list = ['data_20250210_155746.pkl',]
-    data = []
+    filename_list = ['data_20250218_154656.pkl',]
+    df_list = []
     n_symbols = 0
     
     for i, filename in enumerate(filename_list):
@@ -16,14 +16,20 @@ if __name__ == '__main__':
         filename = os.path.join("./data/", filename)
         with open(filename, 'rb') as f:
             tmp = pickle.load(f)
-            data += tmp
+            df_list += tmp
         n_symbols += len(tmp)
-    
+
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
     
+    print('データに特徴を追加しています。')
+    df_list = model.add_technical_indicators(df_list)
+
+    print('データにラベルを追加しています。')
+    XY = model.add_label(df_list)
+    
     print('学習データを準備しています。')
-    X, Y = model.prepare_training_data(data)
+    X, Y = model.prepare_training_data(XY)
 
     print('モデルを評価しています。')
     best_clf = model.evaluate_model(X, Y)
