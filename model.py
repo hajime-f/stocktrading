@@ -179,8 +179,6 @@ class ModelLibrary:
 
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
         
-        result = [pd.NA] * min(time_window, len(stock_price))
-
         for i in range(len(stock_price) - time_window):
 
             base_price = stock_price.iloc[i]  # 基準時刻の株価
