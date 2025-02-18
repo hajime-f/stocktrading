@@ -65,7 +65,6 @@ class StockLibrary:
 
         # Websocketの設定
         self.ws_uri = f"ws://{self.ip_address}:{self.port}/kabusapi/websocket"
-        # self.ws_uri = "ws://" + self.ip_address + ":" + self.port + "/kabusapi/websocket"
         self.timeout_sec = 36000
         self.closed = asyncio.Event()
 
