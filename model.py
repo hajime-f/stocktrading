@@ -89,7 +89,7 @@ class ModelLibrary:
         return df_list
         
 
-    def add_label(self, df_list):
+    def add_labels(self, df_list):
     
         # 正解ラベルを作成する
         label_list = [self.check_price_change(df['close'], 180) for df in df_list]
@@ -179,10 +179,7 @@ class ModelLibrary:
 
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
         
-        if percentage == 0:
-            raise ValueError("percentageは0以外の値を指定してください。")
-
-        result = [pd.NA] * time_window
+        result = [pd.NA] * min(time_window, len(stock_price))
 
         for i in range(len(stock_price) - time_window):
 
@@ -190,13 +187,20 @@ class ModelLibrary:
             target_price = base_price + abs(base_price) * (percentage / 100)  # 目標株価
 
             # 基準時刻からtime_window分後の株価を取得
-            end_index = min(i + time_window, len(stock_price))
-            future_prices = stock_price.iloc[i + 1:end_index]
-            
-            if (future_prices > target_price).any():
-                result.append(1)   # 変化しているなら１
+            future_prices = stock_price.iloc[i + 1:i + time_window]
+
+            if percentage > 0:
+                if (future_prices > target_price).any():
+                    result.append(1)   # 変化しているなら１
+                else:
+                    result.append(0)   # 変化していないなら０
+            elif percentage < 0:
+                if (future_prices < target_price).any():
+                    result.append(1)   # 変化しているなら１
+                else:
+                    result.append(0)   # 変化していないなら０
             else:
-                result.append(0)   # 変化していないなら０
+                result.append(0)
             
         return pd.DataFrame(result, columns = ['Result'])
         

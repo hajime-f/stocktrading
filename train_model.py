@@ -26,7 +26,7 @@ if __name__ == '__main__':
     df_list = model.add_technical_indicators(df_list)
 
     print('データにラベルを追加しています。')
-    XY = model.add_label(df_list)
+    XY = model.add_labels(df_list)
     
     print('学習データを準備しています。')
     X, Y = model.prepare_training_data(XY)

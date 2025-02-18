@@ -55,6 +55,7 @@ if __name__ == '__main__':
         pass
 
     # データを整理する
+    print("データを整理しています。")
     data_list = model.prepare_dataframe_list(symbols)
 
     #データを保存する
