@@ -93,9 +93,9 @@ class ModelLibrary:
     
         # 正解ラベルを作成する
         label_list = [self.check_price_change(df['close'], 180) for df in df_list]
-
+        
         # データを結合する
-        XY = [self.concat_dataframes(input_df, label_df).dropna() for input_df, label_df in zip(df_list, label_list)]
+        XY = [pd.concat([input_df, label_df], axis = 1).dropna() for input_df, label_df in zip(df_list, label_list)]
 
         # ラベル0のデータの数とラベル1のデータの数をバランスさせる
         XY = [self.balance_dataframe(df) for df in XY]
@@ -179,10 +179,10 @@ class ModelLibrary:
 
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
         
-        result = []
-        
         if percentage == 0:
             raise ValueError("percentageは0以外の値を指定してください。")
+
+        result = [pd.NA] * time_window
 
         for i in range(len(stock_price) - time_window):
 
@@ -194,9 +194,9 @@ class ModelLibrary:
             future_prices = stock_price.iloc[i + 1:end_index]
             
             if (future_prices > target_price).any():
-                result.append(1)
+                result.append(1)   # 変化しているなら１
             else:
-                result.append(0)
+                result.append(0)   # 変化していないなら０
             
         return pd.DataFrame(result, columns = ['Result'])
         
