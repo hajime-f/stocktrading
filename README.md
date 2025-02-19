@@ -80,7 +80,7 @@ filename = os.path.join("./model/", 'model_20250215_233856.pkl')
 (env) $ make
 ```
 
-## Macを使った開発環境の構築方法
+## API利用までの流れとMacを使った開発環境の構築方法
 
 「kabuステーションAPI」は、[「kabuステーション」](https://kabu.com/kabustation/default.html)と呼ばれる株取引専用ソフトウェアを経由しなければ使用できません。つまり、原則としてkabuステーションが動作するPC上でプログラムを実行することが求められ、このとき「localhost」をホストに指定して各エンドポイントにアクセスすることになります。
 
