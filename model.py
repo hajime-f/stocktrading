@@ -243,6 +243,12 @@ class ModelLibrary:
         X = X.reset_index(drop = True)
         Y = Y.reset_index(drop = True)
 
+        Y.columns = ['Result']
+        XY = self.balance_dataframe(pd.concat([X, Y], axis = 1))
+
+        X = XY.drop(['Result'], axis = 1)
+        Y = XY['Result']
+
         return X, Y
     
 
