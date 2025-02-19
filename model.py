@@ -92,10 +92,10 @@ class ModelLibrary:
     def add_labels(self, df_list):
     
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df['close'], 180) for df in df_list]
+        label_df_list = [self.check_price_change(df['close'], 180) for df in df_list]
         
         # データを結合する
-        XY = [pd.concat([input_df, label_df], axis = 1).dropna() for input_df, label_df in zip(df_list, label_list)]
+        XY = [pd.concat([input_df, label_df], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
 
         # ラベル0のデータの数とラベル1のデータの数をバランスさせる
         XY = [self.balance_dataframe(df) for df in XY]
@@ -170,7 +170,7 @@ class ModelLibrary:
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
-        data['RSI'] = 100 - (100 / (1 + rs))
+        data['RSI'] = (100 - (100 / (1 + rs))) / 100
             
         return data
 
@@ -178,6 +178,8 @@ class ModelLibrary:
     def check_price_change(self, stock_price, percentage, time_window = 20):
 
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
+        
+        result = []
         
         for i in range(len(stock_price) - time_window):
 

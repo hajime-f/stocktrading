@@ -7,7 +7,7 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename_list = ['data_20250218_154656.pkl',]
+    filename_list = ['data_20250219_093753.pkl',]
     df_list = []
     n_symbols = 0
     
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
-    
+
     print('データに特徴を追加しています。')
     df_list = model.add_technical_indicators(df_list)
 
