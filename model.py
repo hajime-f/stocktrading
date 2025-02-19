@@ -95,7 +95,7 @@ class ModelLibrary:
         label_df_list = [self.check_price_change(df['close'], 180) for df in df_list]
         
         # データを結合する
-        XY = [pd.concat([input_df, label_df], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
+        XY = [pd.concat([input_df.reset_index(), label_df.reset_index()], axis = 1).drop(['DateTime', 'index'], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
 
         # ラベル0のデータの数とラベル1のデータの数をバランスさせる
         XY = [self.balance_dataframe(df) for df in XY]
@@ -204,26 +204,6 @@ class ModelLibrary:
             
         return pd.DataFrame(result, columns = ['Result'])
         
-    
-    def concat_dataframes(self, data1, data2):
-        
-        # 行数の多い方を取得
-        max_rows = max(len(data1), len(data2))
-        
-        # 行数が少ない方にNaNを追加
-        if len(data1) < max_rows:
-            data1 = pd.concat([data1, pd.DataFrame([[pd.NA] * len(data1.columns)] * (max_rows - len(data1)), columns=data1.columns)], ignore_index=True)
-            data1.index = data2.index
-        elif len(data2) < max_rows:
-            data2 = pd.concat([data2, pd.DataFrame([[pd.NA] * len(data2.columns)] * (max_rows - len(data2)), columns=data2.columns)], ignore_index=True)
-            data2.index = data1.index
-        else:
-            pass
-        
-        # 2つのDataFrameを結合
-        data_concat = pd.concat([data1, data2], axis = 1)
-        return data_concat
-
 
     def balance_dataframe(self, df, target_column = 'Result'):
         
@@ -242,7 +222,7 @@ class ModelLibrary:
             group = df[df[target_column] == value]
             sampled_group = group.sample(n = minority_count, random_state = 42)  # random_stateで再現性を確保
             balanced_df.append(sampled_group)
-            
+
         # 抽出されたサンプルを結合
         balanced_df = pd.concat(balanced_df)
         
