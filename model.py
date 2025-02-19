@@ -97,9 +97,6 @@ class ModelLibrary:
         # データを結合する
         XY = [pd.concat([input_df.reset_index(), label_df.reset_index()], axis = 1).drop(['DateTime', 'index'], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
 
-        # ラベル0のデータの数とラベル1のデータの数をバランスさせる
-        XY = [self.balance_dataframe(df) for df in XY]
-        
         return XY
 
     
@@ -222,7 +219,7 @@ class ModelLibrary:
             group = df[df[target_column] == value]
             sampled_group = group.sample(n = minority_count, random_state = 42)  # random_stateで再現性を確保
             balanced_df.append(sampled_group)
-
+            
         # 抽出されたサンプルを結合
         balanced_df = pd.concat(balanced_df)
         
