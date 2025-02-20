@@ -7,7 +7,7 @@ from model import ModelLibrary
 if __name__ == '__main__':
 
     # データファイル名
-    filename_list = ['data_20250219_154512.pkl',]
+    filename_list = ['data_20250219_154512.pkl', 'data_20250220_153727.pkl']
     df_list = []
     n_symbols = 0
     

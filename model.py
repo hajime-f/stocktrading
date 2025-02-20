@@ -85,7 +85,7 @@ class ModelLibrary:
 
         # RSIを計算する
         df_list = [self.calc_rsi(df) for df in df_list]
-
+        
         return df_list
         
 
@@ -234,8 +234,8 @@ class ModelLibrary:
         for r in raw_data:
             for i in range(len(r) - window):
                 
-                tmp1 = r.drop(['Result'], axis = 1).iloc[i:i + window - 1]
-                tmp2 = r.Result.iloc[i + window - 1]
+                tmp1 = r.drop(['Result'], axis = 1).iloc[i:i + window]
+                tmp2 = r.Result.iloc[i + window]
 
                 X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
                 Y = pd.concat([Y, pd.DataFrame([tmp2])])
@@ -248,7 +248,7 @@ class ModelLibrary:
 
         X = XY.drop(['Result'], axis = 1)
         Y = XY['Result']
-
+        
         return X, Y
     
 
