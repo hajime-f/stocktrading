@@ -96,7 +96,6 @@ class ModelLibrary:
         
         # データを結合する
         XY = [pd.concat([input_df.reset_index(drop = True), label_df.reset_index(drop = True)], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
-        breakpoint()
         
         return XY
 

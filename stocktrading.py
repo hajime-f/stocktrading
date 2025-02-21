@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     # モデルライブラリを初期化する
     model = ModelLibrary(n_symbols)
-    filename = os.path.join("./model/", 'model_20250220_153915.pkl')
+    filename = os.path.join("./model/", 'model_20250221_165618.pkl')
     model.load_model(filename)
 
     # 預金残高（現物の買付余力）を問い合わせる
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     stocks = []
     for s in symbols:
         st = Stock(s, lib, model, base_transaction)
-        st.set_infomation()  # 銘柄情報の設定
+        st.set_information()  # 銘柄情報の設定
         stocks.append(st)
     
     # PUSH配信を受信した時に呼ばれる関数
