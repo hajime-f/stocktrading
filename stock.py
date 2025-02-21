@@ -41,7 +41,7 @@ class Stock:
             self.max_value, self.min_value = 0, 0
 
         
-    def set_infomation(self):
+    def set_information(self):
         
         content = self.lib.fetch_information(self.symbol, self.exchange)
         try:
