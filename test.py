@@ -35,17 +35,30 @@ class Test:
         # 成行で買い注文を出す
         content = self.lib.buy_at_market_price_with_cash(self.symbol, self.unit)
 
-        if content['Result'] == 0:
+        try:
+            result = content['Result']
+        except KeyError:
+            console.log(f"KeyError: {content}")
+            return False
+
+        if result == 0:
             
             buy_order_id = content['OrderId']
             console.log(f"[blue]成行で買い注文を出しました[/] \U0001F4B8")
         
             # 買い注文の約定状況を確認する
             result = self.lib.check_execution(buy_order_id)
+
+            try:
+                state = result['State']
+            except KeyError:
+                console.log(f"KeyError: {result}")
+                return False
             
-            while result['State'] != 5:
+            while state != 5:
                 console.log(f"[blue]買い注文がまだ約定していません[/] \U0001F4B8")
                 result = self.lib.check_execution(buy_order_id)
+                state = result['State']
                 time.sleep(1)
                 
             console.log(f"[blue]買い注文が約定しました[/] \U0001F4B0")
@@ -66,17 +79,30 @@ class Test:
         # 成行で売り注文を出す
         content = self.lib.sell_at_market_price_with_cash(self.symbol, self.unit)
 
-        if content['Result'] == 0:
+        try:
+            result = content['Result']
+        except KeyError:
+            console.log(f"KeyError: {content}")
+            return False
+
+        if result == 0:
 
             sell_order_id = content['OrderId']
             console.log(f"[blue]成行で売り注文を出しました[/] \U0001F4B8")
             
             # 売り注文の約定状況を確認する
             result = self.lib.check_execution(sell_order_id)
+
+            try:
+                state = result['State']
+            except KeyError:
+                console.log(f"KeyError: {result}")
+                return False
             
-            while result['State'] != 5:
+            while state != 5:
                 console.log(f"[blue]売り注文がまだ約定していません[/] \U0001F4B8")
                 result = self.lib.check_execution(sell_order_id)
+                state = result['State']
                 time.sleep(1)
                 
             console.log(f"[blue]売り注文が約定しました[/] \U0001F4B0")
@@ -102,7 +128,7 @@ if __name__ == '__main__':
     
             # 損益を計算する
             profit = (self.sell_price - self.buy_price) * test.unit
-            console.log(f"[red]]損益: {profit} 円[/]")
+            console.log(f"[red]損益: {profit} 円[/]")
 
     
         

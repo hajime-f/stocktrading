@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, time
 import pandas as pd
 import numpy as np
+from playsound import playsound
 
 from rich.console import Console
 console = Console(log_time_format = "%Y-%m-%d %H:%M:%S")
@@ -157,6 +158,9 @@ class Stock:
             
             # 上がると予測された場合
             if predict_result:
+
+                playsound('./sound/prediction.mp3')
+                console.log(f"{self.disp_name}（{self.symbol}）：[green]値上がりが予測されました。[/] \U0001F60D")
                 
                 # 成行で買い注文を出す
                 buy_result = self.buy_at_market_price_with_cash()
