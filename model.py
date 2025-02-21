@@ -95,8 +95,9 @@ class ModelLibrary:
         label_df_list = [self.check_price_change(df['close'], 180) for df in df_list]
         
         # データを結合する
-        XY = [pd.concat([input_df.reset_index(), label_df.reset_index()], axis = 1).drop(['DateTime', 'index'], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
-
+        XY = [pd.concat([input_df.reset_index(drop = True), label_df.reset_index(drop = True)], axis = 1).dropna() for input_df, label_df in zip(df_list, label_df_list)]
+        breakpoint()
+        
         return XY
 
     
@@ -175,32 +176,40 @@ class ModelLibrary:
     def check_price_change(self, stock_price, percentage, time_window = 20):
 
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
-        
+
         result = []
         
-        for i in range(len(stock_price) - time_window):
+        for i, base_price in enumerate(stock_price):
 
-            base_price = stock_price.iloc[i]  # 基準時刻の株価
-            target_price = base_price + abs(base_price) * (percentage / 100)  # 目標株価
+            # 目標株価を計算
+            target_price = base_price + abs(base_price) * (percentage / 100)
 
-            # 基準時刻からtime_window分後の株価を取得
-            future_prices = stock_price.iloc[i + 1:i + time_window]
-
-            if percentage > 0:
-                if (future_prices > target_price).any():
-                    result.append(1)   # 変化しているなら１
-                else:
-                    result.append(0)   # 変化していないなら０
-            elif percentage < 0:
-                if (future_prices < target_price).any():
-                    result.append(1)   # 変化しているなら１
-                else:
-                    result.append(0)   # 変化していないなら０
-            else:
-                result.append(0)
+            start_index = i + 1
+            end_index = start_index + time_window
             
+            if end_index <= len(stock_price):
+
+                # 基準時刻からtime_window分後の株価を取得
+                future_prices = stock_price.iloc[start_index:end_index]
+
+                if percentage > 0:
+                    if (future_prices > target_price).any():
+                        result.append(1)
+                    else:
+                        result.append(0)
+                elif percentage < 0:
+                    if (future_prices < target_price).any():
+                        result.append(1)
+                    else:
+                        result.append(0)
+                else:
+                    result.append(0)
+                    
+            else:
+                result.append(np.nan)
+                
         return pd.DataFrame(result, columns = ['Result'])
-        
+                
 
     def balance_dataframe(self, df, target_column = 'Result'):
         
