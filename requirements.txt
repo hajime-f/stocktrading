@@ -13,4 +13,5 @@ mplfinance
 schedule
 rich
 bs4
+wheel
 playsound

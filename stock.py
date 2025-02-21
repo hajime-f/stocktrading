@@ -219,6 +219,7 @@ class Stock:
             
             self.buy_order_flag = False
             self.purchase_price = result['Price']
+            playsound('./sound/buy.mp3')
             console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B8")
 
             return True
@@ -239,8 +240,10 @@ class Stock:
             price = result['Price']
             pl = (price - self.purchase_price) * self.transaction_unit
             if pl >= 0:
+                playsound('./sound/profit.mp3')
                 console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pl:,} 円でした \U0001F60F\U0001F4B0")
             else:
+                playsound('./sound/loss.mp3')
                 console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pl:,} 円でした \U0001F622\U0001F4B8")
             self.purchase_price = 0
 
