@@ -90,20 +90,20 @@ class StockLibrary:
                             response = await asyncio.wait_for(ws.recv(), timeout=self.timeout_sec)
                             func(json.loads(response))
                         except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e:
-                            print(f"接続が閉じられました: {e}")
+                            console.log(f"接続が閉じられました：{e}")
                             self.closed.set()
                             break
                         except asyncio.TimeoutError:
-                            print("タイムアウトしました。")
+                            console.log("タイムアウトしました。")
                             self.closed.set()
                             break
                         except Exception as e:
-                            print(f"エラーが発生しました: {e}")
+                            console.log(f"エラーが発生しました：{e}")
                             traceback.print_exc()
                             self.closed.set()
-                            break                        
+                            break        
             except Exception as e:
-                print(f"接続エラーが発生しました: {e}")
+                console.log(f"接続エラーが発生しました：{e}")
                 traceback.print_exc()
                 self.closed.set()
 
@@ -220,10 +220,10 @@ class StockLibrary:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            print('\033[31m'+ str(e) + '\033[0m')
+            console.log(f":warning:[red]{e}[/]")
             content = json.loads(e.read())
         except Exception as e:
-            print('\033[31m' + str(e) + '\033[0m')
+            console.log(f":warning:[red]{e}[/]")
 
         return content
 
