@@ -62,6 +62,7 @@ class Test:
                 time.sleep(1)
                 
             console.log(f"[blue]買い注文が約定しました[/] \U0001F4B0")
+            playsound('./sound/buy.mp3')
             self.buy_price = result['Price']
 
             return True
@@ -127,8 +128,13 @@ if __name__ == '__main__':
             console.log(f"[green]取引が成功しました[/] \U0001F4B0")
     
             # 損益を計算する
-            profit = (self.sell_price - self.buy_price) * test.unit
-            console.log(f"[red]損益: {profit} 円[/]")
+            profit_loss = (self.sell_price - self.buy_price) * test.unit
+            if profit_loss > 0:
+                playsound('./sound/profit.mp3')
+                console.log(f"[red]利益: {profit_loss} 円[/]")
+            else:
+                playsound('./sound/loss.mp3')
+                console.log(f"[blue]損失: {profit_loss} 円[/]")
 
     
         

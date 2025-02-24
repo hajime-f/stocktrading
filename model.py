@@ -243,7 +243,7 @@ class ModelLibrary:
             for i in range(len(r) - window):
                 
                 tmp1 = r.drop(['Result'], axis = 1).iloc[i:i + window]
-                tmp2 = r.Result.iloc[i + window]
+                tmp2 = r.Result.iloc[i + window - 1]
 
                 X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
                 Y = pd.concat([Y, pd.DataFrame([tmp2])])
