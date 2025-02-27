@@ -32,7 +32,7 @@ class Test:
 
         # 預金残高（現物の買付余力）を問い合わせる
         deposit_before = self.lib.deposit()
-        print(f"\033[33m買付余力：{int(deposit_before):,} 円\033[0m")
+        console.log(f"[yellow]買付余力 {int(deposit_before):,} 円[/]")
 
 
     def buy_stock(self):
