@@ -14,7 +14,6 @@
 
 ```:.env
 APIPassword_production=XXXX
-OrderPassword=YYYY
 IPAddress=127.0.0.1
 Port=18080
 ```
@@ -178,7 +177,6 @@ WindowsマシンのローカルIPアドレスを調べてください。コマ�
 
 ```
 APIPassword_production=XXXXX ← 証券会社から付与されたAPIパスワード
-OrderPassword=YYYYY ← 証券会社から付与された取引パスワード
 IPAddress=192.168.0.ZZZ ← 先ほど調べたWindowsマシンのローカルIPアドレス
 Port=80
 ```

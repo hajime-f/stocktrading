@@ -21,28 +21,21 @@ class StockLibrary:
         try:
             self.api_password = os.getenv("APIPassword_production")
         except KeyError:
-            console.log("U+26A0[red]APIパスワードが環境変数に設定されていません。[/]")
+            console.log("\U000026A0[red]APIパスワードが環境変数に設定されていません。[/]")
             exit()
         
-        # 取引パスワードの設定
-        try:
-            self.order_password = os.getenv("OrderPassword")
-        except KeyError:
-            console.log("U+26A0[red]取引パスワードが環境変数に設定されていません。[/]")
-            exit()
-
         # IPアドレスの設定
         try:
             self.ip_address = os.getenv("IPAddress")
         except KeyError:
-            console.log("U+26A0[red]IPアドレスが環境変数に設定されていません。[/]")
+            console.log("\U000026A0[red]IPアドレスが環境変数に設定されていません。[/]")
             exit()
 
         # ポート番号の設定
         try:
             self.port = os.getenv("Port")
         except KeyError:
-            console.log("U+26A0[red]ポート番号が環境変数に設定されていません。[/]")
+            console.log("\U000026A0[red]ポート番号が環境変数に設定されていません。[/]")
             exit()
 
         # エンドポイントの設定
@@ -60,7 +53,7 @@ class StockLibrary:
         try:
             self.token = content["Token"]
         except KeyError:
-            console.log("U+26A0[red]APIトークンを取得できませんでした。[/]")
+            console.log("\U000026A0[red]APIトークンを取得できませんでした。[/]")
             exit()
 
         # Websocketの設定
@@ -220,10 +213,10 @@ class StockLibrary:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            console.log(f"U+26A0[red]{e}[/]")
+            console.log(f"\U000026A0[red]{e}[/]")
             content = json.loads(e.read())
         except Exception as e:
-            console.log(f"U+26A0[red]{e}[/]")
+            console.log(f"\U000026A0[red]{e}[/]")
 
         return content
 
