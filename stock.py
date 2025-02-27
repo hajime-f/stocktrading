@@ -50,10 +50,10 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * self.base_transaction
         except KeyError:
-            console.log(f"U+26A0[red] {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f"\u26A0[red] {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         except Exception:
-            console.log(f"U+26A0[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f"\u26A0[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         
         
@@ -146,12 +146,12 @@ class Stock:
                 # (1) 時価が買った時の値段の95％を下回っている
                 # (2) 15:30まで2分を切っている
                 cond_result = self.conditional_market_sell()
-            
-        if self.time is not None:
+
+        if self.time:
             
             # データを準備する
             raw_data = self.prepare_data()
-            console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データを更新しました。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データを更新しました[/]\U0001F4C8")
             
             # 株価が上がるか否かを予測する
             predict_result = self.predict(raw_data)
@@ -182,7 +182,7 @@ class Stock:
         price = self.lib.fetch_price(self.symbol, self.exchange)
         condition1 = price < self.purchase_price * 0.95
 
-        # 15:30まで10分を切っているか否かをチェックする
+        # 15:30まで2分を切っているか否かをチェックする
         now = datetime.now()
         target_time = datetime.combine(now.date(), time(15, 30))
         time_limit = target_time - timedelta(minutes = 2)
@@ -195,7 +195,13 @@ class Stock:
             
             # 成行で売り注文を出す
             content = self.lib.sell_at_market_price(self.symbol, self.transaction_unit, self.exchange)
-            order_result = content['Result']
+            
+            try:
+                order_result = content['Result']
+            except KeyError:
+                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
+                return False
+                
             if order_result == 0:
                 self.sell_order_flag = True
                 self.loss_cut = True
@@ -203,7 +209,7 @@ class Stock:
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で売り注文を出しました（ロスカット）[/]\U0001F602")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：U+26A0[red]条件により売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]条件により売り注文を出せませんでした。[/]")
                 return False
 
         return False
@@ -256,14 +262,20 @@ class Stock:
 
         # 指値で売り注文を出す
         content = self.lib.sell_at_limit_price(self.symbol, self.transaction_unit, self.purchase_price * 1.005, self.exchange)
-        order_result = content['Result']
+        
+        try:
+            order_result = content['Result']
+        except KeyError:
+            console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
+            return False
+            
         if order_result == 0:
             self.sell_order_flag = True
             self.sell_order_id = content['OrderId']
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/]\U0001F4B0")
             return True
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：U+26A0[red]売り注文を出せませんでした。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
             return False
     
     
@@ -291,16 +303,22 @@ class Stock:
 
             # 成行で買い注文を入れる
             content = self.lib.buy_at_market_price_with_cash(self.symbol, self.transaction_unit, self.exchange)
-            order_result = content['Result']
+            
+            try:
+                order_result = content['Result']
+            except KeyError:
+                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]買い注文を出せませんでした[/]")
+                return False
+            
             if order_result == 0:
                 self.buy_order_flag = True
                 self.buy_order_id = content['OrderId']
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/]\U0001F4B8")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：U+26A0[red]買い注文を出せませんでした。[/]")
-                return False                            
-            
+                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]買い注文を出せませんでした[/]")
+                return False
+                
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]値上がりが予測されましたが、買付余力がありませんでした[/]\U0001F614")
             return False
