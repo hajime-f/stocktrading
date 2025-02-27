@@ -215,10 +215,10 @@ class Stock:
         result = self.lib.check_execution(self.buy_order_id)
 
         # 約定している場合
-        if result['OrderState'] == 5:
+        if result[0]['State'] == 5:
             
             self.buy_order_flag = False
-            self.purchase_price = result['Price']
+            self.purchase_price = result[0]['Price']
             playsound('./sound/buy.mp3')
             console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました \U0001F4B8")
 
@@ -233,11 +233,11 @@ class Stock:
         result = self.lib.check_execution(self.sell_order_id)
 
         # 約定している場合
-        if result['OrderState'] == 5:
+        if result[0]['State'] == 5:
 
             self.sell_order_flag = False
             self.loss_cut = False
-            price = result['Price']
+            price = result[0]['Price']
             pl = (price - self.purchase_price) * self.transaction_unit
             if pl >= 0:
                 playsound('./sound/profit.mp3')
