@@ -50,10 +50,10 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * self.base_transaction
         except KeyError:
-            console.log(f"\u26A0[red] {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f"\U000026A0[red] {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         except Exception:
-            console.log(f"\u26A0[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
+            console.log(f"\U000026A0[red]不明な例外により {self.symbol} の情報を取得できませんでした。[/]")
             exit()
         
         
@@ -199,7 +199,7 @@ class Stock:
             try:
                 order_result = content['Result']
             except KeyError:
-                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
                 return False
                 
             if order_result == 0:
@@ -209,7 +209,7 @@ class Stock:
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で売り注文を出しました（ロスカット）[/]\U0001F602")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]条件により売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]条件により売り注文を出せませんでした。[/]")
                 return False
 
         return False
@@ -266,7 +266,8 @@ class Stock:
         try:
             order_result = content['Result']
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
+            console.log(content)
             return False
             
         if order_result == 0:
@@ -275,7 +276,8 @@ class Stock:
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/]\U0001F4B0")
             return True
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]売り注文を出せませんでした。[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
+            console.log(content)
             return False
     
     
@@ -307,7 +309,8 @@ class Stock:
             try:
                 order_result = content['Result']
             except KeyError:
-                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]買い注文を出せませんでした[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]")
+                console.log(content)
                 return False
             
             if order_result == 0:
@@ -316,7 +319,7 @@ class Stock:
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/]\U0001F4B8")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：\u26A0[red]買い注文を出せませんでした[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]")
                 return False
                 
         else:

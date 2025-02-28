@@ -66,10 +66,10 @@ class Test:
                 state = result[0]['State']
                 time.sleep(1)
                 
-            console.log(f"[blue]買い注文が約定しました[/]\U0001F4B0")
-            playsound('./sound/buy.mp3')
             self.buy_price = result[0]['Price']
-
+            console.log(f"[blue]買い注文が {self.buy_price:,} 円で約定しました[/]\U0001F4B0")
+            playsound('./sound/buy.mp3')
+            
             return True
 
         else:
@@ -111,9 +111,9 @@ class Test:
                 state = result[0]['State']
                 time.sleep(1)
                 
-            console.log(f"[blue]売り注文が約定しました[/]\U0001F4B0")
             self.sell_price = result[0]['Price']
-
+            console.log(f"[blue]売り注文が {self.sell_price:,} 円で約定しました[/]\U0001F4B0")
+            
             return True
 
         else:
