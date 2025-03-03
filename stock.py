@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time
+import math
 import pandas as pd
 import numpy as np
 from playsound import playsound
@@ -209,7 +210,7 @@ class Stock:
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で売り注文を出しました（ロスカット）[/]\U0001F602")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]条件により売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]条件により売り注文を出せませんでした。[/]\n{content}")
                 return False
 
         return False
@@ -224,7 +225,7 @@ class Stock:
         if result[0]['State'] == 5:
             
             self.buy_order_flag = False
-            self.purchase_price = result[0]['Price']
+            self.purchase_price = int(result[0]['Details'][2]['Price'])
             playsound('./sound/buy.mp3')
             console.log(f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました\U0001F4B8")
 
@@ -243,7 +244,7 @@ class Stock:
 
             self.sell_order_flag = False
             self.loss_cut = False
-            price = result[0]['Price']
+            price = int(result[0]['Details'][2]['Price'])
             pl = (price - self.purchase_price) * self.transaction_unit
             if pl >= 0:
                 playsound('./sound/profit.mp3')
@@ -256,18 +257,18 @@ class Stock:
             return True
 
         return False
-        
 
+    
     def sell_at_limit_price(self):
 
         # 指値で売り注文を出す
-        content = self.lib.sell_at_limit_price(self.symbol, self.transaction_unit, self.purchase_price * 1.005, self.exchange)
+        sell_price = math.ceil(self.purchase_price * 1.005)
+        content = self.lib.sell_at_limit_price(self.symbol, self.transaction_unit, sell_price, self.exchange)
         
         try:
             order_result = content['Result']
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
-            console.log(content)
+            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]\n{content}")
             return False
             
         if order_result == 0:
@@ -276,8 +277,7 @@ class Stock:
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/]\U0001F4B0")
             return True
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
-            console.log(content)
+            console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]\n{content}")
             return False
     
     
@@ -309,8 +309,7 @@ class Stock:
             try:
                 order_result = content['Result']
             except KeyError:
-                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]")
-                console.log(content)
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]\n{content}")
                 return False
             
             if order_result == 0:
@@ -319,7 +318,7 @@ class Stock:
                 console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/]\U0001F4B8")
                 return True
             else:
-                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]買い注文を出せませんでした[/]\n{content}")
                 return False
                 
         else:

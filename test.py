@@ -1,4 +1,5 @@
 import time
+import math
 from playsound import playsound
 from library import StockLibrary
 
@@ -66,7 +67,7 @@ class Test:
                 state = result[0]['State']
                 time.sleep(1)
                 
-            self.buy_price = result[0]['Price']
+            self.buy_price = result[0]['Details'][2]['Price']
             console.log(f"[blue]買い注文が {self.buy_price:,} 円で約定しました[/]\U0001F4B0")
             playsound('./sound/buy.mp3')
             
@@ -81,10 +82,11 @@ class Test:
         
 
     def sell_stock(self):
-
-        # 成行で売り注文を出す
-        content = self.lib.sell_at_market_price(self.symbol, self.unit)
-
+        
+        # 指値で売り注文を出す
+        sell_price = math.ceil(self.buy_price * 1.005)
+        content = self.lib.sell_at_limit_price(self.symbol, self.unit, sell_price)
+        
         try:
             result = content['Result']
         except KeyError:
@@ -94,7 +96,7 @@ class Test:
         if result == 0:
 
             sell_order_id = content['OrderId']
-            console.log(f"[blue]成行で売り注文を出しました[/]\U0001F4B8")
+            console.log(f"[blue]{sell_price:,} 円の指値で売り注文を出しました[/]\U0001F4B8")
             
             # 売り注文の約定状況を確認する
             result = self.lib.check_execution(sell_order_id)
@@ -111,7 +113,7 @@ class Test:
                 state = result[0]['State']
                 time.sleep(1)
                 
-            self.sell_price = result[0]['Price']
+            self.sell_price = result[0]['Details'][2]['Price']
             console.log(f"[blue]売り注文が {self.sell_price:,} 円で約定しました[/]\U0001F4B0")
             
             return True
@@ -126,7 +128,7 @@ class Test:
 
 if __name__ == '__main__':
     
-    test = Test([1475,])
+    test = Test([2552,])
     
     if test.buy_stock():
         if test.sell_stock():
