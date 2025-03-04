@@ -123,7 +123,8 @@ class Stock:
             return False     # データにNaNが含まれている場合も何もしない
         else:
             input_data = tmp.values.reshape(-1)
-            return self.model.predict([input_data])
+            prediction_result = self.model.predict([input_data])
+            return prediction_result
             
     
     def polling(self):
@@ -144,7 +145,7 @@ class Stock:
             if not self.check_and_update_sell_order_status():
 
                 # 売り注文が残っているとき、以下のいずれかの条件を満たす場合は成行で売り注文を出す（ロスカット）
-                # (1) 時価が買った時の値段の95％を下回っている
+                # (1) 時価が買った時の値段の99.5％を下回っている
                 # (2) 15:30まで2分を切っている
                 cond_result = self.conditional_market_sell()
 
@@ -155,10 +156,10 @@ class Stock:
             console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データを更新しました[/]\U0001F4C8")
             
             # 株価が上がるか否かを予測する
-            predict_result = self.predict(raw_data)
+            prediction_result = self.predict(raw_data)
             
             # 上がると予測された場合
-            if predict_result:
+            if prediction_result:
 
                 playsound('./sound/prediction.mp3')
                 console.log(f"{self.disp_name}（{self.symbol}）：[green]値上がりが予測されました[/]\U0001F60D")
@@ -179,15 +180,15 @@ class Stock:
         if self.loss_cut:
             return False
 
-        # 時価が買った時の値段の95％を下回っているか否かをチェックする
+        # 時価が買った時の値段の99.5％を下回っているか否かをチェックする
         price = self.lib.fetch_price(self.symbol, self.exchange)
-        condition1 = price < self.purchase_price * 0.95
+        condition1 = price < self.purchase_price * 0.995
 
-        # 15:30まで2分を切っているか否かをチェックする
+        # 現在時刻が15:30まで2分を切っているか否かをチェックする
         now = datetime.now()
-        target_time = datetime.combine(now.date(), time(15, 30))
-        time_limit = target_time - timedelta(minutes = 2)
-        condition2 = now < time_limit
+        target_time = now.replace(hour=15, minute=30, second=0, microsecond=0)
+        time_difference = target_time - now
+        condition2 = timedelta(seconds=0) < time_difference < timedelta(minutes=2)        
         
         if condition1 or condition2:
             
@@ -200,7 +201,7 @@ class Stock:
             try:
                 order_result = content['Result']
             except KeyError:
-                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]")
+                console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]\n{content}")
                 return False
                 
             if order_result == 0:
@@ -274,7 +275,7 @@ class Stock:
         if order_result == 0:
             self.sell_order_flag = True
             self.sell_order_id = content['OrderId']
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]指値で売り注文を出しました[/]\U0001F4B0")
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]{sell_price} 円の指値で売り注文を出しました[/]\U0001F4B0")
             return True
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：\U000026A0[red]売り注文を出せませんでした。[/]\n{content}")
