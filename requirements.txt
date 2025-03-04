@@ -16,3 +16,5 @@ bs4
 wheel
 playsound
 PyObjC
+flake8
+ruff
