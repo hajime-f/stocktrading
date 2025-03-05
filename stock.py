@@ -220,7 +220,7 @@ class Stock:
             self.purchase_price = int(result[0]["Details"][2]["Price"])
             playsound("./sound/buy.mp3")
             console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {self.purchase_price:,} 円で購入[/]しました\U0001f4b8"
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.purchase_price:,} 円で {self.transaction_unit} 株購入[/]しました\U0001f4b8"
             )
 
             return True
@@ -240,12 +240,12 @@ class Stock:
             if pl >= 0:
                 playsound("./sound/profit.mp3")
                 console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、利益が {pl:,} 円でした\U0001f60f\U0001f4b0"
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{price:,} 円で {self.transaction_unit} 株売却[/]し、利益が {pl:,} 円でした\U0001f60f\U0001f4b0"
                 )
             else:
                 playsound("./sound/loss.mp3")
                 console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.transaction_unit} 株 {price} 円で売却[/]し、損失が {pl:,} 円でした\U0001f622\U0001f4b8"
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{price:,} 円で {self.transaction_unit} 株売却[/]し、損失が {pl:,} 円でした\U0001f622\U0001f4b8"
                 )
             self.purchase_price = 0
 
@@ -272,7 +272,7 @@ class Stock:
             self.sell_order_flag = True
             self.sell_order_id = content["OrderId"]
             console.log(
-                f"{self.disp_name}（{self.symbol}）：[blue]{sell_price} 円の指値で売り注文を出しました[/]\U0001f4b0"
+                f"{self.disp_name}（{self.symbol}）：[blue]{int(sell_price):,} 円の指値で売り注文を出しました[/]\U0001f4b0"
             )
             return True
         else:
@@ -284,9 +284,9 @@ class Stock:
     def buy_at_market_price_with_cash(self):
         # まだ売り注文が残っている場合は買わない
         if self.sell_order_flag:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした[/]\U0001f645\U0001f3fc\u200d\u2642\ufe0f"
-            )
+            # console.log(
+            #     f"{self.disp_name}（{self.symbol}）：[red]売り注文が残っているため、買い注文を出しませんでした[/]\U0001f645\U0001f3fc\u200d\u2642\ufe0f"
+            # )
             return False
 
         # 15:30まで20分を切っている場合は買わない
@@ -294,9 +294,9 @@ class Stock:
         target_time = datetime.combine(now.date(), time(15, 30))
         time_difference = target_time - now
         if time_difference <= timedelta(minutes=20):
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした[/]\U0001f645\U0001f3fc\u200d\u2642\ufe0f"
-            )
+            # console.log(
+            #     f"{self.disp_name}（{self.symbol}）：[red]15:30まで20分を切っているので買い注文を出しませんでした[/]\U0001f645\U0001f3fc\u200d\u2642\ufe0f"
+            # )
             return False
 
         # 取引価格を計算する

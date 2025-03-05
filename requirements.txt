@@ -18,3 +18,4 @@ playsound
 PyObjC
 flake8
 ruff
+isort
