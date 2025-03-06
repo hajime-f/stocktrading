@@ -20,3 +20,5 @@ flake8
 ruff
 isort
 yfinance
+tensorflow
+keras

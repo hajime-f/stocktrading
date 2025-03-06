@@ -1,13 +1,35 @@
 import pandas as pd
 
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from keras.layers import Dropout
+
 from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
 
 
-class LSTM:
+class PredictionModel:
     def __init__(self):
         pass
+
+    def compile(self, X_df):
+        model = Sequential()
+
+        model.add(LSTM(256, activation="relu", input_shape=(X_df.shape[1], 1)))
+        model.add(Dropout(0.2))
+        model.add(Dense(256, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(1, activation="sigmoid"))
+
+        model.compile(
+            optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"]
+        )
+
+        return model
 
 
 if __name__ == "__main__":
@@ -49,5 +71,31 @@ if __name__ == "__main__":
     # 始値と終値の差を追加する
     df["trunk"] = df["open"] - df["close"]
 
-    lstm = LSTM()
+    # 学習用データを準備する
+    df_learn = df[(df["date"] >= "2021-03-01") & (df["date"] <= "2024-06-30")]
+    X_learn = df_learn.drop(columns=["date", "increase", "volume"])
+    Y_learn = df_learn["increase"]
+
+    # テスト用データを準備する
+    df_test = df[(df["date"] >= "2024-07-01") & (df["date"] <= "2025-03-05")]
+    X_test = df_test.drop(columns=["date", "increase", "volume"])
+    Y_test = df_test["increase"]
+
+    # 標準化
+    scaler = StandardScaler()
+    X_learn = scaler.fit_transform(X_learn)
+    X_test = scaler.transform(X_test)
+
+    pred_model = PredictionModel()
+
+    # モデルの学習
+    model = pred_model.compile(X_learn)
+    model.fit(X_learn, Y_learn, batch_size=64, epochs=10)
+
+    # モデルの評価
+    Y_pred = model.predict(X_test)
+    Y_pred = (Y_pred > 0.5).astype(int)
+
+    print("accuracy = ", accuracy_score(y_true=Y_test, y_pred=Y_pred))
+
     breakpoint()
