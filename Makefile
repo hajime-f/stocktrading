@@ -10,5 +10,7 @@ test:
 	python3 test.py
 init_data:
 	python3 data_management.py
+lstm:
+	python3 lstm.py
 clear:
 	rm -rf stocklib/__pycache__
