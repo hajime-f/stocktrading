@@ -22,3 +22,4 @@ isort
 yfinance
 tensorflow
 keras
+lightgbm
