@@ -19,3 +19,4 @@ PyObjC
 flake8
 ruff
 isort
+yfinance

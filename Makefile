@@ -8,5 +8,7 @@ collect:
 	python3 collect_data.py
 test:
 	python3 test.py
+init_data:
+	python3 data_management.py
 clear:
 	rm -rf stocklib/__pycache__

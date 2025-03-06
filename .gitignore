@@ -6,6 +6,7 @@ __pycache__/
 *.pkl
 *.csv
 debug.png
+*.db
 
 # C extensions
 *.so
