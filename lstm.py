@@ -86,42 +86,42 @@ if __name__ == "__main__":
     X_test = df_test.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
     y_test = df_test["increase"].iloc[:-1].reset_index(drop=True)
 
-    test_scores = []
-    tss = TimeSeriesSplit(n_splits=4)
+    # test_scores = []
+    # tss = TimeSeriesSplit(n_splits=4)
     pred_model = PredictionModel()
 
-    for fold, (learn_indices, test_indices) in enumerate(tss.split(X_learn)):
-        X_learn_np_array, X_test_np_array = (
-            X_learn.values[learn_indices],
-            X_learn.values[test_indices],
-        )
-        y_learn_np_array, y_test_np_array = (
-            y_learn.values[learn_indices],
-            y_learn.values[test_indices],
-        )
+    # for fold, (learn_indices, test_indices) in enumerate(tss.split(X_learn)):
+    #     X_learn_np_array, X_test_np_array = (
+    #         X_learn.values[learn_indices],
+    #         X_learn.values[test_indices],
+    #     )
+    #     y_learn_np_array, y_test_np_array = (
+    #         y_learn.values[learn_indices],
+    #         y_learn.values[test_indices],
+    #     )
 
-        X_learn_df = pd.DataFrame(X_learn_np_array)
-        X_test_df = pd.DataFrame(X_test_np_array)
-        y_learn_df = pd.DataFrame(y_learn_np_array)
-        y_test_df = pd.DataFrame(y_test_np_array)
+    #     X_learn_df = pd.DataFrame(X_learn_np_array)
+    #     X_test_df = pd.DataFrame(X_test_np_array)
+    #     y_learn_df = pd.DataFrame(y_learn_np_array)
+    #     y_test_df = pd.DataFrame(y_test_np_array)
 
-        breakpoint()
+    #     breakpoint()
 
-        model = pred_model.DNN_compile(X_learn_df)
+    #     model = pred_model.DNN_compile(X_learn_df)
 
-        model.fit(X_learn_df, y_learn_df, epochs=10, batch_size=64)
-        y_test_pred = model.predict(X_test_df)
-        y_test_pred = np.where(y_test_pred < 0.5, 0, 1)
-        score = accuracy_score(y_test_df, y_test_pred)
-        print(f"fold {fold} MAE: {score}")
+    #     model.fit(X_learn_df, y_learn_df, epochs=10, batch_size=64)
+    #     y_test_pred = model.predict(X_test_df)
+    #     y_test_pred = np.where(y_test_pred < 0.5, 0, 1)
+    #     score = accuracy_score(y_test_df, y_test_pred)
+    #     print(f"fold {fold} MAE: {score}")
 
-        test_scores.append(score)
+    #     test_scores.append(score)
 
-    print(f"test_scores: {test_scores}")
-    cv_score = np.mean(test_scores)
-    print(f"CV score: {cv_score}")
+    # print(f"test_scores: {test_scores}")
+    # cv_score = np.mean(test_scores)
+    # print(f"CV score: {cv_score}")
 
-    breakpoint()
+    # breakpoint()
 
     # # 標準化
     # scaler = StandardScaler()
@@ -131,11 +131,11 @@ if __name__ == "__main__":
     # pred_model = PredictionModel()
 
     # # モデルの学習
-    # model = pred_model.DNN_compile(X_learn)
-    model.fit(X_learn_np_array, y_learn_np_array, batch_size=64, epochs=10)
+    model = pred_model.DNN_compile(X_learn)
+    model.fit(X_learn, y_learn, batch_size=64, epochs=10)
 
     # モデルの評価
-    Y_pred = model.predict(X_test_np_array)
-    Y_pred = (Y_pred_np_array > 0.5).astype(int)
+    y_pred = model.predict(X_test)
+    y_pred = (y_pred > 0.5).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=y_test_np_array, y_pred=Y_pred))
+    print("accuracy = ", accuracy_score(y_true=y_test, y_pred=y_pred))
