@@ -75,10 +75,10 @@ if __name__ == "__main__":
     df["increase"] = 0
     df.loc[df_shift["close"] > df["close"] * 1.025, "increase"] = 1
 
-    # # 学習用データを準備する
-    # df_learn = df[(df["date"] >= "2021-03-01") & (df["date"] <= "2024-06-30")]
-    # X_learn = df_learn.drop(columns=["date"]).iloc[:-1]
-    # y_learn = df_learn["close"].shift(-1).iloc[:-1]
+    # 学習用データを準備する
+    df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]
+    X_learn = df_learn.drop(columns=["increase"]).iloc[:-1]
+    y_learn = df_learn["increase"].iloc[:-1]
 
     # # テスト用データを準備する
     # df_test = df[(df["date"] >= "2024-07-01") & (df["date"] <= "2025-03-05")]
