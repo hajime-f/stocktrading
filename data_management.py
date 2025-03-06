@@ -19,16 +19,19 @@ class DataManagement:
             data_df = yf.download(code + ".T", start="2021-01-01", end=dt.date.today())
             data_df.columns = data_df.columns.get_level_values(0)
             data_df.columns = data_df.columns.str.lower()
+            data_df["date"] = data_df.index
             data_df = data_df.reindex(
-                columns=["open", "high", "low", "close", "volume"]
+                columns=["date", "open", "high", "low", "close", "volume"]
             )
+            data_df = data_df.reset_index(drop=True)
+            data_df["date"] = pd.to_datetime(data_df["date"]).dt.strftime("%Y-%m-%d")
 
             conn = sqlite3.connect("./data/stock_data.db")
             with conn:
-                data_df.to_sql(code, conn, if_exists="replace")
+                data_df.to_sql(code, conn, if_exists="replace", index=False)
 
     def load_stock_data(self, code):
-        query = f"select distinct date from {code} order by date;"
+        query = f'select * from "{code}" order by date;'
 
         conn = sqlite3.connect("./data/stock_data.db")
         with conn:
