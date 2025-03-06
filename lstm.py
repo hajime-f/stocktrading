@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
 
 from keras.models import Sequential
@@ -78,35 +78,31 @@ if __name__ == "__main__":
     df["increase"] = 0
     df.loc[df_shift["close"] > df["close"] * 1.025, "increase"] = 1
 
-    # 学習用データを準備する
-    df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]
-    X_learn = df_learn.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
-    y_learn = df_learn["increase"].iloc[:-1].reset_index(drop=True)
-
-    # テスト用データを準備する
-    df_test = df[(df.index >= "2024-07-01") & (df.index <= "2025-03-05")]
-    X_test = df_test.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
-    y_test = df_test["increase"].iloc[:-1].reset_index(drop=True)
-
     test_scores = []
     tss = TimeSeriesSplit(n_splits=4)
     pred_model = PredictionModel()
     scaler = StandardScaler()
 
-    for fold, (learn_indices, test_indices) in enumerate(tss.split(X_learn)):
+    for fold, (learn_indices, test_indices) in enumerate(tss.split(df.iloc[:-1])):
+        X = df.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
+        y = df["increase"].iloc[:-1].reset_index(drop=True)
+
         X_learn_np_array, X_test_np_array = (
-            X_learn.values[learn_indices],
-            X_learn.values[test_indices],
+            X.values[learn_indices],
+            X.values[test_indices],
         )
         y_learn_np_array, y_test_np_array = (
-            y_learn.values[learn_indices],
-            y_learn.values[test_indices],
+            y.values[learn_indices],
+            y.values[test_indices],
         )
 
         X_learn_df = pd.DataFrame(X_learn_np_array)
         X_test_df = pd.DataFrame(X_test_np_array)
         y_learn_df = pd.DataFrame(y_learn_np_array)
         y_test_df = pd.DataFrame(y_test_np_array)
+
+        # X_learn_df = scaler.fit_transform(X_learn_df)
+        # X_test_df = scaler.fit_transform(X_test_df)
 
         model = pred_model.DNN_compile(X_learn_df)
 
@@ -119,17 +115,23 @@ if __name__ == "__main__":
         test_scores.append(score)
 
     print(f"test_scores: {test_scores}")
-    cv_score = np.mean(test_scores)
-    print(f"CV score: {cv_score}")
+    print(f"CV score: {np.mean(test_scores)}")
+
+    # 学習用データを準備する
+    df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]
+    X_learn = df_learn.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
+    y_learn = df_learn["increase"].iloc[:-1].reset_index(drop=True)
+
+    # テスト用データを準備する
+    df_test = df[(df.index >= "2024-07-01") & (df.index <= "2025-03-05")]
+    X_test = df_test.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
+    y_test = df_test["increase"].iloc[:-1].reset_index(drop=True)
 
     # # 標準化
-    # scaler = StandardScaler()
     # X_learn = scaler.fit_transform(X_learn)
     # X_test = scaler.transform(X_test)
 
-    # pred_model = PredictionModel()
-
-    # # モデルの学習
+    # モデルの学習
     model = pred_model.DNN_compile(X_learn)
     model.fit(X_learn, y_learn, batch_size=64, epochs=10)
 
@@ -138,5 +140,6 @@ if __name__ == "__main__":
     y_pred = pd.DataFrame((y_pred > 0.5).astype(int))
 
     print("accuracy = ", accuracy_score(y_true=y_test, y_pred=y_pred))
+    print(classification_report(y_test, y_pred))
 
     breakpoint()
