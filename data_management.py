@@ -1,4 +1,3 @@
-import datetime as dt
 import yfinance as yf
 import sqlite3
 import pandas as pd
@@ -16,7 +15,7 @@ class DataManagement:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            data_df = yf.download(code + ".T", start="2021-01-01", end=dt.date.today())
+            data_df = yf.download(code + ".T", period="max")
             data_df.columns = data_df.columns.get_level_values(0)
             data_df.columns = data_df.columns.str.lower()
             data_df["date"] = data_df.index

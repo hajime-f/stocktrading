@@ -3,9 +3,10 @@ import numpy as np
 
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 
 from keras.models import Sequential
-from keras.layers import Dense, LSTM
+from keras.layers import Dense, LSTM, InputLayer
 from keras.layers import Dropout
 from lightgbm import LGBMRegressor
 import matplotlib.pyplot as plt
@@ -22,7 +23,8 @@ class PredictionModel:
     def DNN_compile(self, df):
         model = Sequential()
 
-        model.add(LSTM(256, activation="relu", input_shape=(df.shape[0], df.shape[1])))
+        model.add(InputLayer(shape=(df.shape[1], 1)))
+        model.add(LSTM(256, activation="relu"))
         model.add(Dropout(0.2))
         model.add(Dense(256, activation="relu"))
         model.add(Dropout(0.2))
@@ -37,7 +39,7 @@ class PredictionModel:
 
 if __name__ == "__main__":
     dm = DataManagement()
-    df = dm.load_stock_data(2158)
+    df = dm.load_stock_data(1301)
 
     # 日付をインデックスにする
     df.set_index("date", inplace=True)
@@ -86,42 +88,39 @@ if __name__ == "__main__":
     X_test = df_test.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
     y_test = df_test["increase"].iloc[:-1].reset_index(drop=True)
 
-    # test_scores = []
-    # tss = TimeSeriesSplit(n_splits=4)
+    test_scores = []
+    tss = TimeSeriesSplit(n_splits=4)
     pred_model = PredictionModel()
+    scaler = StandardScaler()
 
-    # for fold, (learn_indices, test_indices) in enumerate(tss.split(X_learn)):
-    #     X_learn_np_array, X_test_np_array = (
-    #         X_learn.values[learn_indices],
-    #         X_learn.values[test_indices],
-    #     )
-    #     y_learn_np_array, y_test_np_array = (
-    #         y_learn.values[learn_indices],
-    #         y_learn.values[test_indices],
-    #     )
+    for fold, (learn_indices, test_indices) in enumerate(tss.split(X_learn)):
+        X_learn_np_array, X_test_np_array = (
+            X_learn.values[learn_indices],
+            X_learn.values[test_indices],
+        )
+        y_learn_np_array, y_test_np_array = (
+            y_learn.values[learn_indices],
+            y_learn.values[test_indices],
+        )
 
-    #     X_learn_df = pd.DataFrame(X_learn_np_array)
-    #     X_test_df = pd.DataFrame(X_test_np_array)
-    #     y_learn_df = pd.DataFrame(y_learn_np_array)
-    #     y_test_df = pd.DataFrame(y_test_np_array)
+        X_learn_df = pd.DataFrame(X_learn_np_array)
+        X_test_df = pd.DataFrame(X_test_np_array)
+        y_learn_df = pd.DataFrame(y_learn_np_array)
+        y_test_df = pd.DataFrame(y_test_np_array)
 
-    #     breakpoint()
+        model = pred_model.DNN_compile(X_learn_df)
 
-    #     model = pred_model.DNN_compile(X_learn_df)
+        model.fit(X_learn_df, y_learn_df, epochs=10, batch_size=64)
+        y_test_pred = model.predict(X_test_df)
+        y_test_pred = np.where(y_test_pred < 0.5, 0, 1)
+        score = accuracy_score(y_test_df, y_test_pred)
+        print(f"fold {fold} MAE: {score}")
 
-    #     model.fit(X_learn_df, y_learn_df, epochs=10, batch_size=64)
-    #     y_test_pred = model.predict(X_test_df)
-    #     y_test_pred = np.where(y_test_pred < 0.5, 0, 1)
-    #     score = accuracy_score(y_test_df, y_test_pred)
-    #     print(f"fold {fold} MAE: {score}")
+        test_scores.append(score)
 
-    #     test_scores.append(score)
-
-    # print(f"test_scores: {test_scores}")
-    # cv_score = np.mean(test_scores)
-    # print(f"CV score: {cv_score}")
-
-    # breakpoint()
+    print(f"test_scores: {test_scores}")
+    cv_score = np.mean(test_scores)
+    print(f"CV score: {cv_score}")
 
     # # 標準化
     # scaler = StandardScaler()
@@ -136,6 +135,8 @@ if __name__ == "__main__":
 
     # モデルの評価
     y_pred = model.predict(X_test)
-    y_pred = (y_pred > 0.5).astype(int)
+    y_pred = pd.DataFrame((y_pred > 0.5).astype(int))
 
     print("accuracy = ", accuracy_score(y_true=y_test, y_pred=y_pred))
+
+    breakpoint()
