@@ -70,49 +70,10 @@ if __name__ == "__main__":
     # 始値と終値の差を追加する
     df["trunk"] = df["open"] - df["close"]
 
-    # ターゲットの作成
-    df["target"] = df["close"].shift(-1)
-    X = df.drop(columns=["target"]).iloc[:-1]
-    y = df["target"].iloc[:-1]
-
-    # データの分割
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    # モデルの学習
-    params = {
-        "objective": "regression",
-        "metric": "rmse",
-        "verbosity": -1,
-        "boosting_type": "gbdt",
-        "feature_pre_filter": False,
-        "lambda_l1": 0.0,
-        "lambda_l2": 0.0,
-        "num_leaves": 31,
-        "feature_fraction": 0.9,
-        "bagging_fraction": 0.8,
-        "bagging_freq": 5,
-        "min_child_samples": 20,
-        "n_estimators": 10000,
-    }
-
-    model = LGBMRegressor(**params)
-    model.fit(X_train, y_train)
-
-    # 予測と評価
-    result = pd.DataFrame()
-    result["predictions"] = model.predict(X_test)
-    result["date"] = y_test.index
-    result = result.sort_values("date", ascending=True)
-
-    # 予測結果のプロット
-    plt.figure(figsize=(10, 5))
-    y_test_ = y_test.sort_index(ascending=True)
-    plt.plot(y_test_.index, y_test_, label="Actual")
-    plt.plot(result["date"], result["predictions"], label="Predicted")
-    plt.legend()
-    plt.show()
+    # 翌営業日の終値が当日より2.5%以上上昇していたらフラグを立てる
+    df_shift = df.shift(-1)
+    df["increase"] = 0
+    df.loc[df_shift["close"] > df["close"] * 1.025, "increase"] = 1
 
     # # 学習用データを準備する
     # df_learn = df[(df["date"] >= "2021-03-01") & (df["date"] <= "2024-06-30")]
