@@ -7,6 +7,7 @@ from sklearn.utils import all_estimators
 from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
 import warnings
 
 import pandas as pd
@@ -68,20 +69,9 @@ class ModelLibrary:
 
     def add_labels(self, df_list):
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df, 2.5) for df in df_list]
+        label_list = [self.check_price_change(df, 180) for df in df_list]
 
         return label_list
-
-        # # データを結合する
-        # XY = [
-        #     pd.concat(
-        #         [input_df.reset_index(drop=True), label_df.reset_index(drop=True)],
-        #         axis=1,
-        #     ).dropna()
-        #     for input_df, label_df in zip(df_list, label_df_list)
-        # ]
-
-        # return XY
 
     def check_price_change(self, df, percentage, time_window=20):
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％上昇するか否かを判定する。
@@ -106,6 +96,8 @@ class ModelLibrary:
         return result
 
     def prepare_training_data(self, df_list, label_list, window=10):
+        # 学習データを準備する
+
         df_list = [df.dropna() for df in df_list]
         label_list = [label.dropna() for label in label_list]
 
@@ -128,29 +120,34 @@ class ModelLibrary:
         X_array = np.array(X_list)
         y_array = np.array(y_list)
 
-        return X_array, y_array
+        X_array_downsampled, y_array_downsampled = self.downsampling(X_array, y_array)
 
-    def balance_dataframe(self, df, target_column="Result"):
-        # 値の出現回数をカウント
-        counts = df[target_column].value_counts()
+        return X_array_downsampled, y_array_downsampled
 
-        if len(counts) == 1:
-            return pd.DataFrame(columns=df.columns)
+    def downsampling(self, X_array, y_array):
+        # ラベル1のインデックスを取得
+        label_1_indices = np.where(y_array == 1)[0]
+        # ラベル0のインデックスを取得
+        label_0_indices = np.where(y_array == 0)[0]
 
-        # 少数派の数を取得
-        minority_count = counts.min()
+        # ラベル1のサンプル数と同じ数だけ、ラベル0のデータをランダムにサンプリング
+        downsampled_label_0_indices = resample(
+            label_0_indices,
+            replace=False,
+            n_samples=len(label_1_indices),
+            random_state=42,
+        )
 
-        # 各グループからランダムに minority_count 個のサンプルを抽出
-        balanced_df = []
-        for value in counts.index:
-            group = df[df[target_column] == value]
-            sampled_group = group.sample(n=minority_count, random_state=42)
-            balanced_df.append(sampled_group)
+        # ダウンサンプリングしたデータのインデックスとラベル1のインデックスを結合
+        selected_indices = np.concatenate(
+            [downsampled_label_0_indices, label_1_indices]
+        )
 
-        # 抽出されたサンプルを結合
-        balanced_df = pd.concat(balanced_df)
+        # X_arrayとy_arrayから選択したインデックスのデータを取得
+        X_downsampled = X_array[selected_indices]
+        y_downsampled = y_array[selected_indices]
 
-        return balanced_df
+        return X_downsampled, y_downsampled
 
     def evaluate_model(self, X, Y):
         # クロスバリデーション用のオブジェクトをインスタンス化する
