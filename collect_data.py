@@ -50,7 +50,7 @@ if __name__ == '__main__':
         lib.run()
     except KeyboardInterrupt:
         pass
-    
+
     # データを整理する
     print("データを整理しています。")
     data_list = dm.prepare_dataframe_list(symbols)
@@ -58,5 +58,3 @@ if __name__ == '__main__':
     # データを保存する
     filename = dm.save_data(data_list)
     print(f"{filename} にデータを保存しました。")
-    
-        
