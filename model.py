@@ -59,10 +59,10 @@ class ModelLibrary:
         # 生データを分足のDataFrameに変換する
         df_list = [self.convert_to_dataframe(d) for d in self.data]
 
-        # データを正規化する
-        df_list = [
-            self.normalize_data(df, symbol) for df, symbol in zip(df_list, symbols)
-        ]
+        # # データを正規化する
+        # df_list = [
+        #     self.normalize_data(df, symbol) for df, symbol in zip(df_list, symbols)
+        # ]
 
         return df_list
 

@@ -29,21 +29,6 @@ def prepare_input_data(df, window=10):
 
     return np.array(X_list)
 
-    # X = pd.DataFrame()
-    # Y = pd.DataFrame()
-
-    # for i in range(len(df) - window):
-    #     tmp1 = df.drop(["increase"], axis=1).iloc[i : i + window]
-    #     tmp2 = df["increase"].iloc[i + window - 1]
-
-    #     X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
-    #     Y = pd.concat([Y, pd.DataFrame([tmp2])])
-
-    # X = X.iloc[:-1].reset_index(drop=True)
-    # Y = Y.iloc[:-1].reset_index(drop=True)
-
-    # return X, Y
-
 
 class PredictionModel:
     def __init__(self):
