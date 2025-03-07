@@ -6,6 +6,12 @@
 > 本プログラムを使用することによって被った損害等について、制作者は一切の責任を負いません。
 > 投資はご自身の判断と責任のもとで行ってください。
 
+# 動作環境
+
+- Python 3.12
+
+2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用しています。
+
 # 使い方
 
 ## .env ファイルの追加
@@ -34,6 +40,11 @@ $ python -m venv env
 $ source ./env/bin/activate
 (env) $ make install
 ```
+
+> [!CAUTION]
+> インストール時にエラーが出る場合は、```requirements.txt``` から wheel と playsound をいったん削除し、```make install``` してみてください。
+> その後、```pip install wheel playsound``` で wheel と playsound をインストールすれば、エラーが解消されるかもしれません。
+
 ## データの収集
 
 下記のコマンドを打って、予測モデルを学習させるためのデータを集めてください。
