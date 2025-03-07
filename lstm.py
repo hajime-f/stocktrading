@@ -16,6 +16,23 @@ from data_management import DataManagement
 pd.set_option("display.max_rows", None)
 
 
+def prepare_input_output_data(df, window=10):
+    X = pd.DataFrame()
+    Y = pd.DataFrame()
+
+    for i in range(len(df) - window):
+        tmp1 = df.drop(["increase"], axis=1).iloc[i : i + window]
+        tmp2 = df["increase"].iloc[i + window - 1]
+
+        X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
+        Y = pd.concat([Y, pd.DataFrame([tmp2])])
+
+    X = X.iloc[:-1].reset_index(drop=True)
+    Y = Y.iloc[:-1].reset_index(drop=True)
+
+    return X, Y
+
+
 class PredictionModel:
     def __init__(self):
         pass
@@ -73,20 +90,24 @@ if __name__ == "__main__":
     # 始値と終値の差を追加する
     df["trunk"] = df["open"] - df["close"]
 
+    # nan を削除
+    df = df.dropna()
+
     # 翌営業日の終値が当日より2.5%以上上昇していたらフラグを立てる
     df_shift = df.shift(-1)
     df["increase"] = 0
-    df.loc[df_shift["close"] > df["close"] * 1.025, "increase"] = 1
+    df.loc[df_shift["close"] > df["close"], "increase"] = 1
 
     test_scores = []
     tss = TimeSeriesSplit(n_splits=4)
     pred_model = PredictionModel()
     scaler = StandardScaler()
 
-    for fold, (learn_indices, test_indices) in enumerate(tss.split(df.iloc[:-1])):
-        X = df.drop(columns=["increase"]).iloc[:-1].reset_index(drop=True)
-        y = df["increase"].iloc[:-1].reset_index(drop=True)
+    window = 10
+    X, y = prepare_input_output_data(df, window)
+    df = df.iloc[: -window - 1]
 
+    for fold, (learn_indices, test_indices) in enumerate(tss.split(df)):
         X_learn_np_array, X_test_np_array = (
             X.values[learn_indices],
             X.values[test_indices],
@@ -141,5 +162,3 @@ if __name__ == "__main__":
 
     print("accuracy = ", accuracy_score(y_true=y_test, y_pred=y_pred))
     print(classification_report(y_test, y_pred))
-
-    breakpoint()
