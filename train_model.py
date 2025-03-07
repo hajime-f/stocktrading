@@ -23,18 +23,16 @@ if __name__ == "__main__":
         n_symbols += len(tmp)
 
     # モデルライブラリを初期化する
-    model = ModelLibrary(n_symbols)
-
-    breakpoint()
+    model = ModelLibrary()
 
     print("データに特徴を追加しています。")
     df_list = model.add_technical_indicators(df_list)
 
     print("データにラベルを追加しています。")
-    XY = model.add_labels(df_list)
+    label_list = model.add_labels(df_list)
 
     print("学習データを準備しています。")
-    X, Y = model.prepare_training_data(XY)
+    X, Y = model.prepare_training_data(df_list, label_list)
 
     print("モデルを評価しています。")
     best_clf = model.evaluate_model(X, Y)

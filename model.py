@@ -6,30 +6,18 @@ import numpy as np
 from sklearn.utils import all_estimators
 from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.metrics import classification_report
+from sklearn.preprocessing import StandardScaler
 import warnings
 
-from crawler import Crawler
-
 import pandas as pd
+import numpy as np
 
 pd.set_option("display.max_rows", None)
 
 
 class ModelLibrary:
-    def __init__(self, n_symbols):
-        self.n_symbols = n_symbols
-        self.data = []
-        for _ in range(n_symbols):
-            self.data.append([])
+    def __init__(self):
         self.clf = None
-
-    def set_data(self, p_data):
-        concat_data = []
-
-        for d in p_data:
-            concat_data += d
-
-        self.data = concat_data
 
     def add_technical_indicators(self, df_list):
         # 移動平均を計算する
@@ -45,35 +33,6 @@ class ModelLibrary:
         df_list = [self.calc_rsi(df) for df in df_list]
 
         return df_list
-
-    def add_labels(self, df_list):
-        # 正解ラベルを作成する
-        label_df_list = [self.check_price_change(df["close"], 180) for df in df_list]
-
-        # データを結合する
-        XY = [
-            pd.concat(
-                [input_df.reset_index(drop=True), label_df.reset_index(drop=True)],
-                axis=1,
-            ).dropna()
-            for input_df, label_df in zip(df_list, label_df_list)
-        ]
-
-        return XY
-
-    def normalize_data(self, data, symbol):
-        crawler = Crawler(symbol)
-        values = crawler.fetch_stock_data()
-        max_value, min_value = crawler.extract_first_row_data(values)
-        try:
-            max_value, min_value = (
-                float(max_value.replace(",", "")),
-                float(min_value.replace(",", "")),
-            )
-        except ValueError:
-            max_value, min_value = data.iloc[0]["high"], data.iloc[0]["low"]
-
-        return (data - min_value) / (max_value - min_value)
 
     def calc_moving_average(self, data):
         data["MA5"] = data["close"].rolling(window=5).mean()
@@ -107,39 +66,69 @@ class ModelLibrary:
 
         return data
 
-    def check_price_change(self, stock_price, percentage, time_window=20):
-        # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％変化するか否かを判定する。
+    def add_labels(self, df_list):
+        # 正解ラベルを作成する
+        label_list = [self.check_price_change(df, 2.5) for df in df_list]
 
-        result = []
+        return label_list
 
-        for i, base_price in enumerate(stock_price):
-            # 目標株価を計算
-            target_price = base_price + abs(base_price) * (percentage / 100)
+        # # データを結合する
+        # XY = [
+        #     pd.concat(
+        #         [input_df.reset_index(drop=True), label_df.reset_index(drop=True)],
+        #         axis=1,
+        #     ).dropna()
+        #     for input_df, label_df in zip(df_list, label_df_list)
+        # ]
 
-            start_index = i + 1
-            end_index = start_index + time_window
+        # return XY
 
-            if end_index <= len(stock_price):
-                # 基準時刻からtime_window分後の株価を取得
-                future_prices = stock_price.iloc[start_index:end_index]
+    def check_price_change(self, df, percentage, time_window=20):
+        # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％上昇するか否かを判定する。
+        # target_price = base_price + abs(base_price) * (percentage / 100)
 
-                if percentage > 0:
-                    if (future_prices > target_price).any():
-                        result.append(1)
-                    else:
-                        result.append(0)
-                elif percentage < 0:
-                    if (future_prices < target_price).any():
-                        result.append(1)
-                    else:
-                        result.append(0)
-                else:
-                    result.append(0)
+        result = pd.DataFrame(np.zeros((len(df), 1)), columns=["Result"])
 
-            else:
-                result.append(np.nan)
+        for i in range(time_window):
+            shifted_df = df.shift(-(i + 1))
+            result[f"Result_{i + 1}"] = 0
+            condition = (
+                shifted_df["close"] > df["close"] * (1 + percentage / 100)
+            ).values
+            result.loc[condition, f"Result_{i + 1}"] = 1
 
-        return pd.DataFrame(result, columns=["Result"])
+        for i in range(time_window):
+            result["Result"] += result[f"Result_{i + 1}"]
+            result.drop(f"Result_{i + 1}", axis=1, inplace=True)
+
+        result.loc[result["Result"] > 0, "Result"] = 1
+
+        return result
+
+    def prepare_training_data(self, df_list, label_list, window=10):
+        df_list = [df.dropna() for df in df_list]
+        label_list = [label.dropna() for label in label_list]
+
+        scaler = StandardScaler()
+
+        X_list = []
+        y_list = []
+
+        for df, label in zip(df_list, label_list):
+            array_X = np.array(df)
+            array_y = np.array(label)
+
+            for i in range(len(df) - window):
+                tmp1 = scaler.fit_transform(array_X[i : i + window])
+                tmp2 = array_y[i + window - 1]
+
+                X_list.append(tmp1)
+                y_list.append(tmp2)
+
+        X_array = np.array(X_list)
+        y_array = np.array(y_list)
+
+        return X_array, y_array
 
     def balance_dataframe(self, df, target_column="Result"):
         # 値の出現回数をカウント
@@ -162,30 +151,6 @@ class ModelLibrary:
         balanced_df = pd.concat(balanced_df)
 
         return balanced_df
-
-    def prepare_training_data(self, raw_data, window=10):
-        X = pd.DataFrame()
-        Y = pd.DataFrame()
-
-        for r in raw_data:
-            for i in range(len(r) - window):
-                tmp1 = r.drop(["Result"], axis=1).iloc[i : i + window]
-                # tmp2 = r.Result.iloc[i + window - 1]
-                tmp2 = r["Result"].iloc[i + window - 1]
-
-                X = pd.concat([X, pd.DataFrame([tmp1.values.reshape(-1)])])
-                Y = pd.concat([Y, pd.DataFrame([tmp2])])
-
-        X = X.reset_index(drop=True)
-        Y = Y.reset_index(drop=True)
-
-        Y.columns = ["Result"]
-        XY = self.balance_dataframe(pd.concat([X, Y], axis=1))
-
-        X = XY.drop(["Result"], axis=1)
-        Y = XY["Result"]
-
-        return X, Y
 
     def evaluate_model(self, X, Y):
         # クロスバリデーション用のオブジェクトをインスタンス化する

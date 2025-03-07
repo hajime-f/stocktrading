@@ -39,7 +39,7 @@ if __name__ == "__main__":
     lib.register(symbols)
 
     # モデルライブラリを初期化する
-    model = ModelLibrary(n_symbols)
+    model = ModelLibrary()
     filename = os.path.join("./model/", "model_20250225_153630.pkl")
     model.load_model(filename)
 
