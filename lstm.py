@@ -40,6 +40,14 @@ def downsampling(X_array, y_array):
     # ラベル0のインデックスを取得
     label_0_indices = np.where(y_array == 0)[0]
 
+    if len(label_1_indices) == 0:
+        # ラベル1のサンプルが0個の場合は、ダウンサンプリングを行わない
+        return np.empty([0, 10, 15]), np.empty([0])
+
+    if len(label_0_indices) < len(label_1_indices):
+        # ラベル0のサンプル数がラベル1のサンプル数よりも少ない場合は、ダウンサンプリングを行わない
+        return np.empty([0, 10, 15]), np.empty([0])
+
     # ラベル1のサンプル数と同じ数だけ、ラベル0のデータをランダムにサンプリング
     downsampled_label_0_indices = resample(
         label_0_indices,
@@ -82,6 +90,9 @@ class PredictionModel:
 if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
+
+    array_X = np.empty([0, 10, 15])
+    array_y = np.empty([0])
 
     for code in tqdm(stock_list["code"]):
         df = dm.load_stock_data(code)
@@ -128,11 +139,14 @@ if __name__ == "__main__":
         df = df.dropna()
 
         window = 10
-        array_X = prepare_input_data(df.drop("increase", axis=1), window)
-        array_y = df["increase"].iloc[:-window].values
-        array_X, array_y = downsampling(array_X, array_y)
+        tmp_X = prepare_input_data(df.drop("increase", axis=1), window)
+        tmp_y = df["increase"].iloc[:-window].values
+        tmp_X, tmp_y = downsampling(tmp_X, tmp_y)
 
-        breakpoint()
+        array_X = np.vstack((array_X, tmp_X))
+        array_y = np.hstack((array_y, tmp_y))
+
+    breakpoint()
 
     # 学習用データとテスト用データに分割
     df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]

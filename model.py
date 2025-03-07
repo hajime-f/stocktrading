@@ -137,6 +137,10 @@ class ModelLibrary:
         # ラベル0のインデックスを取得
         label_0_indices = np.where(y_array == 0)[0]
 
+        if len(label_1_indices) == 0:
+            # ラベル1のサンプルが0個の場合は、例外を発生させる
+            raise ValueError("ラベル1のサンプルが0個です。")
+
         # ラベル1のサンプル数と同じ数だけ、ラベル0のデータをランダムにサンプリング
         downsampled_label_0_indices = resample(
             label_0_indices,
