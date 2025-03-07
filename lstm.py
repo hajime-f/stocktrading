@@ -1,15 +1,15 @@
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
 
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, InputLayer
 from keras.layers import Dropout
-from lightgbm import LGBMRegressor
-import matplotlib.pyplot as plt
 
 from data_management import DataManagement
 
@@ -28,6 +28,34 @@ def prepare_input_data(df, window=10):
         X_list.append(df_std)
 
     return np.array(X_list)
+
+
+def downsampling(X_array, y_array):
+    """
+    ラベルの偏りが大きいので、ダウンサンプリングを行う
+    （0が多く1が少ないことを前提としているので、逆になるとエラーが出ることに注意）
+    """
+    # ラベル1のインデックスを取得
+    label_1_indices = np.where(y_array == 1)[0]
+    # ラベル0のインデックスを取得
+    label_0_indices = np.where(y_array == 0)[0]
+
+    # ラベル1のサンプル数と同じ数だけ、ラベル0のデータをランダムにサンプリング
+    downsampled_label_0_indices = resample(
+        label_0_indices,
+        replace=False,
+        n_samples=len(label_1_indices),
+        random_state=42,
+    )
+
+    # ダウンサンプリングしたデータのインデックスとラベル1のインデックスを結合
+    selected_indices = np.concatenate([downsampled_label_0_indices, label_1_indices])
+
+    # X_arrayとy_arrayから選択したインデックスのデータを取得
+    X_downsampled = X_array[selected_indices]
+    y_downsampled = y_array[selected_indices]
+
+    return X_downsampled, y_downsampled
 
 
 class PredictionModel:
@@ -53,47 +81,58 @@ class PredictionModel:
 
 if __name__ == "__main__":
     dm = DataManagement()
-    df = dm.load_stock_data(1301)
+    stock_list = dm.load_stock_list()
 
-    # 日付をインデックスにする
-    df.set_index("date", inplace=True)
+    for code in tqdm(stock_list["code"]):
+        df = dm.load_stock_data(code)
 
-    # 移動平均線を追加する
-    df["MA5"] = df["close"].rolling(window=5).mean()
-    df["MA25"] = df["close"].rolling(window=25).mean()
+        # 日付をインデックスにする
+        df.set_index("date", inplace=True)
 
-    # MACDを追加する
-    df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
-    df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
-    df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
+        # 移動平均線を追加する
+        df["MA5"] = df["close"].rolling(window=5).mean()
+        df["MA25"] = df["close"].rolling(window=25).mean()
 
-    # ボリンジャーバンドを追加する
-    sma20 = df["close"].rolling(window=20).mean()
-    std20 = df["close"].rolling(window=20).std()
-    df["Upper"] = sma20 + (std20 * 2)
-    df["Lower"] = sma20 - (std20 * 2)
+        # MACDを追加する
+        df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
+        df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
+        df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
 
-    # RSIを追加する
-    delta = df["close"].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    df["RSI"] = 100 - (100 / (1 + rs))
+        # ボリンジャーバンドを追加する
+        sma20 = df["close"].rolling(window=20).mean()
+        std20 = df["close"].rolling(window=20).std()
+        df["Upper"] = sma20 + (std20 * 2)
+        df["Lower"] = sma20 - (std20 * 2)
 
-    # 終値の前日比を追加する
-    df_shift = df.shift(1)
-    df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
+        # RSIを追加する
+        delta = df["close"].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df["RSI"] = 100 - (100 / (1 + rs))
 
-    # 始値と終値の差を追加する
-    df["trunk"] = df["open"] - df["close"]
+        # 終値の前日比を追加する
+        df_shift = df.shift(1)
+        df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
 
-    # 翌営業日の終値が当日より2.5%以上上昇していたらフラグを立てる
-    df_shift = df.shift(-1)
-    df["increase"] = 0
-    df.loc[df_shift["close"] > df["close"], "increase"] = 1
+        # 始値と終値の差を追加する
+        df["trunk"] = df["open"] - df["close"]
 
-    # nan を削除
-    df = df.dropna()
+        # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
+        percentage = 3.0
+        df_shift = df.shift(-1)
+        df["increase"] = 0
+        df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+
+        # nan を削除
+        df = df.dropna()
+
+        window = 10
+        array_X = prepare_input_data(df.drop("increase", axis=1), window)
+        array_y = df["increase"].iloc[:-window].values
+        array_X, array_y = downsampling(array_X, array_y)
+
+        breakpoint()
 
     # 学習用データとテスト用データに分割
     df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]

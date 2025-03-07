@@ -3,6 +3,8 @@ import pickle
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
+
 from sklearn.utils import all_estimators
 from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.metrics import classification_report
@@ -10,8 +12,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 import warnings
 
-import pandas as pd
-import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, LSTM, InputLayer
+from keras.layers import Dropout
 
 pd.set_option("display.max_rows", None)
 
@@ -69,7 +72,7 @@ class ModelLibrary:
 
     def add_labels(self, df_list):
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df, 180) for df in df_list]
+        label_list = [self.check_price_change(df, 2.5) for df in df_list]
 
         return label_list
 
@@ -125,6 +128,10 @@ class ModelLibrary:
         return X_array_downsampled, y_array_downsampled
 
     def downsampling(self, X_array, y_array):
+        """
+        ラベルの偏りが大きいので、ダウンサンプリングを行う
+        （0が多く1が少ないことを前提としているので、逆になるとエラーが出ることに注意）
+        """
         # ラベル1のインデックスを取得
         label_1_indices = np.where(y_array == 1)[0]
         # ラベル0のインデックスを取得
@@ -148,6 +155,22 @@ class ModelLibrary:
         y_downsampled = y_array[selected_indices]
 
         return X_downsampled, y_downsampled
+
+    def compile_model(self, shape1, shape2):
+        model = Sequential()
+
+        model.add(InputLayer(shape=(shape1, shape2)))
+        model.add(LSTM(256, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(256, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(1, activation="sigmoid"))
+
+        model.compile(
+            optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"]
+        )
+
+        return model
 
     def evaluate_model(self, X, Y):
         # クロスバリデーション用のオブジェクトをインスタンス化する

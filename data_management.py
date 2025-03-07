@@ -98,6 +98,13 @@ class DataManagement:
 
         return df
 
+    def load_stock_list(self):
+        conn = sqlite3.connect("./data/stock_data.db")
+        with conn:
+            df = pd.read_sql_query("select * from Codes;", conn)
+
+        return df
+
 
 if __name__ == "__main__":
     dm = DataManagement()

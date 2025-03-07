@@ -32,7 +32,15 @@ if __name__ == "__main__":
     label_list = model.add_labels(df_list)
 
     print("学習データを準備しています。")
-    X, Y = model.prepare_training_data(df_list, label_list)
+    X, y = model.prepare_training_data(df_list, label_list)
+
+    breakpoint()
+
+    print("予測モデルをコンパイルしています。")
+    pred_model = model.compile_model(X.shape[1], X.shape[2])
+
+    print("予測モデルを学習させています。")
+    pred_model.fit(X, y, epochs=10, batch_size=64)
 
     print("モデルを評価しています。")
     best_clf = model.evaluate_model(X, Y)
