@@ -73,7 +73,7 @@ class Backtest:
         try:
             df_std = scaler.fit_transform(df)
         except ValueError:
-            return np.empty([0, 10, 15]), False
+            return None, False
 
         X_list.append(df_std)
         return np.array(X_list), True

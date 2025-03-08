@@ -15,7 +15,6 @@ def prepare_input_data(df, window=10):
     scaler = StandardScaler()
 
     try:
-        # with np.errstate(invalid="ignore"):
         df_std = scaler.fit_transform(df)
     except ValueError:
         return np.empty([0, 10, 15]), False
@@ -64,6 +63,9 @@ if __name__ == "__main__":
 
         # 始値と終値の差を追加する
         df["trunk"] = df["open"] - df["close"]
+
+        # nan を削除
+        df = df.dropna()
 
         # データを絞る
         df = df.tail(10)

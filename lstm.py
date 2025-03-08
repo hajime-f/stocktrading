@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 import pandas as pd
 import numpy as np
 
@@ -139,6 +141,12 @@ if __name__ == "__main__":
         # nan を削除
         df = df.dropna()
 
+        # 末尾の行を削除
+        try:
+            df = df.drop(df.index[-1])
+        except IndexError:
+            continue
+
         window = 10
         tmp_X = prepare_input_data(df.drop("increase", axis=1), window)
         tmp_y = df["increase"].iloc[:-window].values
@@ -164,10 +172,18 @@ if __name__ == "__main__":
     print(classification_report(array_y_test, y_pred))
 
     # モデルの保存
-    model.save("./model/model.keras")
+    now = datetime.now()
+    filename = now.strftime("model_%Y%m%d_%H%M%S.keras")
+
+    dirname = "./model"
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    filename = os.path.join(dirname, filename)
+    model.save(filename)
 
     # モデルの読み込み
-    model = load_model("./model/model.keras")
+    model = load_model(filename)
 
     # モデルの再評価
     y_pred = model.predict(array_X_test)

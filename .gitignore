@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .DS_Store
 *.pkl
+*.keras
 debug.png
 *.db
 
