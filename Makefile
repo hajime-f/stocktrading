@@ -12,5 +12,7 @@ init_data:
 	python3 data_management.py
 lstm:
 	python3 lstm.py
+predict:
+	python3 prediction.py
 clear:
 	rm -rf stocklib/__pycache__

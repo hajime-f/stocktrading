@@ -164,10 +164,10 @@ if __name__ == "__main__":
     print(classification_report(array_y_test, y_pred))
 
     # モデルの保存
-    model.save("./model/model.h5")
+    model.save("./model/model.keras")
 
     # モデルの読み込み
-    model = load_model("./model/model.h5")
+    model = load_model("./model/model.keras")
 
     # モデルの再評価
     y_pred = model.predict(array_X_test)
