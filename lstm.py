@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
@@ -94,7 +95,9 @@ if __name__ == "__main__":
     array_X = np.empty([0, 10, 15])
     array_y = np.empty([0])
 
-    for code in tqdm(stock_list["code"]):
+    for i, code in enumerate(stock_list["code"]):
+        print(f"{i}/{len(stock_list)}：{code} のデータを処理しています。")
+
         df = dm.load_stock_data(code)
 
         # 日付をインデックスにする
@@ -146,58 +149,20 @@ if __name__ == "__main__":
         array_X = np.vstack((array_X, tmp_X))
         array_y = np.hstack((array_y, tmp_y))
 
-    breakpoint()
-
-    # 学習用データとテスト用データに分割
-    df_learn = df[(df.index >= "2021-03-01") & (df.index <= "2024-06-30")]
-    df_test = df[(df.index >= "2024-07-01") & (df.index <= "2025-03-06")]
-
-    # 入出力データを準備
-    window = 10
-    array_learn_X = prepare_input_data(df_learn, window)
-    array_learn_y = df_learn["increase"].iloc[:-window].values
-    array_test_X = prepare_input_data(df_test, window)
-    array_test_y = df_test["increase"].iloc[:-window].values
-
-    test_scores = []
-    tss = TimeSeriesSplit(n_splits=4)
-    pred_model = PredictionModel()
-    scaler = StandardScaler()
-
-    for fold, (learn_indices, test_indices) in enumerate(tss.split(array_learn_X)):
-        array_learn_X_validate, array_test_X_validate = (
-            array_learn_X[learn_indices],
-            array_learn_X[test_indices],
-        )
-        array_learn_y_validate, array_test_y_validate = (
-            array_learn_y[learn_indices],
-            array_learn_y[test_indices],
-        )
-
-        model = pred_model.DNN_compile(array_learn_X_validate)
-
-        model.fit(
-            array_learn_X_validate, array_learn_y_validate, epochs=10, batch_size=64
-        )
-        y_test_pred = model.predict(array_test_X_validate)
-        y_test_pred = np.where(y_test_pred < 0.5, 0, 1)
-        score = accuracy_score(array_test_y_validate, y_test_pred)
-        print(f"fold {fold} MAE: {score}")
-
-        test_scores.append(score)
-
-    print(f"test_scores: {test_scores}")
-    print(f"CV score: {np.mean(test_scores)}")
+    array_X_learn, array_X_test, array_y_learn, array_y_test = train_test_split(
+        array_X, array_y, test_size=0.3, random_state=42
+    )
 
     # モデルの学習
-    model = pred_model.DNN_compile(array_learn_X)
-    model.fit(array_learn_X, array_learn_y, batch_size=64, epochs=10)
+    pred_model = PredictionModel()
+    model = pred_model.DNN_compile(array_X_learn)
+    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=10)
 
     # モデルの評価
-    y_pred = model.predict(array_test_X)
+    y_pred = model.predict(array_X_test)
     y_pred = (y_pred > 0.5).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=array_test_y, y_pred=y_pred))
-    print(classification_report(array_test_y, y_pred))
+    print("accuracy = ", accuracy_score(y_true=array_y_test, y_pred=y_pred))
+    print(classification_report(array_y_test, y_pred))
 
     breakpoint()

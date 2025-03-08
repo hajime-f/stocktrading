@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print("データにラベルを追加しています。")
     label_list = model.add_labels(df_list)
 
-    print("学習データを準備しています。")
+    print("学習用データと検証用データを準備しています。")
     X, y = model.prepare_training_data(df_list, label_list)
 
     breakpoint()

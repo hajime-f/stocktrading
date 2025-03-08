@@ -75,7 +75,8 @@ class DataManagement:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            data_df = yf.download(code + ".T", period="max")
+            data_df = yf.download(code + ".T", start="2020-01-01", end=datetime.now())
+            # data_df = yf.download(code + ".T", period="max")
             data_df.columns = data_df.columns.get_level_values(0)
             data_df.columns = data_df.columns.str.lower()
             data_df["date"] = data_df.index
