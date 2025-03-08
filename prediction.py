@@ -15,8 +15,8 @@ def prepare_input_data(df, window=10):
     scaler = StandardScaler()
 
     try:
-        with np.errstate(invalid="ignore"):
-            df_std = scaler.fit_transform(df)
+        # with np.errstate(invalid="ignore"):
+        df_std = scaler.fit_transform(df)
     except ValueError:
         return np.empty([0, 10, 15]), False
 

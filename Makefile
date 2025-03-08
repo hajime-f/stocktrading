@@ -14,5 +14,7 @@ lstm:
 	python3 lstm.py
 predict:
 	python3 prediction.py
+backtest:
+	python3 backtest.py
 clear:
 	rm -rf stocklib/__pycache__
