@@ -1,14 +1,12 @@
-from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
-from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, LSTM, InputLayer
 from keras.layers import Dropout
 
@@ -159,6 +157,19 @@ if __name__ == "__main__":
     model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=10)
 
     # モデルの評価
+    y_pred = model.predict(array_X_test)
+    y_pred = (y_pred > 0.5).astype(int)
+
+    print("accuracy = ", accuracy_score(y_true=array_y_test, y_pred=y_pred))
+    print(classification_report(array_y_test, y_pred))
+
+    # モデルの保存
+    model.save("./model/model.h5")
+
+    # モデルの読み込み
+    model = load_model("./model/model.h5")
+
+    # モデルの再評価
     y_pred = model.predict(array_X_test)
     y_pred = (y_pred > 0.5).astype(int)
 
