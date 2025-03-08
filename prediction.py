@@ -74,7 +74,7 @@ if __name__ == "__main__":
         if not flag:
             continue
         y_pred = model.predict(array_X, verbose=0)
-        y_pred = (y_pred > 0.5).astype(int)
+        y_pred = (y_pred > 0.8).astype(int)
 
         if y_pred:
             print(f"{code}, {stock_list['brand'][i]}")

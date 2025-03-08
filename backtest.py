@@ -101,17 +101,17 @@ if __name__ == "__main__":
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
 
-            X_array, flag = bt.prepare_input_data(
+            array_X, flag = bt.prepare_input_data(
                 df_test.drop("increase", axis=1), window
             )
             if not flag:
                 continue
-            y_array = df_test.tail(1)["increase"].values
+            array_y = df_test.tail(1)["increase"].values
 
-            pred = bt.model.predict(X_array, verbose=0)
+            pred = bt.model.predict(array_X, verbose=0)
             pred = (pred > 0.5).astype(int)
 
-            if pred[0][0] == y_array[0]:
+            if pred[0][0] == array_y[0]:
                 accuracy.append(1)
             else:
                 accuracy.append(0)
@@ -132,11 +132,11 @@ if __name__ == "__main__":
         # データを絞る
         df_test = df_test.tail(window)
 
-        X_array, flag = bt.prepare_input_data(df_test, window)
+        array_X, flag = bt.prepare_input_data(df_test, window)
         if not flag:
             continue
 
-        pred = bt.model.predict(X_array, verbose=0)
+        pred = bt.model.predict(array_X, verbose=0)
         pred = (pred > 0.5).astype(int)
 
         if pred[0][0]:

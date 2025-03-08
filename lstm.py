@@ -191,5 +191,3 @@ if __name__ == "__main__":
 
     print("accuracy = ", accuracy_score(y_true=array_y_test, y_pred=y_pred))
     print(classification_report(array_y_test, y_pred))
-
-    breakpoint()
