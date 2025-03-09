@@ -14,7 +14,7 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model.keras")
+        self.model = load_model("./model/model_20250309_000200.keras")
 
         self.window = window
         self.test_size = test_size
@@ -109,7 +109,7 @@ if __name__ == "__main__":
             array_y = df_test.tail(1)["increase"].values
 
             pred = bt.model.predict(array_X, verbose=0)
-            pred = (pred > 0.5).astype(int)
+            pred = (pred > 0.999).astype(int)
 
             if pred[0][0] == array_y[0]:
                 accuracy.append(1)
@@ -122,22 +122,22 @@ if __name__ == "__main__":
 
     print(f"正答率: {accuracy_rate}")
 
-    for i, code in enumerate(bt.stock_list["code"]):
-        # データを読み込む
-        df_test = bt.dm.load_stock_data(code).tail(window * 5)
+    # for i, code in enumerate(bt.stock_list["code"]):
+    #     # データを読み込む
+    #     df_test = bt.dm.load_stock_data(code).tail(window * 5)
 
-        # テクニカル指標を追加する
-        df_test = bt.add_technical_indicators(df_test)
+    #     # テクニカル指標を追加する
+    #     df_test = bt.add_technical_indicators(df_test)
 
-        # データを絞る
-        df_test = df_test.tail(window)
+    #     # データを絞る
+    #     df_test = df_test.tail(window)
 
-        array_X, flag = bt.prepare_input_data(df_test, window)
-        if not flag:
-            continue
+    #     array_X, flag = bt.prepare_input_data(df_test, window)
+    #     if not flag:
+    #         continue
 
-        pred = bt.model.predict(array_X, verbose=0)
-        pred = (pred > 0.5).astype(int)
+    #     pred = bt.model.predict(array_X, verbose=0)
+    #     pred = (pred > 0.9).astype(int)
 
-        if pred[0][0]:
-            print(f"{code}, {bt.stock_list['brand'][i]}")
+    #     if pred[0][0]:
+    #         print(f"{code}, {bt.stock_list['brand'][i]}")

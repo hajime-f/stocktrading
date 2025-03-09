@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     # モデルの保存
     now = datetime.now()
-    filename = now.strftime("model_%Y%m%d_%H%M%S.keras")
+    filename = now.strftime("model_swingtrade_%Y%m%d_%H%M%S.keras")
 
     dirname = "./model"
     if not os.path.exists(dirname):

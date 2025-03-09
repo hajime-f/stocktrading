@@ -27,7 +27,7 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    model = load_model("./model/model.keras")
+    model = load_model("./model/model_20250309_000200.keras")
 
     for i, code in enumerate(stock_list["code"]):
         df = dm.load_stock_data(code).tail(10 * 5)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         if not flag:
             continue
         y_pred = model.predict(array_X, verbose=0)
-        y_pred = (y_pred > 0.8).astype(int)
+        y_pred = (y_pred > 0.999).astype(int)
 
         if y_pred:
             print(f"{code}, {stock_list['brand'][i]}")

@@ -1,5 +1,10 @@
 import os
 import pickle
+from datetime import datetime
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from keras.models import load_model
 
 from model import ModelLibrary
 
@@ -32,27 +37,41 @@ if __name__ == "__main__":
     label_list = model.add_labels(df_list)
 
     print("学習用データと検証用データを準備しています。")
-    X, y = model.prepare_training_data(df_list, label_list)
-
-    breakpoint()
+    X, y = model.prepare_data(df_list, label_list)
+    X_learn, X_test, y_learn, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42
+    )
 
     print("予測モデルをコンパイルしています。")
     pred_model = model.compile_model(X.shape[1], X.shape[2])
 
     print("予測モデルを学習させています。")
-    pred_model.fit(X, y, epochs=10, batch_size=64)
+    pred_model.fit(X_learn, y_learn, epochs=10, batch_size=64)
 
-    print("モデルを評価しています。")
-    best_clf = model.evaluate_model(X, Y)
+    print("予測モデルを評価しています。")
+    pred = pred_model.predict(X_test)
+    pred = (pred > 0.5).astype(int)
 
-    print("モデルを検証しています。")
-    clf = model.validate_model(best_clf, X, Y)
+    print("accuracy = ", accuracy_score(y_true=y_test, y_pred=pred))
+    print(classification_report(y_test, pred))
 
     print("学習済みモデルを保存しています。")
-    filename = model.save_model(clf)
+    now = datetime.now()
+    filename = now.strftime("model_daytrade_%Y%m%d_%H%M%S.keras")
+
+    dirname = "./model"
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    filename = os.path.join(dirname, filename)
+    pred_model.save(filename)
 
     print("学習済みモデルを復元しています。")
-    clf = model.load_model(filename)
+    pred_model = load_model(filename)
 
-    print("モデルを再度検証しています。")
-    trained_clf = model.validate_model(clf, X, Y)
+    print("予測モデルを再評価しています。")
+    pred = pred_model.predict(X_test)
+    pred = (pred > 0.5).astype(int)
+
+    print("accuracy = ", accuracy_score(y_true=y_test, y_pred=pred))
+    print(classification_report(y_test, pred))

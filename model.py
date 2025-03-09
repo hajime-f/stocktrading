@@ -98,16 +98,16 @@ class ModelLibrary:
 
         return result
 
-    def prepare_training_data(self, df_list, label_list, window=10):
-        # 学習データを準備する
+    def prepare_data(self, df_list, label_list, window=10):
+        # 学習用データと検証用データを準備する
 
         df_list = [df.dropna() for df in df_list]
         label_list = [label.dropna() for label in label_list]
 
         scaler = StandardScaler()
 
-        X_list = []
-        y_list = []
+        list_X = []
+        list_y = []
 
         for df, label in zip(df_list, label_list):
             array_X = np.array(df)
@@ -117,13 +117,13 @@ class ModelLibrary:
                 tmp1 = scaler.fit_transform(array_X[i : i + window])
                 tmp2 = array_y[i + window - 1]
 
-                X_list.append(tmp1)
-                y_list.append(tmp2)
+                list_X.append(tmp1)
+                list_y.append(tmp2)
 
-        X_array = np.array(X_list)
-        y_array = np.array(y_list)
+        array_X = np.array(list_X)
+        array_y = np.array(list_y)
 
-        X_array_downsampled, y_array_downsampled = self.downsampling(X_array, y_array)
+        X_array_downsampled, y_array_downsampled = self.downsampling(array_X, array_y)
 
         return X_array_downsampled, y_array_downsampled
 
