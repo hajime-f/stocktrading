@@ -102,7 +102,7 @@ class DataManagement:
             data_df["date"] = pd.to_datetime(data_df["date"]).dt.strftime("%Y-%m-%d")
 
             # 出来高の小さい銘柄は削除・スキップする
-            if data_df["volume"].mean() < 10000:
+            if data_df["volume"].mean() < 50000:
                 with conn:
                     conn.execute(f"delete from Codes where code = '{code}';")
                 continue
