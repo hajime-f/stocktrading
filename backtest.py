@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
 from keras.models import load_model
 
 from data_management import DataManagement
@@ -86,6 +87,9 @@ if __name__ == "__main__":
     bt = Backtest(window, test_size)
     accuracy = []
 
+    array_y_stack = np.empty([0])
+    pred_stack = np.empty([0])
+
     for i, code in enumerate(bt.stock_list["code"]):
         print(f"{i + 1}/{len(bt.stock_list)}：{code} のデータを処理しています。")
 
@@ -96,7 +100,7 @@ if __name__ == "__main__":
         df = bt.add_technical_indicators(df)
 
         # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        df = bt.add_labels(df, percentage=3.0)
+        df = bt.add_labels(df, percentage=1.0)
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
@@ -109,7 +113,10 @@ if __name__ == "__main__":
             array_y = df_test.tail(1)["increase"].values
 
             pred = bt.model.predict(array_X, verbose=0)
-            pred = (pred > 0.999).astype(int)
+            pred = (pred > 0.5).astype(int)
+
+            array_y_stack = np.append(array_y_stack, array_y)
+            pred_stack = np.append(pred_stack, pred)
 
             if pred[0][0] == array_y[0]:
                 accuracy.append(1)
@@ -120,7 +127,11 @@ if __name__ == "__main__":
     accuracy = np.array(accuracy)
     accuracy_rate = accuracy.sum() / len(accuracy)
 
+    print(classification_report(array_y_stack, pred_stack))
+
     print(f"正答率: {accuracy_rate}")
+
+    breakpoint()
 
     # for i, code in enumerate(bt.stock_list["code"]):
     #     # データを読み込む
@@ -137,7 +148,7 @@ if __name__ == "__main__":
     #         continue
 
     #     pred = bt.model.predict(array_X, verbose=0)
-    #     pred = (pred > 0.999).astype(int)
+    #     pred = (pred > 0.5).astype(int)
 
     #     if pred[0][0]:
     #         print(f"{code}, {bt.stock_list['brand'][i]}")
