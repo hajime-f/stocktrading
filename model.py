@@ -72,7 +72,7 @@ class ModelLibrary:
 
     def add_labels(self, df_list):
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df, 2.5) for df in df_list]
+        label_list = [self.check_price_change(df, 1.0) for df in df_list]
 
         return label_list
 
