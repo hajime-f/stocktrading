@@ -14,7 +14,7 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model_20250309_000200.keras")
+        self.model = load_model("./model/model_swingtrade_20250310_182001.keras")
 
         self.window = window
         self.test_size = test_size
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     #         continue
 
     #     pred = bt.model.predict(array_X, verbose=0)
-    #     pred = (pred > 0.9).astype(int)
+    #     pred = (pred > 0.999).astype(int)
 
     #     if pred[0][0]:
     #         print(f"{code}, {bt.stock_list['brand'][i]}")

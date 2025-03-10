@@ -17,7 +17,7 @@ def prepare_input_data(df, window=10):
     try:
         df_std = scaler.fit_transform(df)
     except ValueError:
-        return np.empty([0, 10, 15]), False
+        return None, False
 
     X_list.append(df_std)
     return np.array(X_list), True
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    model = load_model("./model/model_20250309_000200.keras")
+    model = load_model("./model/model_swingtrade_20250310_182001.keras")
 
     for i, code in enumerate(stock_list["code"]):
         df = dm.load_stock_data(code).tail(10 * 5)
