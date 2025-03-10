@@ -3,9 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .DS_Store
-*.pkl
 *.keras
-debug.png
 *.db
 
 # C extensions
