@@ -135,13 +135,13 @@ if __name__ == "__main__":
     array_y = np.empty([0])
 
     for i, code in enumerate(stock_list["code"]):
-        print(f"{i}/{len(stock_list)}：{code} のデータを処理しています。")
+        print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
 
         # データを読み込んで特徴を追加
         df = add_technical_indicators(dm.load_stock_data(code))
 
         # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage = 3.0
+        percentage = 1.0
         df_shift = df.shift(-1)
         df["increase"] = 0
         df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         window = 10
         tmp_X = prepare_input_data(df.drop("increase", axis=1), window)
         tmp_y = df["increase"].iloc[:-window].values
-        tmp_X, tmp_y = downsampling(tmp_X, tmp_y)
+        # tmp_X, tmp_y = downsampling(tmp_X, tmp_y)
 
         array_X = np.vstack((array_X, tmp_X))
         array_y = np.hstack((array_y, tmp_y))
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     # モデルの学習
     pred_model = PredictionModel()
     model = pred_model.DNN_compile(array_X_learn)
-    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=10)
+    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=3)
 
     # モデルの評価
     y_pred = model.predict(array_X_test)
