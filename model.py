@@ -1,20 +1,14 @@
 import os
-import pickle
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
-from sklearn.utils import all_estimators
-from sklearn.model_selection import KFold, cross_val_score, train_test_split
-from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
-import warnings
 
-from keras.models import Sequential
-from keras.layers import Dense, LSTM, InputLayer
-from keras.layers import Dropout
+from keras.models import Sequential, load_model
+from keras.layers import Dense, LSTM, InputLayer, Dropout
 
 pd.set_option("display.max_rows", None)
 
@@ -123,9 +117,9 @@ class ModelLibrary:
         array_X = np.array(list_X)
         array_y = np.array(list_y)
 
-        X_array_downsampled, y_array_downsampled = self.downsampling(array_X, array_y)
+        array_X_downsampled, array_y_downsampled = self.downsampling(array_X, array_y)
 
-        return X_array_downsampled, y_array_downsampled
+        return array_X_downsampled, array_y_downsampled
 
     def downsampling(self, X_array, y_array):
         """
@@ -176,50 +170,6 @@ class ModelLibrary:
 
         return model
 
-    def evaluate_model(self, X, Y):
-        # クロスバリデーション用のオブジェクトをインスタンス化する
-        kfold_cv = KFold(n_splits=6, shuffle=False)
-        warnings.filterwarnings("ignore")
-
-        # classifier のアルゴリズムをすべて取得する
-        all_Algorithms = all_estimators(type_filter="classifier")
-        warnings.filterwarnings("ignore")
-
-        best_clf = None
-        max_score = -1
-
-        # 各分類アルゴリズムをクロスバリデーションで評価する
-        for name, algorithm in all_Algorithms:
-            try:
-                clf = algorithm()
-                if hasattr(clf, "score"):
-                    scores = cross_val_score(clf, X, Y, cv=kfold_cv)
-                    m = round(np.mean(scores) * 100, 2)
-                    print(name, "の正解率：", m, "％")
-                    if max_score < m:
-                        best_clf = clf
-                        max_score = m
-
-            except Exception:
-                pass
-
-        return best_clf
-
-    def validate_model(self, clf, X, Y):
-        # データを学習用データとテスト用データに分割する
-        X_train, X_test, Y_train, Y_test = train_test_split(
-            X, Y, test_size=0.2, random_state=42
-        )
-
-        # モデルを学習する
-        clf = clf.fit(X_train, Y_train)
-
-        # モデルを評価する
-        Y_pred = clf.predict(X_test)
-        print(classification_report(Y_test, Y_pred))
-
-        return clf
-
     def save_model(self, model):
         now = datetime.now()
         filename = now.strftime("model_%Y%m%d_%H%M%S.pkl")
@@ -230,16 +180,13 @@ class ModelLibrary:
 
         filename = os.path.join(dirname, filename)
 
-        with open(filename, "wb") as f:
-            pickle.dump(model, f)
+        model.save(filename)
 
         return filename
 
     def load_model(self, filename):
-        with open(filename, "rb") as f:
-            self.clf = pickle.load(f)
-
-        return self.clf
+        self.model = load_model(filename)
+        return self.model
 
     def predict(self, data):
-        return self.clf.predict(data)
+        return self.model.predict(data)
