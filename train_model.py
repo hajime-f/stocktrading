@@ -12,9 +12,7 @@ from model import ModelLibrary
 if __name__ == "__main__":
     # データファイル名
     filename_list = [
-        "data_20250220_153727.pkl",
-        "data_20250221_161509.pkl",
-        "data_20250225_153300.pkl",
+        "data_20250310_153016.pkl",
     ]
     df_list = []
     n_symbols = 0
@@ -41,7 +39,7 @@ if __name__ == "__main__":
     X_learn, X_test, y_learn, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
-
+    breakpoint()
     print("予測モデルをコンパイルしています。")
     pred_model = model.compile_model(X.shape[1], X.shape[2])
 
