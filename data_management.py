@@ -70,13 +70,28 @@ class DataManagement:
         """
         stocks_df = pd.read_csv("./data/data_j.csv")
 
+        # market が「ETF・ETN」「PRO Market」「REIT」「出資証券」は削除する
+        stocks_df = stocks_df[stocks_df["market"] != "ETF・ETN"]
+        stocks_df = stocks_df[stocks_df["market"] != "PRO Market"]
+        stocks_df = stocks_df[
+            stocks_df["market"]
+            != "REIT・ベンチャーファンド・カントリーファンド・インフラファンド"
+        ]
+        stocks_df = stocks_df[stocks_df["market"] != "出資証券"]
+
         conn = sqlite3.connect("./data/stock_data.db")
         with conn:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
             data_df = yf.download(code + ".T", start="2020-01-01", end=datetime.now())
-            # data_df = yf.download(code + ".T", period="max")
+
+            # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
+            if data_df.empty:
+                with conn:
+                    conn.execute(f"delete from Codes where code = '{code}';")
+                continue
+
             data_df.columns = data_df.columns.get_level_values(0)
             data_df.columns = data_df.columns.str.lower()
             data_df["date"] = data_df.index
@@ -86,7 +101,12 @@ class DataManagement:
             data_df = data_df.reset_index(drop=True)
             data_df["date"] = pd.to_datetime(data_df["date"]).dt.strftime("%Y-%m-%d")
 
-            conn = sqlite3.connect("./data/stock_data.db")
+            # 出来高の小さい銘柄は削除・スキップする
+            if data_df["volume"].mean() < 10000:
+                with conn:
+                    conn.execute(f"delete from Codes where code = '{code}';")
+                continue
+
             with conn:
                 data_df.to_sql(code, conn, if_exists="replace", index=False)
 
