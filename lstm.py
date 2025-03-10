@@ -67,6 +67,45 @@ def downsampling(X_array, y_array):
     return X_downsampled, y_downsampled
 
 
+def add_technical_indicators(df):
+    # 日付をインデックスにする
+    df.set_index("date", inplace=True)
+
+    # 移動平均線を追加する
+    df["MA5"] = df["close"].rolling(window=5).mean()
+    df["MA25"] = df["close"].rolling(window=25).mean()
+
+    # MACDを追加する
+    df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
+    df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
+    df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
+
+    # ボリンジャーバンドを追加する
+    sma20 = df["close"].rolling(window=20).mean()
+    std20 = df["close"].rolling(window=20).std()
+    df["Upper"] = sma20 + (std20 * 2)
+    df["Lower"] = sma20 - (std20 * 2)
+
+    # RSIを追加する
+    delta = df["close"].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    df["RSI"] = 100 - (100 / (1 + rs))
+
+    # 終値の前日比を追加する
+    df_shift = df.shift(1)
+    df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
+
+    # 始値と終値の差を追加する
+    df["trunk"] = df["open"] - df["close"]
+
+    # nan を削除
+    df = df.dropna()
+
+    return df
+
+
 class PredictionModel:
     def __init__(self):
         pass
@@ -98,48 +137,14 @@ if __name__ == "__main__":
     for i, code in enumerate(stock_list["code"]):
         print(f"{i}/{len(stock_list)}：{code} のデータを処理しています。")
 
-        df = dm.load_stock_data(code)
-
-        # 日付をインデックスにする
-        df.set_index("date", inplace=True)
-
-        # 移動平均線を追加する
-        df["MA5"] = df["close"].rolling(window=5).mean()
-        df["MA25"] = df["close"].rolling(window=25).mean()
-
-        # MACDを追加する
-        df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
-        df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
-        df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
-
-        # ボリンジャーバンドを追加する
-        sma20 = df["close"].rolling(window=20).mean()
-        std20 = df["close"].rolling(window=20).std()
-        df["Upper"] = sma20 + (std20 * 2)
-        df["Lower"] = sma20 - (std20 * 2)
-
-        # RSIを追加する
-        delta = df["close"].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        df["RSI"] = 100 - (100 / (1 + rs))
-
-        # 終値の前日比を追加する
-        df_shift = df.shift(1)
-        df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
-
-        # 始値と終値の差を追加する
-        df["trunk"] = df["open"] - df["close"]
+        # データを読み込んで特徴を追加
+        df = add_technical_indicators(dm.load_stock_data(code))
 
         # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
         percentage = 3.0
         df_shift = df.shift(-1)
         df["increase"] = 0
         df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
-
-        # nan を削除
-        df = df.dropna()
 
         # 末尾の行を削除
         try:
