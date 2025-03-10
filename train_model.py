@@ -39,7 +39,7 @@ if __name__ == "__main__":
     X_learn, X_test, y_learn, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
-    breakpoint()
+
     print("予測モデルをコンパイルしています。")
     pred_model = model.compile_model(X.shape[1], X.shape[2])
 
@@ -54,18 +54,10 @@ if __name__ == "__main__":
     print(classification_report(y_test, pred))
 
     print("学習済みモデルを保存しています。")
-    now = datetime.now()
-    filename = now.strftime("model_daytrade_%Y%m%d_%H%M%S.keras")
-
-    dirname = "./model"
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    filename = os.path.join(dirname, filename)
-    pred_model.save(filename)
+    filename = model.save_model(pred_model)
 
     print("学習済みモデルを復元しています。")
-    pred_model = load_model(filename)
+    pred_model = model.load_model(filename)
 
     print("予測モデルを再評価しています。")
     pred = pred_model.predict(X_test)
