@@ -15,7 +15,7 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model_swingtrade_20250310_182001.keras")
+        self.model = load_model("./model/model_swingtrade_20250311_114554.keras")
 
         self.window = window
         self.test_size = test_size
@@ -66,18 +66,15 @@ class Backtest:
         return df
 
     def prepare_input_data(self, df, window=10):
-        X_list = []
-
-        df = np.array(df)
+        array = np.array(df)
         scaler = StandardScaler()
 
         try:
-            df_std = scaler.fit_transform(df)
+            array_std = scaler.fit_transform(array)
         except ValueError:
             return None, False
 
-        X_list.append(df_std)
-        return np.array(X_list), True
+        return np.array([array_std]), True
 
 
 if __name__ == "__main__":
@@ -85,7 +82,6 @@ if __name__ == "__main__":
     test_size = 10
 
     bt = Backtest(window, test_size)
-    accuracy = []
 
     array_y_stack = np.empty([0])
     pred_stack = np.empty([0])
@@ -100,7 +96,7 @@ if __name__ == "__main__":
         df = bt.add_technical_indicators(df)
 
         # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        df = bt.add_labels(df, percentage=1.0)
+        df = bt.add_labels(df, percentage=0.0)
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
@@ -118,20 +114,7 @@ if __name__ == "__main__":
             array_y_stack = np.append(array_y_stack, array_y)
             pred_stack = np.append(pred_stack, pred)
 
-            if pred[0][0] == array_y[0]:
-                accuracy.append(1)
-            else:
-                accuracy.append(0)
-
-    # 正答率を計算する
-    accuracy = np.array(accuracy)
-    accuracy_rate = accuracy.sum() / len(accuracy)
-
     print(classification_report(array_y_stack, pred_stack))
-
-    print(f"正答率: {accuracy_rate}")
-
-    breakpoint()
 
     # for i, code in enumerate(bt.stock_list["code"]):
     #     # データを読み込む

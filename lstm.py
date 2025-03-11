@@ -16,19 +16,20 @@ from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
 
+window = 10
+test_size = 10
+
 
 def prepare_input_data(df, window=10):
-    X_list = []
-
-    df = np.array(df)
+    array = np.array(df)
     scaler = StandardScaler()
 
-    for i in range(len(df) - window):
-        df_s = df[i : i + window]
-        df_std = scaler.fit_transform(df_s)
-        X_list.append(df_std)
+    try:
+        array_std = scaler.fit_transform(array)
+    except ValueError:
+        return None, False
 
-    return np.array(X_list)
+    return np.array([array_std]), True
 
 
 def downsampling(X_array, y_array):
@@ -43,11 +44,11 @@ def downsampling(X_array, y_array):
 
     if len(label_1_indices) == 0:
         # ラベル1のサンプルが0個の場合は、ダウンサンプリングを行わない
-        return np.empty([0, 10, 15]), np.empty([0])
+        return np.empty([0, window, 15]), np.empty([0])
 
     if len(label_0_indices) < len(label_1_indices):
         # ラベル0のサンプル数がラベル1のサンプル数よりも少ない場合は、ダウンサンプリングを行わない
-        return np.empty([0, 10, 15]), np.empty([0])
+        return np.empty([0, window, 15]), np.empty([0])
 
     # ラベル1のサンプル数と同じ数だけ、ラベル0のデータをランダムにサンプリング
     downsampled_label_0_indices = resample(
@@ -106,6 +107,14 @@ def add_technical_indicators(df):
     return df
 
 
+def add_labels(df, percentage=1.0):
+    df_shift = df.shift(-1)
+    df["increase"] = 0
+    df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+
+    return df
+
+
 class PredictionModel:
     def __init__(self):
         pass
@@ -131,34 +140,33 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    array_X = np.empty([0, 10, 15])
+    array_X = np.empty([0, window, 15])
     array_y = np.empty([0])
 
     for i, code in enumerate(stock_list["code"]):
         print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
 
-        # データを読み込んで特徴を追加
-        df = add_technical_indicators(dm.load_stock_data(code))
+        # データを読み込む
+        df = dm.load_stock_data(code).tail(window * test_size)
+
+        # テクニカル指標を追加
+        df = add_technical_indicators(df)
 
         # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage = 1.0
-        df_shift = df.shift(-1)
-        df["increase"] = 0
-        df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+        df = add_labels(df, percentage=0.0)
 
-        # 末尾の行を削除
-        try:
-            df = df.drop(df.index[-1])
-        except IndexError:
-            continue
+        for j in range(test_size, 0, -1):
+            df_test = df.iloc[-window - j : -j]
 
-        window = 10
-        tmp_X = prepare_input_data(df.drop("increase", axis=1), window)
-        tmp_y = df["increase"].iloc[:-window].values
-        # tmp_X, tmp_y = downsampling(tmp_X, tmp_y)
+            tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1), window)
+            if not flag:
+                continue
+            tmp_y = df_test.tail(1)["increase"].values
 
-        array_X = np.vstack((array_X, tmp_X))
-        array_y = np.hstack((array_y, tmp_y))
+            array_X = np.vstack((array_X, tmp_X))
+            array_y = np.hstack((array_y, tmp_y))
+
+    # array_X, array_y = downsampling(array_X, array_y)
 
     array_X_learn, array_X_test, array_y_learn, array_y_test = train_test_split(
         array_X, array_y, test_size=0.3, random_state=42
@@ -167,7 +175,7 @@ if __name__ == "__main__":
     # モデルの学習
     pred_model = PredictionModel()
     model = pred_model.DNN_compile(array_X_learn)
-    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=3)
+    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=10)
 
     # モデルの評価
     y_pred = model.predict(array_X_test)
