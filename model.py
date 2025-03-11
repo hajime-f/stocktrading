@@ -66,7 +66,7 @@ class ModelLibrary:
 
     def add_labels(self, df_list):
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df, 1.0) for df in df_list]
+        label_list = [self.check_price_change(df, 0.5) for df in df_list]
 
         return label_list
 
@@ -117,9 +117,11 @@ class ModelLibrary:
         array_X = np.array(list_X)
         array_y = np.array(list_y)
 
-        array_X_downsampled, array_y_downsampled = self.downsampling(array_X, array_y)
+        # array_X_downsampled, array_y_downsampled = self.downsampling(array_X, array_y)
 
-        return array_X_downsampled, array_y_downsampled
+        # return array_X_downsampled, array_y_downsampled
+
+        return array_X, array_y
 
     def downsampling(self, X_array, y_array):
         """
