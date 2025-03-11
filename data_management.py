@@ -92,6 +92,12 @@ class DataManagement:
                     conn.execute(f"delete from Codes where code = '{code}';")
                 continue
 
+            # データの少ない銘柄は削除・スキップする
+            if len(data_df) < 100:
+                with conn:
+                    conn.execute(f"delete from Codes where code = '{code}';")
+                continue
+
             data_df.columns = data_df.columns.get_level_values(0)
             data_df.columns = data_df.columns.str.lower()
             data_df["date"] = data_df.index
