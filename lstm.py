@@ -105,21 +105,28 @@ def add_technical_indicators(df):
 
 
 def add_labels(df, percentage=1.0, day_window=3):
-    result = pd.DataFrame(np.zeros((len(df), 1)), columns=["increase"])
+    df_shift = df.shift(-day_window)
+    df["increase"] = 0
+    df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
 
-    for i in range(day_window):
-        shifted_df = df.shift(-(i + 1))
-        result[f"increase_{i + 1}"] = 0
-        condition = (shifted_df["close"] > df["close"] * (1 + percentage / 100)).values
-        result.loc[condition, f"increase_{i + 1}"] = 1
+    return df
 
-    for i in range(day_window):
-        result["increase"] += result[f"increase_{i + 1}"]
-        result.drop(f"increase_{i + 1}", axis=1, inplace=True)
 
-    result.loc[result["increase"] > 0, "increase"] = 1
+# result = pd.DataFrame(np.zeros((len(df), 1)), columns=["increase"])
 
-    return result
+# for i in range(day_window):
+#     shifted_df = df.shift(-(i + 1))
+#     result[f"increase_{i + 1}"] = 0
+#     condition = (shifted_df["close"] > df["close"] * (1 + percentage / 100)).values
+#     result.loc[condition, f"increase_{i + 1}"] = 1
+
+# for i in range(day_window):
+#     result["increase"] += result[f"increase_{i + 1}"]
+#     result.drop(f"increase_{i + 1}", axis=1, inplace=True)
+
+# result.loc[result["increase"] > 0, "increase"] = 1
+
+# return pd.concat([df, result], axis=1)
 
 
 class PredictionModel:
@@ -160,9 +167,10 @@ if __name__ == "__main__":
         df = add_technical_indicators(df)
         df = df.reset_index(drop=True).drop("date", axis=1)
 
-        # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        labels = add_labels(df, percentage=1.0)
-        df = pd.concat([df, labels], axis=1)
+        # day_window日後の終値が当日よりpercentage%以上上昇していたらフラグを立てる
+        percentage, day_window = 0.5, 3
+        df = add_labels(df, percentage=percentage, day_window=day_window)
+        df = df.iloc[:-day_window]
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
