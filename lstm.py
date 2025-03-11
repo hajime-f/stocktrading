@@ -110,16 +110,20 @@ def add_labels(df, percentage=1.0, day_window=3):
     for i in range(day_window):
         shifted_df = df.shift(-(i + 1))
         result[f"increase_{i + 1}"] = 0
-        condition = (shifted_df["close"] > df["close"] * (1 + percentage / 100)).values
-        result.loc[condition, f"increase_{i + 1}"] = 1
+        result.loc[
+            shifted_df["close"] > df["close"] * (1 + percentage / 100),
+            f"increase_{i + 1}",
+        ] = 1
 
+    result["increase"] = 0
     for i in range(day_window):
         result["increase"] += result[f"increase_{i + 1}"]
         result.drop(f"increase_{i + 1}", axis=1, inplace=True)
 
     result.loc[result["increase"] > 0, "increase"] = 1
+    result.index = df.index
 
-    return pd.concat([df, result], axis=1)
+    return pd.concat([df, result], axis=1).iloc[:-day_window]
 
 
 class PredictionModel:
