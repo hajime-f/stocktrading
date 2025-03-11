@@ -15,7 +15,7 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model_swingtrade_20250311_215636.keras")
+        self.model = load_model("./model/model_swingtrade_20250312_002952.keras")
 
         self.window = window
         self.test_size = test_size
@@ -52,6 +52,22 @@ class Backtest:
 
         # 始値と終値の差を追加する
         df["trunk"] = df["open"] - df["close"]
+
+        # 移動平均線乖離率を追加する
+        df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
+        df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
+
+        # MACDの乖離率を追加する
+        df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
+
+        # RSIの乖離率を追加する
+        df["RSI_rate"] = (df["RSI"] - 50) / 50
+
+        # ボリンジャーバンドの乖離率を追加する
+        df["Upper_rate"] = (df["close"] - df["Upper"]) / df["Upper"]
+
+        # 移動平均の差を追加する
+        df["MA_diff"] = df["MA5"] - df["MA25"]
 
         # nan を削除
         df = df.dropna()
@@ -111,7 +127,7 @@ if __name__ == "__main__":
         df = bt.add_technical_indicators(df)
 
         # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 0.8, 3
+        percentage, day_window = 1.0, 3
         df = bt.add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):

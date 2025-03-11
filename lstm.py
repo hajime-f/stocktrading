@@ -100,6 +100,22 @@ def add_technical_indicators(df):
     # 始値と終値の差を追加する
     df["trunk"] = df["open"] - df["close"]
 
+    # 移動平均線乖離率を追加する
+    df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
+    df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
+
+    # MACDの乖離率を追加する
+    df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
+
+    # RSIの乖離率を追加する
+    df["RSI_rate"] = (df["RSI"] - 50) / 50
+
+    # ボリンジャーバンドの乖離率を追加する
+    df["Upper_rate"] = (df["close"] - df["Upper"]) / df["Upper"]
+
+    # 移動平均の差を追加する
+    df["MA_diff"] = df["MA5"] - df["MA25"]
+
     # nan を削除
     df = df.dropna()
 
@@ -144,6 +160,7 @@ def candle_plot(df):
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(df["MA5"], color="r", label="MA5")
     ax.plot(df["MA25"], color="g", label="MA25")
+    ax.fill_between(df.index, df["Upper"], df["Lower"], color="gray", alpha=0.5)
     mpf.plot(df_candle, type="candle", volume=False, style="default", ax=ax)
     ax.legend()
     plt.show()
@@ -174,7 +191,7 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    array_X = np.empty([0, window, 15])
+    array_X = np.empty([0, window, 21])
     array_y = np.empty([0])
 
     for i, code in enumerate(stock_list["code"]):
@@ -188,7 +205,7 @@ if __name__ == "__main__":
         df = df.reset_index(drop=True)
 
         # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 0.8, 3
+        percentage, day_window = 1.0, 3
         df = add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):
