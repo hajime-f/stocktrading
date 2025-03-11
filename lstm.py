@@ -8,9 +8,11 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
-from tensorflow.keras.callbacks import EarlyStopping
 from keras.models import Sequential, load_model
 from keras.layers import Dense, LSTM, InputLayer, Dropout
+
+import matplotlib.pyplot as plt
+import mplfinance as mpf
 
 from data_management import DataManagement
 
@@ -133,6 +135,20 @@ def add_labels(df, percentage=1.0, day_window=3):
     return pd.concat([df, result], axis=1).iloc[:-day_window]
 
 
+def candle_plot(df):
+    df_candle = df[["open", "high", "low", "close", "volume"]]
+    df_candle.columns = ["Open", "High", "Low", "Close", "Volume"]
+    df_candle.index = pd.to_datetime(df_candle.index)
+
+    fig = plt.figure(figsize=(12, 6))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(df["MA5"], color="r", label="MA5")
+    ax.plot(df["MA25"], color="g", label="MA25")
+    mpf.plot(df_candle, type="candle", volume=False, style="default", ax=ax)
+    ax.legend()
+    plt.show()
+
+
 class PredictionModel:
     def __init__(self):
         pass
@@ -169,19 +185,23 @@ if __name__ == "__main__":
 
         # テクニカル指標を追加
         df = add_technical_indicators(df)
-        df = df.reset_index(drop=True).drop("date", axis=1)
+        df = df.reset_index(drop=True)
 
         # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 0.5, 1
+        percentage, day_window = 0.8, 3
         df = add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):
-            df_test = df.iloc[-window - j : -j]
+            df_test = df.iloc[-window - j : -j].drop("date", axis=1)
 
             tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1), window)
             if not flag:
                 continue
             tmp_y = df_test.tail(1)["increase"].values
+
+            # if tmp_y:
+            #     df_plot = df.iloc[-window - j : -j].set_index("date")
+            #     candle_plot(df_plot)
 
             array_X = np.vstack((array_X, tmp_X))
             array_y = np.hstack((array_y, tmp_y))
@@ -195,13 +215,11 @@ if __name__ == "__main__":
     # モデルの学習
     pred_model = PredictionModel()
     model = pred_model.DNN_compile(array_X_learn)
-    early_stopping = EarlyStopping(monitor="loss", min_delta=0.0, patience=2)
     model.fit(
         array_X_learn,
         array_y_learn,
         batch_size=128,
         epochs=10,
-        callbacks=[early_stopping],
     )
 
     # モデルの評価
