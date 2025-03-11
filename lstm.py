@@ -16,7 +16,7 @@ from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
 
-window = 10
+window = 20
 test_size = 10
 
 
@@ -108,6 +108,7 @@ def add_labels(df, percentage=1.0, day_window=3):
     df_shift = df.shift(-day_window)
     df["increase"] = 0
     df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+    df = df.iloc[:-day_window]
 
     return df
 
@@ -168,9 +169,8 @@ if __name__ == "__main__":
         df = df.reset_index(drop=True).drop("date", axis=1)
 
         # day_window日後の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 0.5, 3
+        percentage, day_window = 0.5, 1
         df = add_labels(df, percentage=percentage, day_window=day_window)
-        df = df.iloc[:-day_window]
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
