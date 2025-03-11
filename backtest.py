@@ -15,7 +15,7 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model_swingtrade_20250311_114554.keras")
+        self.model = load_model("./model/model_swingtrade_20250311_155726.keras")
 
         self.window = window
         self.test_size = test_size
@@ -58,10 +58,11 @@ class Backtest:
 
         return df
 
-    def add_labels(self, df, percentage=3.0):
-        df_shift = df.shift(-1)
+    def add_labels(self, df, percentage=1.0, day_window=3):
+        df_shift = df.shift(-day_window)
         df["increase"] = 0
         df.loc[df_shift["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+        df = df.iloc[:-day_window]
 
         return df
 
@@ -78,7 +79,7 @@ class Backtest:
 
 
 if __name__ == "__main__":
-    window = 10
+    window = 20
     test_size = 10
 
     bt = Backtest(window, test_size)
@@ -95,8 +96,9 @@ if __name__ == "__main__":
         # テクニカル指標を追加する
         df = bt.add_technical_indicators(df)
 
-        # 翌営業日の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        df = bt.add_labels(df, percentage=0.0)
+        # day_window日後の終値が当日よりpercentage%以上上昇していたらフラグを立てる
+        percentage, day_window = 0.5, 1
+        df = bt.add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
