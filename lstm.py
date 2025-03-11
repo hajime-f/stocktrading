@@ -4,20 +4,20 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
+from tensorflow.keras.callbacks import EarlyStopping
 from keras.models import Sequential, load_model
-from keras.layers import Dense, LSTM, InputLayer
-from keras.layers import Dropout
+from keras.layers import Dense, LSTM, InputLayer, Dropout
 
 from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
 
 window = 20
-test_size = 10
+test_size = 20
 
 
 def prepare_input_data(df, window=10):
@@ -105,6 +105,13 @@ def add_technical_indicators(df):
 
 
 def add_labels(df, percentage=1.0, day_window=3):
+    # shifted_df = df.shift(-day_window)
+    # df["increase"] = 0
+    # df.loc[shifted_df["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
+    # df = df.iloc[:-day_window]
+
+    # return df
+
     result = pd.DataFrame(np.zeros((len(df), 1)), columns=["increase"])
 
     for i in range(day_window):
@@ -165,7 +172,7 @@ if __name__ == "__main__":
         df = df.reset_index(drop=True).drop("date", axis=1)
 
         # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 0.3, 1
+        percentage, day_window = 0.5, 1
         df = add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):
@@ -188,13 +195,20 @@ if __name__ == "__main__":
     # モデルの学習
     pred_model = PredictionModel()
     model = pred_model.DNN_compile(array_X_learn)
-    model.fit(array_X_learn, array_y_learn, batch_size=64, epochs=10)
+    early_stopping = EarlyStopping(monitor="loss", min_delta=0.0, patience=2)
+    model.fit(
+        array_X_learn,
+        array_y_learn,
+        batch_size=128,
+        epochs=10,
+        callbacks=[early_stopping],
+    )
 
     # モデルの評価
     y_pred = model.predict(array_X_test)
     y_pred = (y_pred > 0.5).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=array_y_test, y_pred=y_pred))
+    model.summary()
     print(classification_report(array_y_test, y_pred))
 
     # モデルの保存
@@ -215,5 +229,4 @@ if __name__ == "__main__":
     y_pred = model.predict(array_X_test)
     y_pred = (y_pred > 0.5).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=array_y_test, y_pred=y_pred))
     print(classification_report(array_y_test, y_pred))
