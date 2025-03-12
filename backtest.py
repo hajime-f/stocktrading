@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -15,7 +16,8 @@ class Backtest:
         self.dm = DataManagement()
         self.stock_list = self.dm.load_stock_list()
 
-        self.model = load_model("./model/model_swingtrade_20250312_002952.keras")
+        filename = os.path.join("./model/", "model_swingtrade_20250312_002952.keras")
+        self.model = load_model(filename)
 
         self.window = window
         self.test_size = test_size

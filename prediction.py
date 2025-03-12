@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import sqlite3
 import pandas as pd
@@ -26,7 +27,8 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    model = load_model("./model/model_swingtrade_20250312_204936.keras")
+    filename = os.path.join("./model/", "model_swingtrade_20250312_204936.keras")
+    model = load_model(filename)
     window = 20
 
     result_list = []
