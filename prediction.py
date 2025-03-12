@@ -1,3 +1,5 @@
+from datetime import datetime
+import sqlite3
 import pandas as pd
 import numpy as np
 
@@ -26,6 +28,8 @@ if __name__ == "__main__":
 
     model = load_model("./model/model_swingtrade_20250312_204936.keras")
     window = 20
+
+    result_list = []
 
     for i, code in enumerate(stock_list["code"]):
         df = dm.load_stock_data(code, start="2025-01-01", end="end")
@@ -90,7 +94,25 @@ if __name__ == "__main__":
         if not flag:
             continue
         y_pred = model.predict(array_X, verbose=0)
-        y_pred = (y_pred > 0.6).astype(int)
+        result_list.append([code, stock_list["brand"][i], y_pred[0][0]])
 
-        if y_pred:
-            print(f"{code}, {stock_list['brand'][i]}")
+    df_result = pd.DataFrame(result_list, columns=["code", "brand", "pred"])
+
+    step = 0.001
+    for i in np.arange(1, 0.4999, -step):
+        df_extract = df_result[df_result["pred"] >= i]
+
+        if len(df_extract) == 50:
+            break
+
+        df_extract_next = df_result[df_result["pred"] >= i - step]
+        if len(df_extract_next) > 50:
+            break
+
+    # 日付の列を挿入する
+    df_extract.loc[:, "date"] = datetime.now().strftime("%Y-%m-%d")
+    df_extract = df_extract[["date", "code", "brand", "pred"]]
+
+    conn = sqlite3.connect("./data/stock_data.db")
+    with conn:
+        df_extract.to_sql("Target", conn, if_exists="append", index=False)
