@@ -19,7 +19,7 @@ from data_management import DataManagement
 pd.set_option("display.max_rows", None)
 
 window = 20
-test_size = 20
+test_size = 30
 
 
 def prepare_input_data(df, window=10):
@@ -199,6 +199,8 @@ if __name__ == "__main__":
 
         # データを読み込む
         df = dm.load_stock_data(code).tail(window * test_size)
+        if window * test_size > len(df):
+            continue
 
         # テクニカル指標を追加
         df = add_technical_indicators(df)

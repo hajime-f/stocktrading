@@ -84,7 +84,8 @@ class DataManagement:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            data_df = yf.download(code + ".T", start="2020-01-01", end=datetime.now())
+            # data_df = yf.download(code + ".T", start="2020-01-01", end=datetime.now())
+            data_df = yf.download(code + ".T", priod="max")
 
             # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
             if data_df.empty:
