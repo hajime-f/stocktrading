@@ -6,7 +6,8 @@
 
 # 動作環境
 
-- Python 3.12：2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用しています。
+- Python 3.12\
+2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用します。3.13 では動作しませんので、ご注意ください。
 - [kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) 
 
 # 使い方
