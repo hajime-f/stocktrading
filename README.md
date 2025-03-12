@@ -8,7 +8,8 @@
 
 - Python 3.12\
 2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用します。3.13 では動作しませんので、ご注意ください。
-- [kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) 
+- [kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) \
+本プログラムは、[三菱UFJ eスマート証券](https://kabu.com/)が提供する株取引専用の API を使用します。証券口座の開設が別途必要です。
 
 # 使い方
 
