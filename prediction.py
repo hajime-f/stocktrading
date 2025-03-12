@@ -100,16 +100,15 @@ if __name__ == "__main__":
 
     step = 0.001
     for i in np.arange(1, 0.4999, -step):
-        df_extract = df_result[df_result["pred"] >= i]
+        df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
 
         if len(df_extract) == 50:
             break
 
-        df_extract_next = df_result[df_result["pred"] >= i - step]
+        df_extract_next = df_result.loc[df_result["pred"] >= i - step, :]
         if len(df_extract_next) > 50:
             break
 
-    # 日付の列を挿入する
     df_extract.loc[:, "date"] = datetime.now().strftime("%Y-%m-%d")
     df_extract = df_extract[["date", "code", "brand", "pred"]]
 
