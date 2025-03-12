@@ -14,6 +14,7 @@ if __name__ == "__main__":
     filename_list = [
         "data_20250310_153016.pkl",
         "data_20250311_153133.pkl",
+        "data_20250312_153037.pkl",
     ]
     df_list = []
     n_symbols = 0
