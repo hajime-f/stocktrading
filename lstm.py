@@ -218,10 +218,6 @@ if __name__ == "__main__":
                 continue
             tmp_y = df_test.tail(1)["increase"].values
 
-            # if tmp_y:
-            #     df_plot = df.iloc[-window - j : -j].set_index("date")
-            #     candle_plot(df_plot)
-
             array_X = np.vstack((array_X, tmp_X))
             array_y = np.hstack((array_y, tmp_y))
 
@@ -246,6 +242,7 @@ if __name__ == "__main__":
     y_pred = (y_pred > 0.5).astype(int)
 
     model.summary()
+    # model.evaluate(array_X_test, array_y_test)
     print(classification_report(array_y_test, y_pred))
 
     # モデルの保存
