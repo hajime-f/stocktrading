@@ -94,12 +94,26 @@ filename_list = [
 
 学習が終了すると、```./model``` 配下に ```model_daytrade_（保存した日時）.keras``` という名前でモデルのインスタンスが保存されます。
 
-## 取引の開始
+## 日足の予測
 
-まず、```stocktrading.py``` の42行目に、モデルインスタンスのファイル名を記述してください。
+まずは日足の値動きを予測します。```prediction.py``` の30行目に、モデルインスタンス（日足）のファイル名を記述してください。
 
 ```python
-filename = os.path.join("./model/", 'model_20250215_233856.pkl')
+filename = os.path.join("./model/", "model_swingtrade_20250312_204936.keras")
+```
+
+次に、下記のコマンドを打って予測を実行します。
+
+```python
+(env) $ make predict
+```
+
+## 取引の開始
+
+まず、```stocktrading.py``` の43行目に、モデルインスタンス（分足）のファイル名を記述してください。
+
+```python
+filename = os.path.join("./model/", 'model_daytrade_20250315_233856.keras')
 ```
 
 次に、下記のコマンドを打つと取引が始まります。
