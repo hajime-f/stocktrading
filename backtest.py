@@ -121,7 +121,7 @@ if __name__ == "__main__":
         print(f"{i + 1}/{len(bt.stock_list)}：{code} のデータを処理しています。")
 
         # データを読み込む
-        df = bt.dm.load_stock_data(code).tail(window * test_size)
+        df = bt.dm.load_stock_data(code, start="2024-01-01", end="end")
 
         # テクニカル指標を追加する
         df = bt.add_technical_indicators(df)

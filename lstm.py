@@ -198,7 +198,7 @@ if __name__ == "__main__":
         print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
 
         # データを読み込む
-        df = dm.load_stock_data(code).tail(window * test_size)
+        df = dm.load_stock_data(code, start="2020-01-01", end="2023-12-31")
         if window * test_size > len(df):
             continue
 
@@ -212,6 +212,10 @@ if __name__ == "__main__":
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j].drop("date", axis=1)
+
+            # if tmp_y:
+            #     df_plot = df.iloc[-window - j : -j].set_index("date")
+            #     candle_plot(df_plot)
 
             tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1), window)
             if not flag:
