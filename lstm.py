@@ -22,7 +22,7 @@ window = 20
 test_size = 30
 
 
-def prepare_input_data(df, window=10):
+def prepare_input_data(df):
     array = np.array(df)
     scaler = StandardScaler()
 
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j].drop("date", axis=1)
 
-            tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1), window)
+            tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1))
             if not flag:
                 continue
             tmp_y = df_test.tail(1)["increase"].values

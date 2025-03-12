@@ -96,7 +96,7 @@ class Backtest:
 
         return pd.concat([df, result], axis=1).iloc[:-day_window]
 
-    def prepare_input_data(self, df, window=10):
+    def prepare_input_data(self, df):
         array = np.array(df)
         scaler = StandardScaler()
 
@@ -133,9 +133,7 @@ if __name__ == "__main__":
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j]
 
-            array_X, flag = bt.prepare_input_data(
-                df_test.drop("increase", axis=1), window
-            )
+            array_X, flag = bt.prepare_input_data(df_test.drop("increase", axis=1))
             if not flag:
                 continue
             array_y = df_test.tail(1)["increase"].values
