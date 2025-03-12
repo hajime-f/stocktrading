@@ -8,7 +8,7 @@ collect:
 	python3 collect_data.py
 test:
 	python3 test.py
-init_data:
+init:
 	python3 data_management.py
 lstm:
 	python3 lstm.py

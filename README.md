@@ -9,23 +9,13 @@
 - Python 3.12\
 2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用します。3.13 では動作しませんので、ご注意ください。
 - [kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) \
-本プログラムは、[三菱UFJ eスマート証券](https://kabu.com/)が提供する株取引専用の API を使用します。証券口座の開設が別途必要です。
+[三菱UFJ eスマート証券](https://kabu.com/)が提供する株取引専用の API を使用します。証券口座の開設が別途必要です。
 
-# 使い方
-
-## .env ファイルの追加
-
-プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。
-
-```:.env
-APIPassword_production=XXXX
-IPAddress=127.0.0.1
-Port=18080
-```
+# 動作方法
 
 ## 仮想環境の作成
 
-仮想環境を作ってください。
+仮想環境を作ってください。前述のとおり、Python 3.12 の環境が必要です。
 
 ```
 $ python -m venv env
@@ -41,8 +31,35 @@ $ source ./env/bin/activate
 ```
 
 > [!CAUTION]
-> インストール時にエラーが出る場合は、```requirements.txt``` から wheel と playsound をいったん削除し、```make install``` してみてください。
-> その後、```pip install wheel playsound``` で wheel と playsound をインストールすれば、エラーが解消されるかもしれません。
+> インストール時にエラーが出る場合は、```requirements.txt``` から「wheel」と「playsound」をいったん削除し、再度 ```make install``` してみてください。
+> その後、```pip install wheel playsound``` で wheel と playsound を別途インストールすれば、エラーが解消されるかもしれません。
+
+## データの初期化
+
+Yahoo! ファイナンスから株価データを取得し、データベースを初期化します。
+
+```
+(env) $ make init
+```
+
+## 予測モデルの学習
+
+予測モデル（LSTM）を学習させます。分類性能を示すレポートが最後に出力されるので確認してください。後述するとおり、Recall が低く、Precision が高いことが理想です。
+
+```
+(env) $ make lstm
+```
+
+
+## .env ファイルの追加
+
+プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。
+
+```:.env
+APIPassword_production=XXXX
+IPAddress=127.0.0.1
+Port=18080
+```
 
 ## データの収集
 
