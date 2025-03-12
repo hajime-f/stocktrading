@@ -117,8 +117,15 @@ class DataManagement:
             with conn:
                 data_df.to_sql(code, conn, if_exists="replace", index=False)
 
-    def load_stock_data(self, code):
-        query = f'select * from "{code}" order by date;'
+    def load_stock_data(self, code, start="2020-04-01", end="2025-03-31"):
+        if start == "start" and end == "end":
+            query = f'select * from "{code}" order by date;'
+        elif start == "start":
+            query = f'select * from "{code}" where date <= "{end}" order by date;'
+        elif end == "end":
+            query = f'select * from "{code}" where date >= "{start}" order by date;'
+        else:
+            query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
         conn = sqlite3.connect("./data/stock_data.db")
         with conn:
