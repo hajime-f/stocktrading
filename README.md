@@ -21,7 +21,7 @@
 $ python -m venv env
 ```
 
-## パッケージのインストール
+## 1. パッケージのインストール
 
 仮想環境に入って ```make install``` してください。
 
@@ -34,7 +34,7 @@ $ source ./env/bin/activate
 > インストール時にエラーが出る場合は、```requirements.txt``` から「wheel」と「playsound」をいったん削除し、再度 ```make install``` してみてください。
 > その後、```pip install wheel playsound``` でこれらを別途インストールすれば、うまく動作するかもしれません。
 
-## データベースの初期化
+## 2. データベースの初期化
 
 Yahoo! ファイナンスから株価データを取得し、データベースを初期化します。
 
