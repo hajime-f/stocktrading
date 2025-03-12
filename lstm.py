@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
-from keras.models import Sequential, load_model
+from keras.models import Sequential
 from keras.layers import Dense, LSTM, InputLayer, Dropout
 
 import matplotlib.pyplot as plt
@@ -162,7 +162,7 @@ def candle_plot(df):
     ax.plot(df["MA25"], color="g", label="MA25")
     ax.fill_between(df.index, df["Upper"], df["Lower"], color="gray", alpha=0.5)
     mpf.plot(df_candle, type="candle", volume=False, style="default", ax=ax)
-    ax.legend()
+    plt.axis("off")
     plt.show()
 
 
@@ -207,20 +207,20 @@ if __name__ == "__main__":
         df = df.reset_index(drop=True)
 
         # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        percentage, day_window = 1.0, 3
+        percentage, day_window = 0.5, 1
         df = add_labels(df, percentage=percentage, day_window=day_window)
 
         for j in range(test_size, 0, -1):
             df_test = df.iloc[-window - j : -j].drop("date", axis=1)
 
-            # if tmp_y:
-            #     df_plot = df.iloc[-window - j : -j].set_index("date")
-            #     candle_plot(df_plot)
-
             tmp_X, flag = prepare_input_data(df_test.drop("increase", axis=1), window)
             if not flag:
                 continue
             tmp_y = df_test.tail(1)["increase"].values
+
+            # if tmp_y:
+            #     df_plot = df.iloc[-window - j : -j].set_index("date")
+            #     candle_plot(df_plot)
 
             array_X = np.vstack((array_X, tmp_X))
             array_y = np.hstack((array_y, tmp_y))
@@ -241,12 +241,28 @@ if __name__ == "__main__":
         epochs=10,
     )
 
-    # モデルの評価
+    # モデルの評価１
     y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.5).astype(int)
+    y_pred = (y_pred > 0.7).astype(int)
 
-    model.summary()
-    # model.evaluate(array_X_test, array_y_test)
+    print(classification_report(array_y_test, y_pred))
+
+    # モデルの評価２
+    y_pred = model.predict(array_X_test)
+    y_pred = (y_pred > 0.75).astype(int)
+
+    print(classification_report(array_y_test, y_pred))
+
+    # モデルの評価３
+    y_pred = model.predict(array_X_test)
+    y_pred = (y_pred > 0.8).astype(int)
+
+    print(classification_report(array_y_test, y_pred))
+
+    # モデルの評価４
+    y_pred = model.predict(array_X_test)
+    y_pred = (y_pred > 0.85).astype(int)
+
     print(classification_report(array_y_test, y_pred))
 
     # モデルの保存
@@ -259,12 +275,3 @@ if __name__ == "__main__":
 
     filename = os.path.join(dirname, filename)
     model.save(filename)
-
-    # モデルの読み込み
-    model = load_model(filename)
-
-    # モデルの再評価
-    y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.5).astype(int)
-
-    print(classification_report(array_y_test, y_pred))
