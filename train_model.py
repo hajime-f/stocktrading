@@ -21,8 +21,8 @@ if __name__ == "__main__":
 
     for i, filename in enumerate(filename_list):
         print(f"{filename} からデータを読み込んでいます。")
-        filename = os.path.join("./data/", filename)
-        with open(filename, "rb") as f:
+        filepath_name = os.path.join("./data/", filename)
+        with open(filepath_name, "rb") as f:
             tmp = pickle.load(f)
             df_list += tmp
         n_symbols += len(tmp)
