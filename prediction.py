@@ -9,11 +9,11 @@ from keras.models import load_model
 from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
+scaler = StandardScaler()
 
 
 def prepare_input_data(df):
     array = np.array(df)
-    scaler = StandardScaler()
 
     try:
         array_std = scaler.fit_transform(array)
@@ -96,6 +96,8 @@ if __name__ == "__main__":
         if not flag:
             continue
         y_pred = model.predict(array_X, verbose=0)
+        if y_pred[0][0] >= 0.8:
+            print(f"{code}：{stock_list['brand'][i]}")
         result_list.append([code, stock_list["brand"][i], y_pred[0][0]])
 
     df_result = pd.DataFrame(result_list, columns=["code", "brand", "pred"])

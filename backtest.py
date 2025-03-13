@@ -22,6 +22,8 @@ class Backtest:
         self.window = window
         self.test_size = test_size
 
+        self.scaler = StandardScaler()
+
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
@@ -100,10 +102,9 @@ class Backtest:
 
     def prepare_input_data(self, df):
         array = np.array(df)
-        scaler = StandardScaler()
 
         try:
-            array_std = scaler.fit_transform(array)
+            array_std = self.scaler.fit_transform(array)
         except ValueError:
             return None, False
 
