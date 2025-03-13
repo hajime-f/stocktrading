@@ -154,7 +154,7 @@ class DataManagement:
                 params=[target_date],
             )
 
-        return df
+        return df.values.tolist()
 
 
 if __name__ == "__main__":
