@@ -16,5 +16,7 @@ predict:
 	python3 prediction.py
 backtest:
 	python3 backtest.py
+check:
+	python3 crawler.py
 clear:
 	rm -rf stocklib/__pycache__
