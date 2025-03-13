@@ -104,7 +104,7 @@ class Stock:
         data = raw_data.tail(self.window).values
         if len(data) < self.window:
             return False  # データが足らない場合は何もしない
-        elif np.any(np.isnan(data))
+        elif np.any(np.isnan(data)):
             return False  # データにNaNが含まれている場合も何もしない
         else:
             # input_data = tmp.values.reshape(-1)
