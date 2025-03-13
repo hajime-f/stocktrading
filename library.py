@@ -118,7 +118,7 @@ class StockLibrary:
 
         obj = {"Symbols": []}
         for symbol in symbol_list:
-            obj["Symbols"].append({"Symbol": str(symbol), "Exchange": 1})
+            obj["Symbols"].append({"Symbol": symbol, "Exchange": 1})
 
         content = self.put_request(url, obj)
         return content
