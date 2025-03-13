@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, time
 import math
+import numpy as np
 import pandas as pd
 from playsound import playsound
 
@@ -81,8 +82,9 @@ class Stock:
         raw_data = self.model.calc_rsi(raw_data)
 
         # データを正規化する
-        scaler = StandardScaler()
-        raw_data = scaler.fit_transform(raw_data.values)
+        if not raw_data.isnull().values.any():
+            scaler = StandardScaler()
+            raw_data = scaler.fit_transform(raw_data.values)
 
         return raw_data
 
@@ -101,7 +103,7 @@ class Stock:
             return (data - self.min_value) / (self.max_value - self.min_value)
 
     def predict(self, raw_data):
-        data = raw_data.tail(self.window).values
+        data = raw_data[-self.window :]
         if len(data) < self.window:
             return False  # データが足らない場合は何もしない
         elif np.any(np.isnan(data)):
