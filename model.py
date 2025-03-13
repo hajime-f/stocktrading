@@ -191,5 +191,4 @@ class ModelLibrary:
         return self.model
 
     def predict(self, data):
-        pred = self.model.predict(data)
-        return (pred > 0.9).astype(int)
+        return self.model.predict(data, verbose=0)

@@ -110,8 +110,9 @@ class Stock:
             return False  # データにNaNが含まれている場合も何もしない
         else:
             # input_data = tmp.values.reshape(-1)
-            prediction_result = self.model.predict(data)
-            return prediction_result
+            prediction_result = self.model.predict(np.array([data]))
+            console.log(f"{self.disp_name}（{self.symbol}）：{prediction_result}")
+            return (prediction_result > 0.9).astype(int)
 
     def polling(self):
         # １分間隔で呼ばれる関数
