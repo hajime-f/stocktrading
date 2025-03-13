@@ -4,6 +4,7 @@ import pandas as pd
 from playsound import playsound
 from crawler import Crawler
 
+from sklearn.preprocessing import StandardScaler
 from rich.console import Console
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
@@ -79,9 +80,6 @@ class Stock:
         self.data = pd.concat([self.data, price_df])
         raw_data = self.data.copy()
 
-        # データを正規化する
-        raw_data = self.normalize_data(raw_data)
-
         # 移動平均を計算する
         raw_data = self.model.calc_moving_average(raw_data)
 
@@ -93,6 +91,10 @@ class Stock:
 
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
+
+        # データを正規化する
+        scaler = StandardScaler()
+        raw_data = scaler.fit_transform(raw_data.values)
 
         return raw_data
 
@@ -111,14 +113,14 @@ class Stock:
             return (data - self.min_value) / (self.max_value - self.min_value)
 
     def predict(self, raw_data):
-        tmp = raw_data.tail(self.window)
-        if len(tmp) < self.window:
+        data = raw_data.tail(self.window).values
+        if len(data) < self.window:
             return False  # データが足らない場合は何もしない
-        elif tmp.isnull().values.any():
+        elif np.any(np.isnan(data))
             return False  # データにNaNが含まれている場合も何もしない
         else:
-            input_data = tmp.values.reshape(-1)
-            prediction_result = self.model.predict([input_data])
+            # input_data = tmp.values.reshape(-1)
+            prediction_result = self.model.predict(data)
             return prediction_result
 
     def polling(self):
