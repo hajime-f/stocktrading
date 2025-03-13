@@ -52,7 +52,6 @@ if __name__ == "__main__":
     pred = pred_model.predict(X_test)
     pred = (pred > 0.8).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=y_test, y_pred=pred))
     print(classification_report(y_test, pred))
 
     print("学習済みモデルを保存しています。")
@@ -65,5 +64,4 @@ if __name__ == "__main__":
     pred = pred_model.predict(X_test)
     pred = (pred > 0.9).astype(int)
 
-    print("accuracy = ", accuracy_score(y_true=y_test, y_pred=pred))
     print(classification_report(y_test, pred))
