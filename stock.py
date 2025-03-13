@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, time
 import math
 import pandas as pd
 from playsound import playsound
-from crawler import Crawler
 
 from sklearn.preprocessing import StandardScaler
 from rich.console import Console
@@ -31,17 +30,6 @@ class Stock:
         self.sell_order_id = None
         self.purchase_price = 0
         self.loss_cut = False
-
-        crawler = Crawler(self.symbol)
-        values = crawler.fetch_stock_data()
-        max_value, min_value = crawler.extract_first_row_data(values)
-        try:
-            self.max_value, self.min_value = (
-                float(max_value.replace(",", "")),
-                float(min_value.replace(",", "")),
-            )
-        except ValueError:
-            self.max_value, self.min_value = 0, 0
 
     def set_information(self):
         content = self.lib.fetch_information(self.symbol, self.exchange)
