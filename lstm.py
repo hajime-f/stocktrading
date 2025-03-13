@@ -17,6 +17,7 @@ import mplfinance as mpf
 from data_management import DataManagement
 
 pd.set_option("display.max_rows", None)
+scaler = StandardScaler()
 
 window = 20
 test_size = 30
@@ -24,7 +25,6 @@ test_size = 30
 
 def prepare_input_data(df):
     array = np.array(df)
-    scaler = StandardScaler()
 
     try:
         array_std = scaler.fit_transform(array)
