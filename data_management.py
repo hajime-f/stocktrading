@@ -143,8 +143,6 @@ class DataManagement:
     def fetch_target(self, target_date="today"):
         if target_date == "today":
             target_date = datetime.now().strftime("%Y-%m-%d")
-        else:
-            target_date = target_date
 
         conn = sqlite3.connect("./data/stock_data.db")
         with conn:
