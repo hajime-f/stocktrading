@@ -32,6 +32,8 @@ class Stock:
         self.purchase_price = 0
         self.loss_cut = False
 
+        self.scaler = StandardScaler()
+
     def set_information(self):
         content = self.lib.fetch_information(self.symbol, self.exchange)
         try:
@@ -83,8 +85,7 @@ class Stock:
 
         # データを正規化する
         if not raw_data.isnull().values.any():
-            scaler = StandardScaler()
-            raw_data = scaler.fit_transform(raw_data.values)
+            raw_data = self.scaler.fit_transform(raw_data.values)
 
         return raw_data
 
@@ -109,8 +110,8 @@ class Stock:
         elif np.any(np.isnan(data)):
             return False  # データにNaNが含まれている場合も何もしない
         else:
-            # input_data = tmp.values.reshape(-1)
             prediction_result = self.model.predict(np.array([data]))
+            console.log(np.array([data]))
             console.log(f"{self.disp_name}（{self.symbol}）：{prediction_result}")
             return (prediction_result > 0.9).astype(int)
 
