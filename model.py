@@ -66,11 +66,11 @@ class ModelLibrary:
 
     def add_labels(self, df_list):
         # 正解ラベルを作成する
-        label_list = [self.check_price_change(df, 0.5) for df in df_list]
+        label_list = [self.check_price_change(df, 0.5, 20) for df in df_list]
 
         return label_list
 
-    def check_price_change(self, df, percentage, time_window=20):
+    def check_price_change(self, df, percentage=0.5, time_window=20):
         # ある時刻における株価を基準にして、そこからtime_window分以内にpercentage％上昇するか否かを判定する。
         # target_price = base_price + abs(base_price) * (percentage / 100)
 
@@ -174,7 +174,7 @@ class ModelLibrary:
 
     def save_model(self, model):
         now = datetime.now()
-        filename = now.strftime("model_%Y%m%d_%H%M%S.pkl")
+        filename = now.strftime("model_daytrade_%Y%m%d_%H%M%S.keras")
 
         dirname = "./model"
         if not os.path.exists(dirname):
