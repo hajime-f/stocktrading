@@ -49,7 +49,7 @@ class Crawler:
 
 if __name__ == "__main__":
     dm = DataManagement()
-    symbols = [[symbol[1], symbol[2]] for symbol in dm.fetch_target("2025-03-12")]
+    symbols = [[symbol[1], symbol[2]] for symbol in dm.fetch_target()]
 
     total = 0
 
