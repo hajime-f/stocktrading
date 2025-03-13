@@ -31,7 +31,7 @@ def prepare_input_data(df):
     except ValueError:
         return None, False
 
-    return np.array([array_std]), True
+    return np.array(array_std), True
 
 
 def downsampling(X_array, y_array):
@@ -191,8 +191,8 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    array_X = np.empty([0, window, 21])
-    array_y = np.empty([0])
+    list_X = []
+    list_y = []
 
     for i, code in enumerate(stock_list["code"]):
         print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
@@ -222,10 +222,13 @@ if __name__ == "__main__":
             #     df_plot = df.iloc[-window - j : -j].set_index("date")
             #     candle_plot(df_plot)
 
-            array_X = np.vstack((array_X, tmp_X))
-            array_y = np.hstack((array_y, tmp_y))
+            list_X.append(tmp_X)
+            list_y.append(tmp_y)
 
     # array_X, array_y = downsampling(array_X, array_y)
+
+    array_X = np.array(list_X)
+    array_y = np.array(list_y)
 
     array_X_learn, array_X_test, array_y_learn, array_y_test = train_test_split(
         array_X, array_y, test_size=0.3, random_state=42
