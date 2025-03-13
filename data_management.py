@@ -140,13 +140,18 @@ class DataManagement:
 
         return df
 
-    def fetch_todays_target(self):
+    def fetch_target(self, target_date="today"):
+        if target_date == "today":
+            target_date = datetime.now().strftime("%Y-%m-%d")
+        else:
+            target_date = target_date
+
         conn = sqlite3.connect("./data/stock_data.db")
         with conn:
             df = pd.read_sql_query(
                 "select distinct * from Target where date = ?;",
                 conn,
-                params=[datetime.now().strftime("%Y-%m-%d")],
+                params=[target_date],
             )
 
         return df
