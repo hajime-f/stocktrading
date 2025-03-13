@@ -117,3 +117,5 @@ if __name__ == "__main__":
     conn = sqlite3.connect("./data/stock_data.db")
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)
+
+    print("予測結果をデータベースに保存しました。")
