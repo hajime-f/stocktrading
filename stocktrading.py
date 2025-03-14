@@ -23,11 +23,11 @@ if __name__ == "__main__":
 
     # 銘柄リストを取得する
     dm = DataManagement()
-    # symbols = [symbol[1] for symbol in dm.fetch_target()]
+    symbols = [symbol[1] for symbol in dm.fetch_target()]
     # symbols = ['1329', '1475', '1592', '1586', '1481', '1578', '2552',]  # テスト用銘柄
-    symbols = [
-        "1475",
-    ]
+    # symbols = [
+    #     "1475",
+    # ]
 
     # 銘柄登録
     lib.register(symbols)
@@ -79,4 +79,4 @@ if __name__ == "__main__":
 
     deposit_after = lib.deposit()
     print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
-    print(f"損益：{deposit_before - deposit_after:,} 円")
+    print(f"損益：{int(deposit_before - deposit_after):,} 円")
