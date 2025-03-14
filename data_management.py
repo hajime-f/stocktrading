@@ -88,9 +88,7 @@ class DataManagement:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            data_df = yf.download(
-                code + ".T", period="max", progress=False, downloading_error=False
-            )
+            data_df = yf.download(code + ".T", period="max", progress=False)
 
             # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
             if data_df.empty:
