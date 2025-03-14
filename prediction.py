@@ -96,8 +96,8 @@ if __name__ == "__main__":
         if not flag:
             continue
         y_pred = model.predict(array_X, verbose=0)
-        if y_pred[0][0] >= 0.8:
-            print(f"{code}：{stock_list['brand'][i]}")
+        # if y_pred[0][0] >= 0.8:
+        #     print(f"{code}：{stock_list['brand'][i]}")
         result_list.append([code, stock_list["brand"][i], y_pred[0][0]])
 
     df_result = pd.DataFrame(result_list, columns=["code", "brand", "pred"])
@@ -122,4 +122,4 @@ if __name__ == "__main__":
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)
 
-    print("予測結果をデータベースに保存しました。")
+    # print("予測結果をデータベースに保存しました。")
