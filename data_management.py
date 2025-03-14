@@ -68,7 +68,9 @@ class DataManagement:
         """
         Yahoo!ファイナンスから日足の株価データを取得し、SQLiteデータベースに保存する
         """
-        stocks_df = pd.read_csv("./data/data_j.csv")
+        stocks_df = pd.read_csv(
+            "/Users/hajime-f/Development/stocktrading/data/data_j.csv"
+        )
 
         # market が「ETF・ETN」「PRO Market」「REIT」「出資証券」は削除する
         stocks_df = stocks_df[stocks_df["market"] != "ETF・ETN"]
@@ -79,13 +81,16 @@ class DataManagement:
         ]
         stocks_df = stocks_df[stocks_df["market"] != "出資証券"]
 
-        conn = sqlite3.connect("./data/stock_data.db")
+        conn = sqlite3.connect(
+            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+        )
         with conn:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            # data_df = yf.download(code + ".T", start="2020-01-01", end=datetime.now())
-            data_df = yf.download(code + ".T", period="max")
+            data_df = yf.download(
+                code + ".T", period="max", progress=False, downloading_error=False
+            )
 
             # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
             if data_df.empty:
@@ -108,8 +113,8 @@ class DataManagement:
             data_df = data_df.reset_index(drop=True)
             data_df["date"] = pd.to_datetime(data_df["date"]).dt.strftime("%Y-%m-%d")
 
-            # 出来高の小さい銘柄は削除・スキップする
-            if data_df["volume"].mean() < 50000:
+            # 最近の出来高が小さい銘柄は削除・スキップする
+            if data_df["volume"].tail(500).mean() < 50000:
                 with conn:
                     conn.execute(f"delete from Codes where code = '{code}';")
                 continue
