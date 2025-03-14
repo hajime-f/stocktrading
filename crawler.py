@@ -25,7 +25,7 @@ class Crawler:
 
         return values
 
-    def extract_change_data(self, values):
+    def extract_todays_data(self, values):
         if values:
             table = values[0]
             first_row = table.find("tbody").find("tr")
@@ -34,9 +34,8 @@ class Crawler:
                 cells = first_row.find_all("td")
 
                 if len(cells) >= 6:
-                    change = cells[4].text.strip()
-                    change_p = cells[5].text.strip()
-                    return change, change_p
+                    data = [c.text.strip() for c in cells]
+                    return data
                 else:
                     return None, None
 
@@ -51,17 +50,24 @@ if __name__ == "__main__":
     dm = DataManagement()
     symbols = [[symbol[1], symbol[2]] for symbol in dm.fetch_target()]
 
-    total = 0
+    total_change = 0
+    total_open_price = 0
 
     for symbol in symbols:
         crawler = Crawler(symbol[0])
         values = crawler.fetch_stock_data()
-        change, change_p = crawler.extract_change_data(values)
+        data = crawler.extract_todays_data(values)
+
+        open_price = float(data[0].replace(",", ""))
+        close_price = float(data[3].replace(",", ""))
+        change = float(data[4])
+        change_p = float(data[5])
 
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
         try:
-            total += float(change)
+            total_open_price += open_price
+            total_change += change
         except ValueError:
             continue
 
-    print(f"合計：{total}")
+    print(f"{int(total_open_price) * 100:,} で {int(total_change) * 100:,} の損益")
