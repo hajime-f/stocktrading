@@ -12,8 +12,6 @@ init:
 	python3 data_management.py
 lstm:
 	python3 lstm.py
-predict:
-	python3 prediction.py
 backtest:
 	python3 backtest.py
 check:

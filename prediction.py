@@ -116,7 +116,9 @@ if __name__ == "__main__":
     df_extract.loc[:, "date"] = datetime.now().strftime("%Y-%m-%d")
     df_extract = df_extract[["date", "code", "brand", "pred"]]
 
-    conn = sqlite3.connect("./data/stock_data.db")
+    conn = sqlite3.connect(
+        "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+    )
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)
 
