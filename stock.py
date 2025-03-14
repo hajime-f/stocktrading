@@ -83,10 +83,6 @@ class Stock:
         # RSIを計算する
         raw_data = self.model.calc_rsi(raw_data)
 
-        # データを正規化する
-        if not raw_data.isnull().values.any():
-            raw_data = self.scaler.fit_transform(raw_data.values)
-
         return raw_data
 
     def normalize_data(self, data):
@@ -104,16 +100,15 @@ class Stock:
             return (data - self.min_value) / (self.max_value - self.min_value)
 
     def predict(self, raw_data):
-        data = raw_data[-self.window :]
+        data = raw_data.tail(self.window)
         if len(data) < self.window:
             return False  # データが足らない場合は何もしない
-        elif np.any(np.isnan(data)):
+        elif data.isnull().values.any():
             return False  # データにNaNが含まれている場合も何もしない
         else:
+            data = self.scaler.fit_transform(data)
             prediction_result = self.model.predict(np.array([data]))
-            console.log(np.array([data]))
-            console.log(f"{self.disp_name}（{self.symbol}）：{prediction_result}")
-            return (prediction_result > 0.9).astype(int)
+            return (prediction_result > 0.8).astype(int)
 
     def polling(self):
         # １分間隔で呼ばれる関数

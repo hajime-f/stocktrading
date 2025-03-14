@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # symbols = [symbol[1] for symbol in dm.fetch_target()]
     # symbols = ['1329', '1475', '1592', '1586', '1481', '1578', '2552',]  # テスト用銘柄
     symbols = [
-        "5481",
+        "1475",
     ]
 
     # 銘柄登録
