@@ -27,7 +27,10 @@ if __name__ == "__main__":
     dm = DataManagement()
     stock_list = dm.load_stock_list()
 
-    filename = os.path.join("./model/", "model_swingtrade_20250312_204936.keras")
+    filename = os.path.join(
+        "/Users/hajime-f/Development/stocktrading/model/",
+        "model_swingtrade_20250315_141517.keras",
+    )
     model = load_model(filename)
     window = 20
 

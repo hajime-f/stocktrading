@@ -137,7 +137,9 @@ class DataManagement:
         return df
 
     def load_stock_list(self):
-        conn = sqlite3.connect("./data/stock_data.db")
+        conn = sqlite3.connect(
+            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+        )
         with conn:
             df = pd.read_sql_query("select * from Codes;", conn)
 
