@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, InputLayer, Dropout
+from keras.layers import Dense, InputLayer, Dropout, SimpleRNN, Bidirectional
 
 import matplotlib.pyplot as plt
 import mplfinance as mpf
@@ -174,7 +174,8 @@ class PredictionModel:
         model = Sequential()
 
         model.add(InputLayer(shape=(array.shape[1], array.shape[2])))
-        model.add(LSTM(256, activation="relu"))
+        model.add(Bidirectional(SimpleRNN(200)))
+        # model.add(LSTM(256, activation="relu"))
         model.add(Dropout(0.2))
         model.add(Dense(256, activation="relu"))
         model.add(Dropout(0.2))
