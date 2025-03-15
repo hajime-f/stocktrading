@@ -172,6 +172,22 @@ Yahoo! ファイナンスから取得した株価データを利用して、1日
 
 21x20 の行列とそれに対応するラベルのペアを与えて、日足モデルを学習させます。なお、モデルは6層からなる DNN で、2層目に双方向 RNN を利用しています。
 
+```python
+def DNN_compile(self, array):
+    model = Sequential()
+
+    model.add(InputLayer(shape=(array.shape[1], array.shape[2])))
+    model.add(Bidirectional(SimpleRNN(200)))
+    model.add(Dropout(0.2))
+    model.add(Dense(256, activation="relu"))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation="sigmoid"))
+
+    model.compile(
+        optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"]
+    )
+```
+
 ### 1-4. 当日までのデータを使って翌営業日の値上がりを予測する
 
 モデルが出力する予測値（0〜1の値をとる）を、ラベル0または1に振り分けるための閾値を調整することで、2000 銘柄から 50 銘柄に絞り込みます。
