@@ -1,10 +1,8 @@
 import os
 import pickle
-from datetime import datetime
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-from keras.models import load_model
+from sklearn.metrics import classification_report
 
 from model import ModelLibrary
 

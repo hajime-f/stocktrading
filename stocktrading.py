@@ -5,7 +5,7 @@ import threading
 from library import StockLibrary
 from model import ModelLibrary
 from stock import Stock
-from data_management import DataManagement
+from data_manager import DataManager
 
 
 if __name__ == "__main__":
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     lib.unregister_all()
 
     # 銘柄リストを取得する
-    dm = DataManagement()
+    dm = DataManager()
     symbols = [symbol[1] for symbol in dm.fetch_target()]
     # symbols = ['1329', '1475', '1592', '1586', '1481', '1578', '2552',]  # テスト用銘柄
     # symbols = [

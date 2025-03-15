@@ -14,7 +14,7 @@ from keras.layers import Dense, InputLayer, Dropout, SimpleRNN, Bidirectional
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 
-from data_management import DataManagement
+from data_manager import DataManager
 
 pd.set_option("display.max_rows", None)
 scaler = StandardScaler()
@@ -189,7 +189,7 @@ class PredictionModel:
 
 
 if __name__ == "__main__":
-    dm = DataManagement()
+    dm = DataManager()
     stock_list = dm.load_stock_list()
 
     list_X = []

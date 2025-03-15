@@ -7,7 +7,7 @@ import sqlite3
 import pandas as pd
 
 
-class DataManagement:
+class DataManager:
     def __init__(self, n_symbols=50):
         self.n_symbols = n_symbols
         self.data = []

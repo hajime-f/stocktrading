@@ -6,7 +6,7 @@ import numpy as np
 
 from sklearn.preprocessing import StandardScaler
 from keras.models import load_model
-from data_management import DataManagement
+from data_manager import DataManager
 
 pd.set_option("display.max_rows", None)
 scaler = StandardScaler()
@@ -24,7 +24,7 @@ def prepare_input_data(df):
 
 
 if __name__ == "__main__":
-    dm = DataManagement()
+    dm = DataManager()
     stock_list = dm.load_stock_list()
 
     filename = os.path.join(

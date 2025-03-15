@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib.request
 
-from data_management import DataManagement
+from data_manager import DataManager
 
 
 class Crawler:
@@ -47,7 +47,7 @@ class Crawler:
 
 
 if __name__ == "__main__":
-    dm = DataManagement()
+    dm = DataManager()
     symbols = [[symbol[1], symbol[2], symbol[3]] for symbol in dm.fetch_target()]
 
     total_change = 0

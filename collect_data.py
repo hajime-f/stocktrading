@@ -1,11 +1,10 @@
 import random
 
 from library import StockLibrary
-from data_management import DataManagement
+from data_manager import DataManager
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # 株ライブラリを初期化する
     lib = StockLibrary()
 
@@ -26,19 +25,20 @@ if __name__ == '__main__':
     lib.register(symbols)
 
     # データライブラリを初期化する
-    dm = DataManagement(n_symbols)
+    dm = DataManager(n_symbols)
 
     def receive(data):
-
         # 受信したデータに対応する銘柄のインデクスを取得する
         try:
-            index = symbols.index(int(data['Symbol']))
+            index = symbols.index(int(data["Symbol"]))
         except ValueError:
             print("受信したデータに対応する銘柄が見つかりません。")
             exit()
 
         # 情報表示
-        print(f"{data['CurrentPriceTime']}: {data['Symbol']} {data['SymbolName']} {data['CurrentPrice']} {data['TradingVolume']}")
+        print(
+            f"{data['CurrentPriceTime']}: {data['Symbol']} {data['SymbolName']} {data['CurrentPrice']} {data['TradingVolume']}"
+        )
 
         # データを追加する
         dm.append_data(data, index)

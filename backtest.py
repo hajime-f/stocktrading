@@ -6,14 +6,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
 from keras.models import load_model
 
-from data_management import DataManagement
+from data_manager import DataManager
 
 pd.set_option("display.max_rows", None)
 
 
 class Backtest:
     def __init__(self, window=10, test_size=10):
-        self.dm = DataManagement()
+        self.dm = DataManager()
         self.stock_list = self.dm.load_stock_list()
 
         filename = os.path.join("./model/", "model_swingtrade_20250312_002952.keras")
