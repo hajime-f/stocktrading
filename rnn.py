@@ -125,13 +125,6 @@ def add_technical_indicators(df):
 
 
 def add_labels(df, percentage=1.0, day_window=3):
-    # shifted_df = df.shift(-day_window)
-    # df["increase"] = 0
-    # df.loc[shifted_df["close"] > df["close"] * (1 + percentage / 100), "increase"] = 1
-    # df = df.iloc[:-day_window]
-
-    # return df
-
     result = pd.DataFrame(np.zeros((len(df), 1)), columns=["increase"])
 
     for i in range(day_window):
@@ -168,28 +161,22 @@ def candle_plot(df):
     plt.show()
 
 
-class PredictionModel:
-    def __init__(self):
-        pass
+def DNN_compile(array):
+    model = Sequential()
 
-    def DNN_compile(self, array):
-        model = Sequential()
+    model.add(InputLayer(shape=(array.shape[1], array.shape[2])))
+    model.add(Bidirectional(SimpleRNN(200)))
+    # model.add(Bidirectional(LSTM(200, return_sequences=True)))
+    model.add(Dropout(0.3))
+    model.add(Dense(256, activation="relu"))
+    model.add(Dropout(0.3))
+    model.add(Dense(1, activation="sigmoid"))
 
-        model.add(InputLayer(shape=(array.shape[1], array.shape[2])))
-        model.add(Bidirectional(SimpleRNN(200)))
-        # model.add(Bidirectional(LSTM(200, return_sequences=True)))
-        model.add(Dropout(0.3))
-        model.add(Dense(256, activation="relu"))
-        model.add(Dropout(0.3))
-        model.add(Dense(1, activation="sigmoid"))
+    optimizer = Adam(learning_rate=0.001)
 
-        optimizer = Adam(learning_rate=0.001)
+    model.compile(optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"])
 
-        model.compile(
-            optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"]
-        )
-
-        return model
+    return model
 
 
 if __name__ == "__main__":
@@ -240,8 +227,7 @@ if __name__ == "__main__":
     )
 
     # モデルの学習
-    pred_model = PredictionModel()
-    model = pred_model.DNN_compile(array_X_learn)
+    model = DNN_compile(array_X_learn)
     model.fit(
         array_X_learn,
         array_y_learn,

@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     filename = os.path.join(
         "/Users/hajime-f/Development/stocktrading/model/",
-        "model_swingtrade_20250315_141517.keras",
+        "model_swingtrade_20250315_225154.keras",
     )
     model = load_model(filename)
     window = 20
