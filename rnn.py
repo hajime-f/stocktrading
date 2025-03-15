@@ -255,8 +255,7 @@ if __name__ == "__main__":
     y_pred_proba = model.predict(array_X_test)
     y_pred = (y_pred_proba > 0.7).astype(int)
 
-    roc = roc_auc_score(array_y_test, y_pred_proba)
-    print("AUC:", roc)
+    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
     print("混同行列:")
     print(confusion_matrix(array_y_test, y_pred))
 
@@ -274,9 +273,13 @@ if __name__ == "__main__":
     y_pred = (y_pred_proba > 0.85).astype(int)
     print(classification_report(array_y_test, y_pred))
 
+    # モデルの評価５
+    y_pred = (y_pred_proba > 0.9).astype(int)
+    print(classification_report(array_y_test, y_pred))
+
     # モデルの保存
     now = datetime.now()
-    filename = now.strftime("model_swingtrade_%Y%m%d_%H%M%S_roc_%.4f.keras")
+    filename = now.strftime("model_swingtrade_%Y%m%d_%H%M%S.keras")
 
     dirname = "./model"
     if not os.path.exists(dirname):
