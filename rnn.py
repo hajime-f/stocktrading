@@ -4,12 +4,14 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
 from keras.models import Sequential
 from keras.layers import Dense, InputLayer, Dropout, SimpleRNN, Bidirectional
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping
 
 import matplotlib.pyplot as plt
 import mplfinance as mpf
@@ -175,14 +177,16 @@ class PredictionModel:
 
         model.add(InputLayer(shape=(array.shape[1], array.shape[2])))
         model.add(Bidirectional(SimpleRNN(200)))
-        # model.add(LSTM(256, activation="relu"))
-        model.add(Dropout(0.2))
+        # model.add(Bidirectional(LSTM(200, return_sequences=True)))
+        model.add(Dropout(0.3))
         model.add(Dense(256, activation="relu"))
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.3))
         model.add(Dense(1, activation="sigmoid"))
 
+        optimizer = Adam(learning_rate=0.001)
+
         model.compile(
-            optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"]
+            optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"]
         )
 
         return model
@@ -242,32 +246,46 @@ if __name__ == "__main__":
         array_X_learn,
         array_y_learn,
         batch_size=128,
-        epochs=10,
+        epochs=20,
+        validation_split=0.2,
+        callbacks=[EarlyStopping(patience=3)],
     )
 
     # モデルの評価１
-    y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.7).astype(int)
+    y_pred_proba = model.predict(array_X_test)
+    y_pred = (y_pred_proba > 0.7).astype(int)
 
     print(classification_report(array_y_test, y_pred))
+    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+    print("混同行列:")
+    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの評価２
-    y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.75).astype(int)
+    y_pred_proba = model.predict(array_X_test)
+    y_pred = (y_pred_proba > 0.75).astype(int)
 
     print(classification_report(array_y_test, y_pred))
+    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+    print("混同行列:")
+    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの評価３
-    y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.8).astype(int)
+    y_pred_proba = model.predict(array_X_test)
+    y_pred = (y_pred_proba > 0.8).astype(int)
 
     print(classification_report(array_y_test, y_pred))
+    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+    print("混同行列:")
+    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの評価４
-    y_pred = model.predict(array_X_test)
-    y_pred = (y_pred > 0.85).astype(int)
+    y_pred_proba = model.predict(array_X_test)
+    y_pred = (y_pred_proba > 0.85).astype(int)
 
     print(classification_report(array_y_test, y_pred))
+    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+    print("混同行列:")
+    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの保存
     now = datetime.now()
