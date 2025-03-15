@@ -44,10 +44,10 @@ Yahoo! ファイナンスから株価データを取得し、データベース�
 
 ## 4. 予測モデル（日足）の学習
 
-日足の値動きを予測するモデル（LSTM）を学習させます。予測性能を示すレポートが最後に出力されるので確認してください。後述するとおり、ラベル１の Recall が低く、Precision が高いことが理想です。
+日足の値動きを予測するモデル（RNN）を学習させます。予測性能を示すレポートが最後に出力されるので確認してください。後述するとおり、ラベル１の Recall が低く、Precision が高いことが理想です。
 
 ```
-(env) $ make lstm
+(env) $ make rnn
 ```
 
 学習が終了すると、```./model``` 配下に ```model_swingtrade_（保存した日時）.keras``` という名前でモデルのインスタンスが保存されます。
@@ -219,6 +219,7 @@ Precision を高く保つために閾値は高めに固定しておきたいの�
 上記で構成した入力データ・正解データのペアをモデルに与え、学習させます。なお、モデルは6層からなる DNN で、2層目に LSTM を利用しています。
 
 ```python:model.py
+def compile_model(self, shape1, shape2):
     model = Sequential()
 
     model.add(InputLayer(shape=(shape1, shape2)))
