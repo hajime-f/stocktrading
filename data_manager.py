@@ -130,7 +130,9 @@ class DataManager:
         else:
             query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
-        conn = sqlite3.connect("./data/stock_data.db")
+        conn = sqlite3.connect(
+            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+        )
         with conn:
             df = pd.read_sql_query(query, conn)
 
