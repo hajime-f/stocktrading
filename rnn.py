@@ -255,41 +255,28 @@ if __name__ == "__main__":
     y_pred_proba = model.predict(array_X_test)
     y_pred = (y_pred_proba > 0.7).astype(int)
 
-    print(classification_report(array_y_test, y_pred))
-    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+    roc = roc_auc_score(array_y_test, y_pred_proba)
+    print("AUC:", roc)
     print("混同行列:")
     print(confusion_matrix(array_y_test, y_pred))
+
+    print(classification_report(array_y_test, y_pred))
 
     # モデルの評価２
-    y_pred_proba = model.predict(array_X_test)
     y_pred = (y_pred_proba > 0.75).astype(int)
-
     print(classification_report(array_y_test, y_pred))
-    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
-    print("混同行列:")
-    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの評価３
-    y_pred_proba = model.predict(array_X_test)
     y_pred = (y_pred_proba > 0.8).astype(int)
-
     print(classification_report(array_y_test, y_pred))
-    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
-    print("混同行列:")
-    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの評価４
-    y_pred_proba = model.predict(array_X_test)
     y_pred = (y_pred_proba > 0.85).astype(int)
-
     print(classification_report(array_y_test, y_pred))
-    print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
-    print("混同行列:")
-    print(confusion_matrix(array_y_test, y_pred))
 
     # モデルの保存
     now = datetime.now()
-    filename = now.strftime("model_swingtrade_%Y%m%d_%H%M%S.keras")
+    filename = now.strftime("model_swingtrade_%Y%m%d_%H%M%S_roc_%.4f.keras")
 
     dirname = "./model"
     if not os.path.exists(dirname):
