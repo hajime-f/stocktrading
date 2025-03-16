@@ -29,10 +29,10 @@ if __name__ == "__main__":
 
     filename = os.path.join(
         "/Users/hajime-f/Development/stocktrading/model/",
-        "model_swingtrade_20250315_225154.keras",
+        "model_swingtrade_20250316_190609.keras",
     )
     model = load_model(filename)
-    window = 20
+    window = 30
 
     result_list = []
 
