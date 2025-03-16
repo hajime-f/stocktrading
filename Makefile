@@ -3,7 +3,7 @@ all:
 install:
 	pip3 install -r requirements.txt
 train:
-	python3 train_model.py
+	python3 model.py
 collect:
 	python3 collect_data.py
 test:
