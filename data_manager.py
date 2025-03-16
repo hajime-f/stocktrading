@@ -163,5 +163,5 @@ class DataManager:
 
 
 if __name__ == "__main__":
-    dm = DataManagement()
+    dm = DataManager()
     dm.init_stock_data()
