@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, InputLayer, Dropout, SimpleRNN, Bidirectional, LSTM
+from keras.layers import Dense, InputLayer, Dropout, LSTM
 
 pd.set_option("display.max_rows", None)
 
@@ -160,7 +160,6 @@ class ModelLibrary:
         model = Sequential()
 
         model.add(InputLayer(shape=(shape1, shape2)))
-        # model.add(Bidirectional(SimpleRNN(200)))
         model.add(LSTM(256, activation="relu"))
         model.add(Dropout(0.2))
         model.add(Dense(256, activation="relu"))
