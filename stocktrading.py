@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     # モデルライブラリを初期化する
     model = ModelLibrary()
-    filename = os.path.join("./model/", "model_daytrade_20250313_085957.keras")
+    filename = os.path.join("./model/", "model_daytrade_20250316_221357.keras")
     model.load_model(filename)
 
     # 預金残高（現物の買付余力）を問い合わせる

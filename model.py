@@ -20,7 +20,7 @@ pd.set_option("display.max_rows", None)
 
 class ModelLibrary:
     def __init__(self):
-        self.clf = None
+        pass
 
     def add_technical_indicators(self, df_list):
         # 移動平均を計算する
