@@ -21,7 +21,7 @@ from data_manager import DataManager
 pd.set_option("display.max_rows", None)
 scaler = StandardScaler()
 
-window = 20
+window = 30
 test_size = 30
 
 
@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
     # モデルの評価１
     y_pred_proba = model.predict(array_X_test)
-    y_pred = (y_pred_proba > 0.7).astype(int)
+    y_pred = (y_pred_proba > 0.5).astype(int)
 
     print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
     print("混同行列:")
@@ -248,18 +248,22 @@ if __name__ == "__main__":
     print(classification_report(array_y_test, y_pred))
 
     # モデルの評価２
-    y_pred = (y_pred_proba > 0.75).astype(int)
+    y_pred = (y_pred_proba > 0.7).astype(int)
     print(classification_report(array_y_test, y_pred))
 
     # モデルの評価３
-    y_pred = (y_pred_proba > 0.8).astype(int)
+    y_pred = (y_pred_proba > 0.75).astype(int)
     print(classification_report(array_y_test, y_pred))
 
     # モデルの評価４
-    y_pred = (y_pred_proba > 0.85).astype(int)
+    y_pred = (y_pred_proba > 0.8).astype(int)
     print(classification_report(array_y_test, y_pred))
 
     # モデルの評価５
+    y_pred = (y_pred_proba > 0.85).astype(int)
+    print(classification_report(array_y_test, y_pred))
+
+    # モデルの評価６
     y_pred = (y_pred_proba > 0.9).astype(int)
     print(classification_report(array_y_test, y_pred))
 
