@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     # 予測値が 0.7 以上の銘柄を買った場合
     for symbol in symbols:
-        if symbol[3] < 0.7:
+        if symbol[2] < 0.7:
             continue
 
         crawler = Crawler(symbol[0])
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     # 予測値が 0.8 以上の銘柄を買った場合
     for symbol in symbols:
-        if symbol[3] < 0.8:
+        if symbol[2] < 0.8:
             continue
 
         crawler = Crawler(symbol[0])
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     # 予測値が 0.9 以上の銘柄を買った場合
     for symbol in symbols:
-        if symbol[3] < 0.9:
+        if symbol[2] < 0.9:
             continue
 
         crawler = Crawler(symbol[0])
