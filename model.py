@@ -239,7 +239,7 @@ if __name__ == "__main__":
         X_learn,
         y_learn,
         epochs=20,
-        batch_size=64,
+        batch_size=128,
         validation_split=0.2,
         callbacks=[EarlyStopping(patience=3)],
     )
