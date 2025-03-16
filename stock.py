@@ -108,7 +108,7 @@ class Stock:
         else:
             data = self.scaler.fit_transform(data)
             prediction_result = self.model.predict(np.array([data]))
-            return (prediction_result > 0.9).astype(int)
+            return (prediction_result > 0.8).astype(int)
 
     def polling(self):
         # １分間隔で呼ばれる関数
