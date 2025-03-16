@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     filename = os.path.join(
         "/Users/hajime-f/Development/stocktrading/model/",
-        "model_swingtrade_20250316_190609.keras",
+        "model_swingtrade_20250317_001445.keras",
     )
     model = load_model(filename)
     window = 30
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     result_list = []
 
     for i, code in enumerate(stock_list["code"]):
-        df = dm.load_stock_data(code, start="2025-01-01", end="end")
+        df = dm.load_stock_data(code, start="2024-12-01", end="end")
 
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
