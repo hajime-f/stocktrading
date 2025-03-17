@@ -120,7 +120,7 @@ class DataManager:
             with conn:
                 data_df.to_sql(code, conn, if_exists="replace", index=False)
 
-    def load_stock_data(self, code, start="2020-04-01", end="2025-03-31"):
+    def load_stock_data(self, code, start="start", end="end"):
         if start == "start" and end == "end":
             query = f'select * from "{code}" order by date;'
         elif start == "start":
