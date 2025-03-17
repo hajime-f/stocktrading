@@ -138,9 +138,9 @@ if __name__ == "__main__":
         list_y = []
 
         for code, brand in zip(stock_list["code"], stock_list["brand"]):
-            df = dm.load_stock_data(code, start="2024-01-01", end="end")
+            df = dm.load_stock_data(code, start="2018-01-01", end="2023-12-31")
 
-            if window * 2 + test_size > len(df):
+            if window * test_size > len(df):
                 continue
 
             # テクニカル指標を追加
@@ -181,8 +181,6 @@ if __name__ == "__main__":
 
         # モデルの評価
         y_pred_proba = pred_model.predict(array_X_test)
-        y_pred = (y_pred_proba > 0.85).astype(int)
-        # print("AUC:", roc_auc_score(array_y_test, y_pred_proba))
+        y_pred = (y_pred_proba > 0.80).astype(int)
+        print("AUC:", roc_auc_score(array_y_test.reshape(-1), y_pred_proba.reshape(-1)))
         print(classification_report(array_y_test.reshape(-1), y_pred.reshape(-1)))
-
-        breakpoint()
