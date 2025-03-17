@@ -1,44 +1,21 @@
-import os
 from datetime import datetime
 import sqlite3
+import os
 import pandas as pd
 import numpy as np
 
 from sklearn.preprocessing import StandardScaler
 from keras.models import load_model
+
 from data_manager import DataManager
 
-pd.set_option("display.max_rows", None)
-scaler = StandardScaler()
 
+class Predictor:
+    def __init__(self, filename):
+        self.model = load_model(filename)
+        self.scaler = StandardScaler()
 
-def prepare_input_data(df):
-    array = np.array(df)
-
-    try:
-        array_std = scaler.fit_transform(array)
-    except ValueError:
-        return None, False
-
-    return np.array([array_std]), True
-
-
-if __name__ == "__main__":
-    dm = DataManager()
-    stock_list = dm.load_stock_list()
-
-    filename = os.path.join(
-        "/Users/hajime-f/Development/stocktrading/model/",
-        "model_swingtrade_20250317_001445.keras",
-    )
-    model = load_model(filename)
-    window = 30
-
-    result_list = []
-
-    for i, code in enumerate(stock_list["code"]):
-        df = dm.load_stock_data(code, start="2024-12-01", end="end")
-
+    def add_technical_indicators(self, df):
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
 
@@ -90,20 +67,67 @@ if __name__ == "__main__":
         # nan を削除
         df = df.dropna()
 
-        # データを絞る
-        df = df.tail(window)
-        if len(df) < window:
-            continue
+        return df
 
-        array_X, flag = prepare_input_data(df)
-        if not flag:
-            continue
-        y_pred = model.predict(array_X, verbose=0)
-        # if y_pred[0][0] >= 0.8:
-        #     print(f"{code}：{stock_list['brand'][i]}")
-        result_list.append([code, stock_list["brand"][i], y_pred[0][0]])
+    def prepare_input_data(self, df):
+        array = np.array(df)
 
-    df_result = pd.DataFrame(result_list, columns=["code", "brand", "pred"])
+        try:
+            array_std = self.scaler.fit_transform(array)
+        except ValueError:
+            return None, False
+
+        return np.array([array_std]), True
+
+    def predict(self, data):
+        return self.model.predict(data, verbose=0)
+
+
+if __name__ == "__main__":
+    dm = DataManager()
+    stock_list = dm.load_stock_list()
+
+    filenames = [
+        "model_swingtrade_20250317_130715_30.keras",
+        "model_swingtrade_20250317_131006_31.keras",
+        "model_swingtrade_20250317_131538_32.keras",
+        "model_swingtrade_20250317_132132_33.keras",
+        "model_swingtrade_20250317_132401_34.keras",
+    ]
+
+    windows = [30, 31, 32, 33, 34]
+
+    list_result = []
+
+    for filename, window in zip(filenames, windows):
+        filename = os.path.join(
+            "/Users/hajime-f/Development/stocktrading/model/", filename
+        )
+
+        predictor = Predictor(filename)
+
+        # データを読み込む
+        for code, brand in zip(stock_list["code"], stock_list["brand"]):
+            df = dm.load_stock_data(code, start="2024-12-01", end="end")
+
+            # テクニカル指標を追加
+            df = predictor.add_technical_indicators(df)
+
+            # データを絞る
+            df = df.tail(window)
+            if len(df) < window:
+                continue
+
+            # 予測する
+            array_X, flag = predictor.prepare_input_data(df)
+            if not flag:
+                continue
+            y_pred = predictor.predict(array_X)
+
+            list_result.append([code, brand, y_pred[0][0]])
+
+    df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
+    df_result = df_result.loc[df_result.groupby("code")["pred"].idxmax(), :]
 
     step = 0.001
     for i in np.arange(1, 0.7, -step):
@@ -124,5 +148,3 @@ if __name__ == "__main__":
     )
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)
-
-    # print("予測結果をデータベースに保存しました。")

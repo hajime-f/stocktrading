@@ -3,12 +3,14 @@ all:
 install:
 	pip install -r requirements.txt
 train:
-	python3 model.py
+	python model.py
 collect:
-	python3 collect_data.py
+	python collect_data.py
 init:
-	python3 data_management.py
+	python data_management.py
 rnn:
-	python3 rnn.py
+	python rnn.py
+predict:
+	python predictor.py
 check:
-	python3 crawler.py
+	python crawler.py
