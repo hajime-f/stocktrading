@@ -144,8 +144,8 @@ class Stock:
                     f"{self.disp_name}（{self.symbol}）：[green]値上がりが予測されました[/]\U0001f60d"
                 )
 
-                # 成行で買い注文を出す
-                buy_result = self.buy_at_market_price_with_cash()
+                # # 成行で買い注文を出す
+                # buy_result = self.buy_at_market_price_with_cash()
 
         self.time = []
         self.price = []
