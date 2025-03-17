@@ -106,7 +106,7 @@ if __name__ == "__main__":
     df_result = pd.DataFrame(result_list, columns=["code", "brand", "pred"])
 
     step = 0.001
-    for i in np.arange(1, 0.4999, -step):
+    for i in np.arange(1, 0.7, -step):
         df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
 
         if len(df_extract) == 50:
