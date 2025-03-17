@@ -21,7 +21,7 @@ from data_manager import DataManager
 pd.set_option("display.max_rows", None)
 scaler = StandardScaler()
 
-window = 30
+window = 34
 test_size = 30
 
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
 
         # データを読み込む
-        df = dm.load_stock_data(code, start="2020-01-01", end="2023-12-31")
+        df = dm.load_stock_data(code, start="2018-01-01", end="2023-12-31")
         if window * test_size > len(df):
             continue
 

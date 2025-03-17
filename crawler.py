@@ -67,7 +67,7 @@ if __name__ == "__main__":
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
         try:
             total_open_price += open_price
-            total_change += change
+            total_change += close_price - open_price
         except ValueError:
             continue
 
@@ -77,6 +77,27 @@ if __name__ == "__main__":
 
     total_change = 0
     total_open_price = 0
+
+    # 予測値が 0.8 以上の銘柄を買った場合
+    for symbol in symbols:
+        if symbol[2] < 0.7:
+            continue
+
+        crawler = Crawler(symbol[0])
+        values = crawler.fetch_stock_data()
+        data = crawler.extract_todays_data(values)
+
+        open_price = float(data[0].replace(",", ""))
+        close_price = float(data[3].replace(",", ""))
+        change = float(data[4])
+        change_p = float(data[5])
+
+        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
+        try:
+            total_open_price += open_price
+            total_change += close_price - open_price
+        except ValueError:
+            continue
 
     print(
         f"0.7：{int(total_open_price) * 100:,} で {int(total_change) * 100:,} の損益\n"
@@ -102,7 +123,7 @@ if __name__ == "__main__":
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
         try:
             total_open_price += open_price
-            total_change += change
+            total_change += close_price - open_price
         except ValueError:
             continue
 
@@ -130,7 +151,7 @@ if __name__ == "__main__":
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
         try:
             total_open_price += open_price
-            total_change += change
+            total_change += close_price - open_price
         except ValueError:
             continue
 
