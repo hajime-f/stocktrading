@@ -183,7 +183,7 @@ if __name__ == "__main__":
         now = datetime.now()
         filename = now.strftime(f"model_swingtrade_%Y%m%d_%H%M%S_{window}.keras")
 
-        dirname = "/Users/hajime-f/Development/stocktrading/model"
+        dirname = f"{dm.base_dir}/model"
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 

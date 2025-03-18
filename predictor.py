@@ -91,9 +91,7 @@ if __name__ == "__main__":
     list_result = []
 
     for filename, window in zip(df_models["model_name"], df_models["window"]):
-        filename = os.path.join(
-            "/Users/hajime-f/Development/stocktrading/model/", filename
-        )
+        filename = os.path.join(f"{dm.base_dir}/model/", filename)
 
         predictor = Predictor(filename)
 
@@ -134,8 +132,6 @@ if __name__ == "__main__":
     df_extract.loc[:, "date"] = datetime.now().strftime("%Y-%m-%d")
     df_extract = df_extract[["date", "code", "brand", "pred"]]
 
-    conn = sqlite3.connect(
-        "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-    )
+    conn = sqlite3.connect(f"{dm.base_dir}/data/stock_data.db")
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)

@@ -1,6 +1,7 @@
 import os
 import pickle
 from datetime import datetime
+from dotenv import load_dotenv
 
 import yfinance as yf
 import sqlite3
@@ -13,6 +14,9 @@ class DataManager:
         self.data = []
         for _ in range(n_symbols):
             self.data.append([])
+
+        load_dotenv()
+        self.base_dir = os.getenv("BASE_DIR")
 
     def append_data(self, new_data, index):
         if new_data["CurrentPriceTime"] is not None:
@@ -68,9 +72,7 @@ class DataManager:
         """
         Yahoo!ファイナンスから日足の株価データを取得し、SQLiteデータベースに保存する
         """
-        stocks_df = pd.read_csv(
-            "/Users/hajime-f/Development/stocktrading/data/data_j.csv"
-        )
+        stocks_df = pd.read_csv(f"{self.base_dir}/data/data_j.csv")
 
         # market が「ETF・ETN」「PRO Market」「REIT」「出資証券」は削除する
         stocks_df = stocks_df[stocks_df["market"] != "ETF・ETN"]
@@ -81,9 +83,7 @@ class DataManager:
         ]
         stocks_df = stocks_df[stocks_df["market"] != "出資証券"]
 
-        conn = sqlite3.connect(
-            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-        )
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
@@ -130,18 +130,14 @@ class DataManager:
         else:
             query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
-        conn = sqlite3.connect(
-            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-        )
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             df = pd.read_sql_query(query, conn)
 
         return df
 
     def load_stock_list(self):
-        conn = sqlite3.connect(
-            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-        )
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             df = pd.read_sql_query("select * from Codes;", conn)
 
@@ -162,16 +158,12 @@ class DataManager:
         return df.values.tolist()
 
     def save_model_names(self, data_df):
-        conn = sqlite3.connect(
-            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-        )
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             data_df.to_sql("Models", conn, if_exists="replace", index=False)
 
     def load_model_list(self):
-        conn = sqlite3.connect(
-            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
-        )
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             df = pd.read_sql_query("select * from Models;", conn)
 
