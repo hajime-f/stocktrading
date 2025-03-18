@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 import pandas as pd
 import numpy as np
 
@@ -129,6 +131,7 @@ if __name__ == "__main__":
     stock_list = dm.load_stock_list()
 
     model = UpdateModel()
+    model_names = []
 
     test_size = 30
     windows = [30, 31, 32, 33, 34]
@@ -138,7 +141,7 @@ if __name__ == "__main__":
         list_y = []
 
         for code, brand in zip(stock_list["code"], stock_list["brand"]):
-            df = dm.load_stock_data(code, start="2018-01-01", end="2023-12-31")
+            df = dm.load_stock_data(code, start="2019-01-01", end="end")
 
             if window * test_size > len(df):
                 continue
@@ -164,23 +167,30 @@ if __name__ == "__main__":
         array_X = np.array(list_X)
         array_y = np.array(list_y)
 
-        array_X_learn, array_X_test, array_y_learn, array_y_test = train_test_split(
-            array_X, array_y, test_size=0.3, random_state=42
-        )
-
         # モデルの学習
         pred_model = model.compile_model(array_X.shape[1], array_X.shape[2])
         pred_model.fit(
-            array_X_learn,
-            array_y_learn,
+            array_X,
+            array_y,
             batch_size=128,
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
+            verbose=0,
         )
 
-        # モデルの評価
-        y_pred_proba = pred_model.predict(array_X_test)
-        y_pred = (y_pred_proba > 0.80).astype(int)
-        print("AUC:", roc_auc_score(array_y_test.reshape(-1), y_pred_proba.reshape(-1)))
-        print(classification_report(array_y_test.reshape(-1), y_pred.reshape(-1)))
+        # モデルの保存
+        now = datetime.now()
+        filename = now.strftime(f"model_swingtrade_%Y%m%d_%H%M%S_{window}.keras")
+
+        dirname = "/Users/hajime-f/Development/stocktrading/model"
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        filename = os.path.join(dirname, filename)
+        pred_model.save(filename)
+        model_names.append([datetime.now().strftime("%Y-%m-%d"), filename, window])
+
+    # モデルのファイル名をデータベースに保存する
+    model_names = pd.DataFrame(model_names, columns=["date", "model_name", "window"])
+    dm.save_model_names(model_names)
