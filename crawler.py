@@ -64,7 +64,7 @@ if __name__ == "__main__":
         change = float(data[4])
         change_p = float(data[5])
 
-        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
+        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
             total_open_price += open_price
             total_change += close_price - open_price
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         change = float(data[4])
         change_p = float(data[5])
 
-        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
+        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
             total_open_price += open_price
             total_change += close_price - open_price
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         change = float(data[4])
         change_p = float(data[5])
 
-        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
+        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
             total_open_price += open_price
             total_change += close_price - open_price
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         change = float(data[4])
         change_p = float(data[5])
 
-        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％")
+        print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
             total_open_price += open_price
             total_change += close_price - open_price

@@ -161,6 +161,13 @@ class DataManager:
 
         return df.values.tolist()
 
+    def save_model_names(self, data_df):
+        conn = sqlite3.connect(
+            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+        )
+        with conn:
+            data_df.to_sql("Models", conn, if_exists="append", index=False)
+
 
 if __name__ == "__main__":
     dm = DataManager()
