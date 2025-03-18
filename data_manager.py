@@ -166,7 +166,16 @@ class DataManager:
             "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
         )
         with conn:
-            data_df.to_sql("Models", conn, if_exists="append", index=False)
+            data_df.to_sql("Models", conn, if_exists="replace", index=False)
+
+    def load_model_list(self):
+        conn = sqlite3.connect(
+            "/Users/hajime-f/Development/stocktrading/data/stock_data.db"
+        )
+        with conn:
+            df = pd.read_sql_query("select * from Models;", conn)
+
+        return df
 
 
 if __name__ == "__main__":

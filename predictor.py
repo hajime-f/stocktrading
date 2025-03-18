@@ -85,21 +85,12 @@ class Predictor:
 
 if __name__ == "__main__":
     dm = DataManager()
-    stock_list = dm.load_stock_list()
-
-    filenames = [
-        "model_swingtrade_20250317_130715_30.keras",
-        "model_swingtrade_20250317_131006_31.keras",
-        "model_swingtrade_20250317_131538_32.keras",
-        "model_swingtrade_20250317_132132_33.keras",
-        "model_swingtrade_20250317_132401_34.keras",
-    ]
-
-    windows = [30, 31, 32, 33, 34]
+    list_stocks = dm.load_stock_list()
+    df_models = dm.load_model_list()
 
     list_result = []
 
-    for filename, window in zip(filenames, windows):
+    for filename, window in zip(df_models["model_name"], df_models["window"]):
         filename = os.path.join(
             "/Users/hajime-f/Development/stocktrading/model/", filename
         )
@@ -107,7 +98,7 @@ if __name__ == "__main__":
         predictor = Predictor(filename)
 
         # データを読み込む
-        for code, brand in zip(stock_list["code"], stock_list["brand"]):
+        for code, brand in zip(list_stocks["code"], list_stocks["brand"]):
             df = dm.load_stock_data(code, start="2024-12-01", end="end")
 
             # テクニカル指標を追加
