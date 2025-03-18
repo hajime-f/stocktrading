@@ -44,22 +44,23 @@ Yahoo! ファイナンスから株価データを取得し、データベース�
 
 ## 4. 予測モデル（日足）の学習
 
-日足の値動きを予測するモデル（RNN）を学習させます。予測性能を示すレポートが最後に出力されるので確認してください。後述するとおり、ラベル１の Recall が低く、Precision が高いことが理想です。
+日足の値動きを予測するモデル（RNN）を学習させます。
 
 ```
-(env) $ make rnn
+(env) $ make update
 ```
 
-学習が終了すると、```./model``` 配下に ```model_swingtrade_（保存した日時）.keras``` という名前でモデルのインスタンスが保存されます。
+学習が終了すると、```./model``` 配下に ```model_swingtrade_（保存した日時）_（パラメータ）.keras``` という名前でモデルのインスタンスが保存されます。
 
 ## 5. .env ファイルの追加
 
-プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。なお、「APIPassword_production」は、証券会社から発行される API パスワード（本番用）です。
+プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。なお、「APIPassword_production」は、証券会社から発行される API パスワード（本番用）です。また、「BaseDir」は、本プログラムが格納されている「stocktrading」ディレクトリへの絶対パスです。
 
 ```:.env
 APIPassword_production=XXXX
 IPAddress=127.0.0.1
 Port=18080
+BaseDir=/path/to/dir/stocktrading
 ```
 
 ## 6. データの収集
@@ -96,13 +97,7 @@ filename_list = [
 
 ## 8. 日足の予測
 
-まずは日足の値動きを予測します。```prediction.py``` の30行目に、モデルインスタンス（日足）のファイル名を記述してください。
-
-```python
-filename = os.path.join("./model/", "model_swingtrade_20250312_204936.keras")
-```
-
-次に、下記のコマンドを打って予測を実行します。
+日足の値動きを予測します。下記のコマンドを打って予測を実行しましょう。
 
 ```python
 (env) $ make predict
