@@ -30,7 +30,7 @@ $ source ./env/bin/activate
 (env) $ make install
 ```
 
-> [!CAUTION]
+> [!TIP]
 > インストール時にエラーが出る場合は、```requirements.txt``` から「wheel」と「playsound」をいったん削除し、再度 ```make install``` してみてください。
 > その後、```pip install wheel playsound``` でこれらを別途インストールすれば、うまく動作するかもしれません。
 
@@ -44,7 +44,7 @@ Yahoo! ファイナンスから株価データを取得し、データベース�
 
 ## 4. 予測モデル（日足）の学習
 
-日足の値動きを予測するモデル（RNN）を学習させます。
+日足の値動きを予測するモデルを学習させます。
 
 ```
 (env) $ make update
@@ -102,6 +102,9 @@ filename_list = [
 ```python
 (env) $ make predict
 ```
+
+> [!TIP]
+> 「3. データベースの初期化」「4. 予測モデル（日足）の学習」「8. 日足の予測」は cron に登録しておいて、毎日実行するようにしておくと便利です。
 
 ## 9. 取引の開始
 
