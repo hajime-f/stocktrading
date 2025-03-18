@@ -16,7 +16,7 @@ class DataManager:
             self.data.append([])
 
         load_dotenv()
-        self.base_dir = os.getenv("BASE_DIR")
+        self.base_dir = os.getenv("BaseDir")
 
     def append_data(self, new_data, index):
         if new_data["CurrentPriceTime"] is not None:
