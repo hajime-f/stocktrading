@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # Stockクラスをインスタンス化してリストに入れる
     stocks = []
     for s in symbols:
-        st = Stock(s, lib, base_transaction)
+        st = Stock(s, lib, dm, base_transaction)
         st.set_information()  # 銘柄情報の設定
         stocks.append(st)
 
