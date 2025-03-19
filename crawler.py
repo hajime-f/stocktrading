@@ -78,7 +78,7 @@ if __name__ == "__main__":
     total_change = 0
     total_open_price = 0
 
-    # 予測値が 0.8 以上の銘柄を買った場合
+    # 予測値が 0.7 以上の銘柄を買った場合
     for symbol in symbols:
         if symbol[2] < 0.7:
             continue
