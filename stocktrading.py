@@ -1,4 +1,5 @@
 import time
+import random
 import threading
 from rich.console import Console
 
@@ -24,7 +25,8 @@ if __name__ == "__main__":
 
     # 今回取引する銘柄のリストを取得する
     dm = DataManager()
-    symbols = [symbol[1] for symbol in dm.fetch_target()]
+    # symbols = [symbol[1] for symbol in dm.fetch_target()]
+    symbols = ["1475"]
 
     # 銘柄登録
     lib.register(symbols)
@@ -55,11 +57,11 @@ if __name__ == "__main__":
     # 受信関数を登録
     lib.register_receiver(receive)
 
-    # １分間隔でstockクラスのpolling関数を呼ぶように設定する
+    # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
     def run_polling(st):
         while True:
+            # time.sleep(300 + (2 * random.random() - 1) * 5)
             st.polling()
-            time.sleep(60)
 
     for st in stocks:
         thread = threading.Thread(target=run_polling, args=(st,))

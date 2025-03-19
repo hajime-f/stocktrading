@@ -52,12 +52,19 @@ class Stock:
             self.data = pd.concat([self.data, price_df])
 
     def polling(self):
-        # １分間隔で呼ばれる関数
+        # 約５分間隔で呼ばれる関数
+
+        # 買いポジションを確認する
+        if not self.lib.fetch_positions(self.symbol, 2):
+            # ポジションがない場合、買い注文を出す
+            content = self.lib.buy_at_market_price_with_margin(
+                self.symbol, self.transaction_unit
+            )
+
+        breakpoint()
 
         # データを更新する
         self.update_data()
-        console.log(f"{self.disp_name}（{self.symbol}）：[cyan]データ更新[/]")
-
         self.time = []
         self.price = []
         self.volume = []
