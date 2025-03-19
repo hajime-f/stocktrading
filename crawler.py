@@ -134,9 +134,9 @@ if __name__ == "__main__":
     total_change = 0
     total_open_price = 0
 
-    # 予測値が 0.9 以上の銘柄を買った場合
+    # 予測値が 0.85 以上の銘柄を買った場合
     for symbol in symbols:
-        if symbol[2] < 0.9:
+        if symbol[2] < 0.85:
             continue
 
         crawler = Crawler(symbol[0])
@@ -155,4 +155,6 @@ if __name__ == "__main__":
         except ValueError:
             continue
 
-    print(f"0.9：{int(total_open_price) * 100:,} で {int(total_change) * 100:,} の損益")
+    print(
+        f"0.85：{int(total_open_price) * 100:,} で {int(total_change) * 100:,} の損益"
+    )
