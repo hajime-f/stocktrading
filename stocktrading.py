@@ -1,11 +1,12 @@
-import os
 import time
 import threading
+from rich.console import Console
 
 from library import StockLibrary
-from model import ModelLibrary
 from stock import Stock
 from data_manager import DataManager
+
+console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 
 if __name__ == "__main__":
@@ -21,30 +22,21 @@ if __name__ == "__main__":
     # 登録銘柄リストからすべての銘柄を削除する
     lib.unregister_all()
 
-    # 銘柄リストを取得する
+    # 今回取引する銘柄のリストを取得する
     dm = DataManager()
     symbols = [symbol[1] for symbol in dm.fetch_target()]
-    # symbols = ['1329', '1475', '1592', '1586', '1481', '1578', '2552',]  # テスト用銘柄
-    # symbols = [
-    #     "1475",
-    # ]
 
     # 銘柄登録
     lib.register(symbols)
 
-    # モデルライブラリを初期化する
-    model = ModelLibrary()
-    filename = os.path.join("./model/", "model_daytrade_20250316_221357.keras")
-    model.load_model(filename)
-
     # 預金残高（現物の買付余力）を問い合わせる
     deposit_before = lib.deposit()
-    print(f"\033[33m買付余力：{int(deposit_before):,} 円\033[0m")
+    console.log(f"[yellow]買付余力：{int(deposit_before):,} 円[/]")
 
     # Stockクラスをインスタンス化してリストに入れる
     stocks = []
     for s in symbols:
-        st = Stock(s, lib, model, base_transaction)
+        st = Stock(s, lib, base_transaction)
         st.set_information()  # 銘柄情報の設定
         stocks.append(st)
 
@@ -52,7 +44,8 @@ if __name__ == "__main__":
     def receive(data):
         # 受信したデータに対応する銘柄のインスタンスを取得する
         received_stock = next(
-            filter(lambda st: st.symbol == data["Symbol"], stocks), None
+            filter(lambda st: st.symbol == data["Symbol"], stocks),
+            None,
         )
 
         # データを追加する
@@ -78,5 +71,5 @@ if __name__ == "__main__":
         pass
 
     deposit_after = lib.deposit()
-    print(f"\033[33m買付余力：{int(deposit_after):,} 円\033[0m")
-    print(f"損益：{int(deposit_before - deposit_after):,} 円")
+    console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
+    console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
