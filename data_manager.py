@@ -169,6 +169,11 @@ class DataManager:
 
         return df
 
+    def save_order(self, data_df):
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        with conn:
+            data_df.to_sql("Orders", conn, if_exists="append", index=False)
+
 
 if __name__ == "__main__":
     dm = DataManager()
