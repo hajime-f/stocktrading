@@ -60,6 +60,16 @@ class Stock:
         約５分間隔で呼ばれる関数
         """
 
+        content = self.lib.fetch_positions(self.symbol, 2)
+        console.log(content)
+        content = self.lib.buy_at_market_price_with_margin(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+        console.log(content)
+        content = self.lib.fetch_positions(self.symbol, 2)
+        console.log(content)
+        breakpoint()
+
         # 買いポジションを確認する
         if not self.lib.fetch_positions(self.symbol, 2):
             # 買いポジションがない場合、信用で成行の買い注文を出す
@@ -88,20 +98,16 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]買い注文を出せませんでした[/]\n{content}"
-            )
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(content)
             return None
 
         if result == 0:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[blue]成行で買い注文を出しました[/]"
-            )
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行発注成功[/]")
             return content["OrderId"]
         else:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]買い注文を出せませんでした[/]\n{content}"
-            )
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(content)
             return None
 
     def check_buy_order_status(self):

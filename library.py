@@ -226,7 +226,7 @@ class StockLibrary:
         return content
 
     def buy_at_market_price_with_margin(self, symbol, count, exchange=1):
-        # 信用で成行買いする
+        # 寄付に信用で成行買いする（信用寄成）
 
         url = self.base_url + "/sendorder"
 
@@ -235,13 +235,13 @@ class StockLibrary:
             "Exchange": exchange,  # 市場
             "SecurityType": 1,  # 株式
             "Side": "2",  # 買い
-            "CashMargin": 2,  # 現物
+            "CashMargin": 2,  # 新規
             "MarginTradeType": 1,  # 制度信用
             "DelivType": 0,  # 預り金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
             "Qty": count,  # 注文数量
-            "FrontOrderType": 10,  # 執行条件（成行）
+            "FrontOrderType": 13,  # 執行条件（寄成）
             "Price": 0,  # 注文価格（成行なのでゼロ）
             "ExpireDay": 0,  # 当日中
         }
