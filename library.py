@@ -225,7 +225,7 @@ class StockLibrary:
 
         return content
 
-    def buy_at_market_price_with_margin(self, symbol, count, exchange=1):
+    def execute_margin_buy_market_order_at_opening(self, symbol, count, exchange=1):
         # 寄付に信用で成行買いする（信用寄成）
 
         url = self.base_url + "/sendorder"

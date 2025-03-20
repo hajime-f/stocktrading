@@ -62,18 +62,16 @@ class Stock:
 
         content = self.lib.fetch_positions(self.symbol, 2)
         console.log(content)
-        content = self.lib.buy_at_market_price_with_margin(
-            self.symbol, self.transaction_unit, self.exchange
-        )
-        console.log(content)
+        self.buy_order_id = self.execute_margin_buy_market_order_at_opening()
+        console.log(self.buy_order_id)
         content = self.lib.fetch_positions(self.symbol, 2)
         console.log(content)
         breakpoint()
 
         # 買いポジションを確認する
         if not self.lib.fetch_positions(self.symbol, 2):
-            # 買いポジションがない場合、信用で成行の買い注文を出す
-            self.buy_order_id = self.buy_at_market_price_with_margin()
+            # 買いポジションがない場合、寄付に信用で成行の買い注文を出す
+            self.buy_order_id = self.execute_margin_buy_market_order_at_opening()
 
         if self.buy_order_id is not None:
             # 買い注文が出せた場合、約定状況を確認する
@@ -83,15 +81,17 @@ class Stock:
                 # 約定している場合、データベースに保存する
                 self.save_order(side=2)
 
+        breakpoint()
+
         # データを更新する
         self.update_data()
         self.time = []
         self.price = []
         self.volume = []
 
-    def buy_at_market_price_with_margin(self):
+    def execute_margin_buy_market_order_at_opening(self):
         # 信用で成行の買い注文を入れる
-        content = self.lib.buy_at_market_price_with_margin(
+        content = self.lib.execute_margin_buy_market_order_at_opening(
             self.symbol, self.transaction_unit, self.exchange
         )
 
@@ -103,7 +103,7 @@ class Stock:
             return None
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]成行発注成功[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
             return content["OrderId"]
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
