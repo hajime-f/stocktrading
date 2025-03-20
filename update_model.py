@@ -1,13 +1,13 @@
 import os
 from datetime import datetime
-import pandas as pd
-import numpy as np
 
-from sklearn.preprocessing import StandardScaler
-from keras.models import Sequential
-from keras.layers import Dense, InputLayer, Dropout, SimpleRNN, Bidirectional
-from keras.optimizers import Adam
+import numpy as np
+import pandas as pd
 from keras.callbacks import EarlyStopping
+from keras.layers import Bidirectional, Dense, Dropout, InputLayer, SimpleRNN
+from keras.models import Sequential
+from keras.optimizers import Adam
+from sklearn.preprocessing import StandardScaler
 
 from data_manager import DataManager
 

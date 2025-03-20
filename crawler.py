@@ -1,5 +1,6 @@
-from bs4 import BeautifulSoup
 import urllib.request
+
+from bs4 import BeautifulSoup
 
 from data_manager import DataManager
 

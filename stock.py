@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import pandas as pd
 from rich.console import Console
 

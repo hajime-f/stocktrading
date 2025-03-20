@@ -1,11 +1,12 @@
-import time
 import random
 import threading
+import time
+
 from rich.console import Console
 
+from data_manager import DataManager
 from library import StockLibrary
 from stock import Stock
-from data_manager import DataManager
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 

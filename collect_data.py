@@ -1,8 +1,7 @@
 import random
 
-from library import StockLibrary
 from data_manager import DataManager
-
+from library import StockLibrary
 
 if __name__ == "__main__":
     # 株ライブラリを初期化する

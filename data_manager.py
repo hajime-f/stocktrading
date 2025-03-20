@@ -1,11 +1,11 @@
 import os
 import pickle
-from datetime import datetime
-from dotenv import load_dotenv
-
-import yfinance as yf
 import sqlite3
+from datetime import datetime
+
 import pandas as pd
+import yfinance as yf
+from dotenv import load_dotenv
 
 
 class DataManager:

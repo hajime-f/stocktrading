@@ -4,16 +4,14 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.utils import resample
-
-from keras.models import Sequential, load_model
-from keras.layers import Dense, InputLayer, Dropout, LSTM
-from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
+from keras.layers import LSTM, Dense, Dropout, InputLayer
+from keras.models import Sequential, load_model
+from keras.optimizers import Adam
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
 
 pd.set_option("display.max_rows", None)
 
