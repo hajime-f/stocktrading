@@ -188,6 +188,11 @@ class DataManager:
                 f"UPDATE Orders SET Price = {price} WHERE Order_id = {order_id}",
             )
 
+    def save_profit_loss(self, df):
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        with conn:
+            df.to_sql("ProfitLoss", conn, if_exists="append", index=False)
+
 
 if __name__ == "__main__":
     dm = DataManager()
