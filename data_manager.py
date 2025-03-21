@@ -185,13 +185,30 @@ class DataManager:
         conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             conn.execute(
-                f"UPDATE Orders SET Price = {price} WHERE Order_id = {order_id}",
+                f"UPDATE Orders SET Price = {price} WHERE Order_id = {order_id};",
             )
 
     def save_profit_loss(self, df):
         conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             df.to_sql("ProfitLoss", conn, if_exists="append", index=False)
+
+    def seek_position(self, symbol, side):
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+
+        # 以下のクエリを実行して、指定した条件に一致するデータを取得します。
+        with conn:
+            df = pd.read_sql_query(
+                f"""
+                SELECT *
+                FROM Orders
+                WHERE DATE(DateTime) = date('now', 'localtime')
+                AND Symbol = {symbol}
+                AND Side = {str(side)};
+                """,
+                conn,
+            )
+        return df
 
 
 if __name__ == "__main__":

@@ -160,21 +160,12 @@ class Stock:
         self.dm.save_order(df_data)
 
     def seek_position(self, side):
-        df_data = self.dm.load_order()
+        df = self.dm.seek_position(self.symbol, side)
 
-        today = datetime.now().strftime("%Y-%m-%d")
-        df_data["DateTime"] = pd.to_datetime(df_data["DateTime"])
-
-        df_extracted_data = df_data[
-            (df_data["DateTime"].dt.date == pd.to_datetime(today).date())
-            & (df_data["Symbol"] == self.symbol)
-            & (df_data["Side"] == str(side))
-        ]
-
-        if df_extracted_data.empty:
+        if df.empty:
             return None
         else:
-            return df_extracted_data
+            return df
 
     def execute_margin_sell_market_order_at_closing(self):
         content = self.lib.execute_margin_sell_market_order_at_closing(
