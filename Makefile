@@ -9,6 +9,8 @@ init:
 update:
 	python update_model.py
 predict:
-	python predictor.py
+	python predictor_2.py
 check:
 	python crawler.py
+check2:
+	python crawler2.py
