@@ -18,6 +18,9 @@ class Stock:
         self.price = []
         self.volume = []
 
+        self.buy_executed = False
+        self.sell_executed = False
+
         self.data = pd.DataFrame()
 
     def set_information(self):
@@ -58,32 +61,41 @@ class Stock:
         約５分間隔で呼ばれる関数
         """
 
-        # 買いポジションを確認する
-        buy_position = self.seek_position(side=2)
+        # 買い注文が完結していない場合、まずは買い注文を約定させる
+        if not self.buy_executed:
+            # 買い注文の有無を確認する
+            buy_position = self.seek_position(side=2)
 
-        if buy_position is None:
-            # 買いポジションがない場合、寄付に信用で成行の買い注文を出す
-            self.execute_margin_buy_market_order_at_opening()
+            if buy_position is None:
+                # まだ買い注文を出していない場合、寄付に信用で成行の買い注文を出す
+                self.execute_margin_buy_market_order_at_opening()
 
-        else:
-            # 買いポジションがある場合、約定状況を確認する
-            if len(buy_position) != 1:
-                raise AssertionError("買いポジションが複数あります")
+            else:
+                # すでに買い注文を出している場合、約定状況を確認する
+                if len(buy_position) != 1:
+                    raise AssertionError("買いポジションが複数あります")
 
-            if self.check_order_status(buy_position["Order_id"].values[0]):
-                # 買い注文が約定している場合、引けに信用で成行の売り注文を出す
+                if self.check_order_status(buy_position["Order_id"].values[0]):
+                    # 買い注文が約定している（買い注文が完結している）場合、フラグを立てる
+                    self.buy_executed = True
+
+        # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文を約定させる
+        if self.buy_executed and not self.sell_executed:
+            # 売り注文の有無を確認する
+            sell_position = self.seek_position(side=1)
+
+            if sell_position is None:
+                # まだ売り注文を出していない場合、引けに信用で成行の売り注文を出す
                 self.execute_margin_sell_market_order_at_closing()
 
-        # 売りポジションを確認する
-        sell_position = self.seek_position(side=1)
+            else:
+                # すでに売りポジションがある場合、約定状況を確認する
+                if len(sell_position) != 1:
+                    raise AssertionError("売りポジションが複数あります")
 
-        if sell_position is not None:
-            # 売りポジションがある場合、約定状況を確認する
-            if len(sell_position) != 1:
-                raise AssertionError("売りポジションが複数あります")
-
-            if self.check_order_status(sell_position["Order_id"].values[0]):
-                console.log(f"{self.disp_name}（{self.symbol}）：[blue]売買成立[/]")
+                if self.check_order_status(sell_position["Order_id"].values[0]):
+                    console.log(f"{self.disp_name}（{self.symbol}）：[blue]売買成立[/]")
+                    self.sell_executed = True
 
         # データを更新する
         self.update_data()
