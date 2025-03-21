@@ -181,6 +181,13 @@ class DataManager:
 
         return df
 
+    def update_price(self, order_id, price):
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        with conn:
+            conn.execute(
+                f"UPDATE Orders SET Price = {price} WHERE Order_id = {order_id}",
+            )
+
 
 if __name__ == "__main__":
     dm = DataManager()

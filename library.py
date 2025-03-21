@@ -237,11 +237,35 @@ class StockLibrary:
             "Side": "2",  # 買い
             "CashMargin": 2,  # 新規
             "MarginTradeType": 1,  # 制度信用
-            "DelivType": 0,  # 預り金
+            "DelivType": 0,  # 指定なし
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
             "Qty": count,  # 注文数量
             "FrontOrderType": 13,  # 執行条件（寄成）
+            "Price": 0,  # 注文価格（成行なのでゼロ）
+            "ExpireDay": 0,  # 当日中
+        }
+        content = self.post_request(url, obj)
+
+        return content
+
+    def execute_margin_sell_market_order_at_closing(self, symbol, count, exchange=1):
+        # 引けに信用で成行売りする（信用引成）
+
+        url = self.base_url + "/sendorder"
+
+        obj = {
+            "Symbol": symbol,  # 銘柄コード
+            "Exchange": exchange,  # 市場
+            "SecurityType": 1,  # 株式
+            "Side": "1",  # 売り
+            "CashMargin": 3,  # 返済
+            "MarginTradeType": 1,  # 制度信用
+            "DelivType": 0,  # 指定なし
+            "FundType": "11",  # 信用取引
+            "AccountType": 4,  # 特定口座
+            "Qty": count,  # 注文数量
+            "FrontOrderType": 16,  # 執行条件（引成）
             "Price": 0,  # 注文価格（成行なのでゼロ）
             "ExpireDay": 0,  # 当日中
         }
@@ -295,15 +319,13 @@ class StockLibrary:
 
         return content
 
-    def check_orders(self, symbol, side, id=None):
+    def check_orders(self, symbol, side, order_id=None):
         # 注文のステータスを確認する
         url = self.base_url + "/orders"
 
-        if id is not None:
+        if order_id is not None:
             obj = {
-                "symbol": symbol,
-                "side": str(side),
-                "id": id,
+                "id": order_id,
             }
         else:
             obj = {
@@ -314,12 +336,12 @@ class StockLibrary:
 
         return content
 
-    def cancel_order(self, id):
+    def cancel_order(self, order_id):
         # 注文をキャンセルする
         url = self.base_url + "/cancelorder"
 
         obj = {
-            "OrderId": id,
+            "OrderId": order_id,
         }
         content = self.put_request(url, obj)
 
