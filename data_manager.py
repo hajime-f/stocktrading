@@ -174,6 +174,13 @@ class DataManager:
         with conn:
             data_df.to_sql("Orders", conn, if_exists="append", index=False)
 
+    def load_order(self):
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        with conn:
+            df = pd.read_sql_query("select * from Orders;", conn)
+
+        return df
+
 
 if __name__ == "__main__":
     dm = DataManager()
