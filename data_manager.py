@@ -147,7 +147,7 @@ class DataManager:
         if target_date == "today":
             target_date = datetime.now().strftime("%Y-%m-%d")
 
-        conn = sqlite3.connect("./data/stock_data.db")
+        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             df = pd.read_sql_query(
                 "select distinct * from Target where date = ?;",
