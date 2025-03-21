@@ -116,7 +116,12 @@ class Stock:
 
         if result == 0:
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
-            self.save_order(side=2, price=None, order_id=content["OrderId"])
+            self.save_order(
+                side=2,
+                price=None,
+                count=self.transaction_unit,
+                order_id=content["OrderId"],
+            )
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
             console.log(content)
@@ -140,20 +145,19 @@ class Stock:
 
         return False
 
-    def save_order(self, side, price, order_id):
+    def save_order(self, side, price, count, order_id):
         df_data = pd.DataFrame(
             {
                 "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Symbol": self.symbol,
                 "Displayname": self.disp_name,
                 "Price": price,
+                "Count": count,
                 "Order_id": order_id,
                 "Side": side,
             }
         )
         self.dm.save_order(df_data)
-        self.buy_order_id = None
-        self.purchase_price = None
 
     def seek_position(self, side):
         df_data = self.dm.load_order()
