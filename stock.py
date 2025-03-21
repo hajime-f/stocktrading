@@ -73,7 +73,7 @@ class Stock:
             else:
                 # すでに買い注文を出している場合、約定状況を確認する
                 if len(buy_position) != 1:
-                    raise AssertionError("買いポジションが複数あります")
+                    raise AssertionError("買い注文が複数あります")
 
                 if self.check_order_status(buy_position["Order_id"].values[0]):
                     # 買い注文が約定している（買い注文が完結している）場合、フラグを立てる
@@ -91,11 +91,15 @@ class Stock:
             else:
                 # すでに売りポジションがある場合、約定状況を確認する
                 if len(sell_position) != 1:
-                    raise AssertionError("売りポジションが複数あります")
+                    raise AssertionError("売り注文が複数あります")
 
                 if self.check_order_status(sell_position["Order_id"].values[0]):
-                    console.log(f"{self.disp_name}（{self.symbol}）：[blue]売買成立[/]")
                     self.sell_executed = True
+
+        if self.buy_executed and self.sell_executed:
+            console.log(
+                f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
+            )
 
         # データを更新する
         self.update_data()

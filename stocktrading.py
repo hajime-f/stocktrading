@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
     def run_polling(st):
         while True:
-            time.sleep(300 + (2 * random.random() - 1) * 10)
+            time.sleep(300 + (2 * random.random() - 1) * 30)
             st.polling()
 
     # Ctrl+C ハンドラー
