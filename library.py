@@ -295,13 +295,21 @@ class StockLibrary:
 
         return content
 
-    def check_execution(self, id):
+    def check_orders(self, symbol, side, id=None):
         # 注文のステータスを確認する
         url = self.base_url + "/orders"
 
-        obj = {
-            "id": id,
-        }
+        if id is not None:
+            obj = {
+                "symbol": symbol,
+                "side": str(side),
+                "id": id,
+            }
+        else:
+            obj = {
+                "symbol": symbol,
+                "side": side,
+            }
         content = self.get_request(url, obj)
 
         return content

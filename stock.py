@@ -63,10 +63,12 @@ class Stock:
 
         content = self.lib.fetch_positions(self.symbol, 2)
         console.log(content)
-        self.buy_order_id = self.execute_margin_buy_market_order_at_opening()
-        console.log(self.buy_order_id)
-        content = self.lib.fetch_positions(self.symbol, 2)
+        content = self.lib.check_orders(self.symbol, 2)
         console.log(content)
+        # self.buy_order_id = self.execute_margin_buy_market_order_at_opening()
+        # console.log(self.buy_order_id)
+        # content = self.lib.fetch_positions(self.symbol, 2)
+        # console.log(content)
         breakpoint()
 
         # 買いポジションを確認する
@@ -139,3 +141,9 @@ class Stock:
         self.dm.save_order(df_data)
         self.buy_order_id = None
         self.purchase_price = None
+
+
+    def is_buy_order_pending(self):
+
+        
+        
