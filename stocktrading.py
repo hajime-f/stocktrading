@@ -1,6 +1,8 @@
 import random
 import threading
 import time
+import signal
+import sys
 
 from rich.console import Console
 
@@ -10,6 +12,8 @@ from stock import Stock
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
+# スレッドを停止させるためのフラグ
+stop_threads = False
 
 if __name__ == "__main__":
     # 取引のベース単位
@@ -61,18 +65,35 @@ if __name__ == "__main__":
     # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
     def run_polling(st):
         while True:
-            # time.sleep(300 + (2 * random.random() - 1) * 5)
+            time.sleep(300 + (2 * random.random() - 1) * 10)
             st.polling()
 
+    # Ctrl+C ハンドラー
+    def signal_handler(sig, frame):
+        global stop_threads
+        console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
+        stop_threads = True  # スレッド停止フラグを設定
+        sys.exit(0)  # プログラムを終了
+
+    # Ctrl+C ハンドラーを登録
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # スレッド起動
+    threads = []
     for st in stocks:
         thread = threading.Thread(target=run_polling, args=(st,))
+        threads.append(thread)
         thread.start()
 
     try:
         lib.run()
-    except KeyboardInterrupt:
-        pass
+    except Exception as e:
+        console.log(f"[red]エラーが発生しました: {e}")
+    finally:
+        # すべてのスレッドが終了するのを待つ
+        for thread in threads:
+            thread.join()
 
-    deposit_after = lib.deposit()
-    console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
-    console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
+        deposit_after = lib.deposit()
+        console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
+        console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
