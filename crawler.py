@@ -78,6 +78,7 @@ if __name__ == "__main__":
         list_data, columns=["date", "code", "brand", "open", "close", "pred"]
     )
     df["change"] = df["close"] - df["open"]
+    df = df[["date", "code", "brand", "open", "close", "change", "pred"]]
 
     # 予測モデルが提案するすべての銘柄を買った場合
     total_pl = df["change"].sum()
