@@ -80,15 +80,18 @@ if __name__ == "__main__":
     df["change"] = df["close"] - df["open"]
 
     # 予測モデルが提案するすべての銘柄を買った場合
-    total = df["change"].sum()
-    print(f"全部：{int(total * 100):,} 円")
+    total_pl = df["change"].sum()
+    total_open_price = df["open"].sum()
+    print(f"全部：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
 
     # 予測値が 0.80 以上の銘柄を買った場合
-    total = df[df["pred"] >= 0.80]["change"].sum()
-    print(f"0.80：{int(total * 100):,} 円")
+    total_pl = df[df["pred"] >= 0.80]["change"].sum()
+    total_open_price = df[df["pred"] >= 0.80]["open"].sum()
+    print(f"0.80：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
 
     # 予測値が 0.85 以上の銘柄を買った場合
-    total = df[df["pred"] >= 0.85]["change"].sum()
-    print(f"0.85：{int(total * 100):,} 円")
+    total_pl = df[df["pred"] >= 0.85]["change"].sum()
+    total_open_price = df[df["pred"] >= 0.85]["open"].sum()
+    print(f"0.85：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
 
     dm.save_profit_loss(df)
