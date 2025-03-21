@@ -18,9 +18,6 @@ class Stock:
         self.price = []
         self.volume = []
 
-        self.buy_order_id = None
-        self.purchase_price = None
-
         self.data = pd.DataFrame()
 
     def set_information(self):
@@ -63,24 +60,30 @@ class Stock:
 
         # 買いポジションを確認する
         buy_position = self.seek_position(side=2)
+
         if buy_position is None:
             # 買いポジションがない場合、寄付に信用で成行の買い注文を出す
             self.execute_margin_buy_market_order_at_opening()
 
         else:
             # 買いポジションがある場合、約定状況を確認する
-            if len(buy_position["Order_id"]) != 1:
+            if len(buy_position) != 1:
                 raise AssertionError("買いポジションが複数あります")
 
-        if self.buy_order_id is not None:
-            # 買い注文が出せた場合、約定状況を確認する
-            self.purchase_price = self.check_buy_order_status()
+            if self.check_order_status(buy_position["Order_id"].values[0]):
+                # 買い注文が約定している場合、引けに信用で成行の売り注文を出す
+                self.execute_margin_sell_market_order_at_closing()
 
-            if self.purchase_price is not None:
-                # 約定している場合、データベースに保存する
-                self.save_order(side=2)
+        # 売りポジションを確認する
+        sell_position = self.seek_position(side=1)
 
-        breakpoint()
+        if sell_position is not None:
+            # 売りポジションがある場合、約定状況を確認する
+            if len(sell_position) != 1:
+                raise AssertionError("売りポジションが複数あります")
+
+            if self.check_order_status(sell_position["Order_id"].values[0]):
+                console.log(f"{self.disp_name}（{self.symbol}）：[blue]売買成立[/]")
 
         # データを更新する
         self.update_data()
@@ -102,33 +105,38 @@ class Stock:
 
         if result == 0:
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
-            self.save_order(side=2, price=None)
+            self.save_order(side=2, price=None, order_id=content["OrderId"])
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
             console.log(content)
 
-    def check_buy_order_status(self):
-        # 買い注文の約定状況を確認する
-        result = self.lib.check_execution(self.buy_order_id)
+    def check_order_status(self, order_id):
+        # 注文の約定状況を確認する
+        result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
+
+        if not result:
+            raise AssertionError(f"id：{order_id} に対応する約定情報が取得できません")
 
         # 約定している場合
         if result[0]["State"] == 5:
-            purchase_price = int(result[0]["Details"][2]["Price"])
+            price = int(result[0]["Details"][2]["Price"])
             console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.purchase_price:,} 円で {self.transaction_unit} 株購入[/]しました"
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.price:,} 円で {self.transaction_unit} 株が約定[/]しました"
             )
-            return purchase_price
+            self.dm.update_price(order_id, price)
 
-        return None
+            return True
 
-    def save_order(self, side, price):
+        return False
+
+    def save_order(self, side, price, order_id):
         df_data = pd.DataFrame(
             {
                 "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Symbol": self.symbol,
                 "Displayname": self.disp_name,
                 "Price": price,
-                "Order_id": self.buy_order_id,
+                "Order_id": order_id,
                 "Side": side,
             }
         )
@@ -141,6 +149,7 @@ class Stock:
 
         today = datetime.now().strftime("%Y-%m-%d")
         df_data["DateTime"] = pd.to_datetime(df_data["DateTime"])
+
         df_extracted_data = df_data[
             (df_data["DateTime"].dt.date == pd.to_datetime(today).date())
             & (df_data["Symbol"] == self.symbol)
@@ -151,3 +160,21 @@ class Stock:
             return None
         else:
             return df_extracted_data
+
+    def execute_margin_sell_market_order_at_closing(self):
+        content = self.lib.execute_margin_sell_market_order_at_closing(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+
+        try:
+            result = content["Result"]
+        except KeyError:
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(content)
+
+        if result == 0:
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
+            self.save_order(side=1, price=None, order_id=content["OrderId"])
+        else:
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(content)
