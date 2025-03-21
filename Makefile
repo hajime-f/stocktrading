@@ -8,7 +8,7 @@ init:
 	python data_management.py
 update:
 	python update_model.py
-predict:
+predict2:
 	python predictor_2.py
 check:
 	python crawler.py

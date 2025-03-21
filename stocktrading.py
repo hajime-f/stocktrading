@@ -1,8 +1,8 @@
 import random
-import threading
-import time
 import signal
 import sys
+import threading
+import time
 
 from rich.console import Console
 
@@ -98,3 +98,18 @@ if __name__ == "__main__":
         deposit_after = lib.deposit()
         console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
         console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
+
+        df = dm.load_order()
+        price_side_1 = (
+            df[df["Side"] == 1]["Price"].iloc[0]
+            if not df[df["Side"] == 1].empty
+            else None
+        )
+        price_side_2 = (
+            df[df["Side"] == 2]["Price"].iloc[0]
+            if not df[df["Side"] == 2].empty
+            else None
+        )
+        if price_side_1 is not None and price_side_2 is not None:
+            tmp = price_side_1 - price_side_2
+        breakpoint()
