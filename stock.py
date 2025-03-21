@@ -96,11 +96,6 @@ class Stock:
                 if self.check_order_status(sell_position["Order_id"].values[0]):
                     self.sell_executed = True
 
-        if self.buy_executed and self.sell_executed:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
-            )
-
         # データを更新する
         self.update_data()
         self.time = []
@@ -194,3 +189,17 @@ class Stock:
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
             console.log(content)
+
+    def check_transaction(self):
+        if self.buy_executed and self.sell_executed:
+            console.log(
+                f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
+            )
+        elif self.buy_executed and not self.sell_executed:
+            console.log(
+                f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません[/]"
+            )
+        else:
+            console.log(
+                f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません[/]"
+            )

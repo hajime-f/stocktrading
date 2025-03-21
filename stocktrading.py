@@ -13,7 +13,7 @@ from stock import Stock
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 # スレッドを停止させるためのフラグ
-stop_threads = False
+stop_event = threading.Event()
 
 if __name__ == "__main__":
     # 取引のベース単位
@@ -65,15 +65,18 @@ if __name__ == "__main__":
 
     # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
     def run_polling(st):
-        while True:
+        while not stop_event.is_set():
             time.sleep(300 + (2 * random.random() - 1) * 30)
             st.polling()
+
+        # Ctrl+C が押されたときに実行する処理
+        st.check_transaction()
 
     # Ctrl+C ハンドラー
     def signal_handler(sig, frame):
         global stop_threads
         console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
-        stop_threads = True  # スレッド停止フラグを設定
+        stop_event.set()  # スレッド停止イベントを設定
         sys.exit(0)  # プログラムを終了
 
     # Ctrl+C ハンドラーを登録
