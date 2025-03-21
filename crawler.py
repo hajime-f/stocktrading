@@ -62,8 +62,8 @@ if __name__ == "__main__":
 
         open_price = float(data[0].replace(",", ""))
         close_price = float(data[3].replace(",", ""))
-        change = float(data[4])
-        change_p = float(data[5])
+        change = float(data[4].replace(",", ""))
+        change_p = float(data[5].replace(",", ""))
 
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
@@ -90,8 +90,8 @@ if __name__ == "__main__":
 
         open_price = float(data[0].replace(",", ""))
         close_price = float(data[3].replace(",", ""))
-        change = float(data[4])
-        change_p = float(data[5])
+        change = float(data[4].replace(",", ""))
+        change_p = float(data[5].replace(",", ""))
 
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
@@ -118,8 +118,8 @@ if __name__ == "__main__":
 
         open_price = float(data[0].replace(",", ""))
         close_price = float(data[3].replace(",", ""))
-        change = float(data[4])
-        change_p = float(data[5])
+        change = float(data[4].replace(",", ""))
+        change_p = float(data[5].replace(",", ""))
 
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
@@ -146,8 +146,8 @@ if __name__ == "__main__":
 
         open_price = float(data[0].replace(",", ""))
         close_price = float(data[3].replace(",", ""))
-        change = float(data[4])
-        change_p = float(data[5])
+        change = float(data[4].replace(",", ""))
+        change_p = float(data[5].replace(",", ""))
 
         print(f"{symbol[0]}：{symbol[1]}, {change}, {change_p}％：{symbol[2]:.3f}")
         try:
