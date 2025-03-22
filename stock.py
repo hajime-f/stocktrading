@@ -89,7 +89,7 @@ class Stock:
                 self.execute_margin_sell_market_order_at_closing()
 
             else:
-                # すでに売りポジションがある場合、約定状況を確認する
+                # すでに売り注文を出している場合、約定状況を確認する
                 if len(sell_position) != 1:
                     raise AssertionError("売り注文が複数あります")
 
@@ -154,7 +154,7 @@ class Stock:
                 "Price": price,
                 "Count": count,
                 "Order_id": order_id,
-                "Side": side,
+                "Side": str(side),
             }
         )
         self.dm.save_order(df_data)
