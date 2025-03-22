@@ -10,10 +10,58 @@ from data_manager import DataManager
 from library import StockLibrary
 from stock import Stock
 
+# 定数の定義
+POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
+POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
+
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
-# スレッドを停止させるためのフラグ
+# スレッドを停止させるためのイベント
 stop_event = threading.Event()
+
+
+# PUSH配信を受信した時に呼ばれる関数
+def receive(data):
+    """
+    PUSH配信を受信した時に呼ばれる関数
+    """
+
+    # 受信したデータに対応する銘柄のインスタンスを取得する
+    received_stock = next(
+        filter(lambda st: st.symbol == data["Symbol"], stocks),
+        None,
+    )
+    # データを追加する
+    if received_stock:
+        received_stock.append_data(data)
+
+
+# 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
+def run_polling(st):
+    """
+    約５分間隔でstockクラスのpolling関数を呼ぶ関数
+    """
+
+    while not stop_event.is_set():
+        time.sleep(
+            POLLING_INTERVAL + (2 * random.random() - 1) * POLLING_INTERVAL_VARIATION
+        )
+        st.polling()
+
+    # Ctrl+C が押されたときに実行する処理
+    st.check_transaction()
+
+
+# Ctrl+C ハンドラー
+def signal_handler(sig, frame):
+    """
+    Ctrl+C ハンドラー
+    """
+
+    console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
+    stop_event.set()  # スレッド停止イベントを設定
+    sys.exit(0)  # プログラムを終了
+
 
 if __name__ == "__main__":
     # 取引のベース単位
@@ -22,13 +70,13 @@ if __name__ == "__main__":
     # 当然、ベース単位を引き上げるほど取引価格が上がっていくので、注意が必要。
     base_transaction = 1
 
-    # 株ライブラリを初期化する
+    # 株ライブラリを初期化
     lib = StockLibrary()
 
     # 登録銘柄リストからすべての銘柄を削除する
     lib.unregister_all()
 
-    # 今回取引する銘柄のリストを取得する
+    # 今回取引する銘柄リストを取得
     dm = DataManager()
     # symbols = [symbol[1] for symbol in dm.fetch_target()]
     # symbols = ["1329", "1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
@@ -37,56 +85,24 @@ if __name__ == "__main__":
     # 銘柄登録
     lib.register(symbols)
 
-    # 預金残高（現物の買付余力）を問い合わせる
+    # 預金残高を取得
     deposit_before = lib.deposit()
     console.log(f"[yellow]買付余力：{int(deposit_before):,} 円[/]")
 
     # Stockクラスをインスタンス化してリストに入れる
-    stocks = []
-    for s in symbols:
-        st = Stock(s, lib, dm, base_transaction)
+    stocks = [Stock(s, lib, dm, base_transaction) for s in symbols]
+    for st in stocks:
         st.set_information()  # 銘柄情報の設定
-        stocks.append(st)
-
-    # PUSH配信を受信した時に呼ばれる関数
-    def receive(data):
-        # 受信したデータに対応する銘柄のインスタンスを取得する
-        received_stock = next(
-            filter(lambda st: st.symbol == data["Symbol"], stocks),
-            None,
-        )
-
-        # データを追加する
-        if received_stock:
-            received_stock.append_data(data)
 
     # 受信関数を登録
     lib.register_receiver(receive)
-
-    # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
-    def run_polling(st):
-        while not stop_event.is_set():
-            time.sleep(300 + (2 * random.random() - 1) * 30)
-            st.polling()
-
-        # Ctrl+C が押されたときに実行する処理
-        st.check_transaction()
-
-    # Ctrl+C ハンドラー
-    def signal_handler(sig, frame):
-        global stop_threads
-        console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
-        stop_event.set()  # スレッド停止イベントを設定
-        sys.exit(0)  # プログラムを終了
 
     # Ctrl+C ハンドラーを登録
     signal.signal(signal.SIGINT, signal_handler)
 
     # スレッド起動
-    threads = []
-    for st in stocks:
-        thread = threading.Thread(target=run_polling, args=(st,))
-        threads.append(thread)
+    threads = [threading.Thread(target=run_polling, args=(st,)) for st in stocks]
+    for thread in threads:
         thread.start()
 
     try:
@@ -102,17 +118,9 @@ if __name__ == "__main__":
         console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
         console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
 
-        df = dm.load_order()
-        price_side_1 = (
-            df[df["Side"] == 1]["Price"].iloc[0]
-            if not df[df["Side"] == 1].empty
-            else None
-        )
-        price_side_2 = (
-            df[df["Side"] == 2]["Price"].iloc[0]
-            if not df[df["Side"] == 2].empty
-            else None
-        )
-        if price_side_1 is not None and price_side_2 is not None:
-            tmp = price_side_1 - price_side_2
+        breakpoint()
+
+        results = dm.calculate_price_diff_times_count()
+        console.log(results)
+
         breakpoint()
