@@ -80,14 +80,16 @@ if __name__ == "__main__":
     dm = DataManager()
     # symbols = [symbol[1] for symbol in dm.fetch_target()]
     # symbols = ["1329", "1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
-    symbols = ["1475"]
+    symbols = ["1475"]  # テスト用銘柄
 
     # 銘柄登録
     lib.register(symbols)
 
-    # 預金残高を取得
-    deposit_before = lib.deposit()
-    console.log(f"[yellow]買付余力：{int(deposit_before):,} 円[/]")
+    # 取引余力を取得
+    deposit_margin = lib.deposit_margin()
+    console.log(f"[yellow]取引余力（信用）：{int(deposit_margin):,} 円[/]")
+    deposit_cash = lib.deposit_cash()
+    console.log(f"[yellow]取引余力（現物）：{int(deposit_cash):,} 円[/]")
 
     # Stockクラスをインスタンス化してリストに入れる
     stocks = [Stock(s, lib, dm, base_transaction) for s in symbols]
@@ -113,12 +115,6 @@ if __name__ == "__main__":
         # すべてのスレッドが終了するのを待つ
         for thread in threads:
             thread.join()
-
-            deposit_after = lib.deposit()
-            console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
-            console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
-
-            breakpoint()
 
             results = dm.calculate_price_diff_times_count()
             console.log(results)

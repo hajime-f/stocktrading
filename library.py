@@ -132,11 +132,17 @@ class StockLibrary:
         content = self.throw_request(req)
         return content
 
-    def deposit(self):
-        # 預金残高（現物の取引余力）を問い合わせる
+    def deposit_cash(self):
+        # 現物の取引余力を問い合わせる
         url = self.base_url + "/wallet/cash"
         content = self.get_request(url)
         return content["StockAccountWallet"]
+
+    def deposit_margin(self):
+        # 信用の取引余力を問い合わせる
+        url = self.base_url + "/wallet/margin"
+        content = self.get_request(url)
+        return content["MarginAccountWallet"]
 
     def fetch_price(self, symbol, exchange):
         # ある銘柄の時価を得る
