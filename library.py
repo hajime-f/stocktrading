@@ -132,13 +132,13 @@ class StockLibrary:
         content = self.throw_request(req)
         return content
 
-    def deposit_cash(self):
+    def wallet_cash(self):
         # 現物の取引余力を問い合わせる
         url = self.base_url + "/wallet/cash"
         content = self.get_request(url)
         return content["StockAccountWallet"]
 
-    def deposit_margin(self):
+    def wallet_margin(self):
         # 信用の取引余力を問い合わせる
         url = self.base_url + "/wallet/margin"
         content = self.get_request(url)

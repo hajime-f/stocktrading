@@ -86,10 +86,10 @@ if __name__ == "__main__":
     lib.register(symbols)
 
     # 取引余力を取得
-    deposit_margin = lib.deposit_margin()
-    console.log(f"[yellow]取引余力（信用）：{int(deposit_margin):,} 円[/]")
-    deposit_cash = lib.deposit_cash()
-    console.log(f"[yellow]取引余力（現物）：{int(deposit_cash):,} 円[/]")
+    wallet_margin = lib.wallet_margin()
+    console.log(f"[yellow]取引余力（信用）：{int(wallet_margin):,} 円[/]")
+    wallet_cash = lib.wallet_cash()
+    console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
 
     # Stockクラスをインスタンス化してリストに入れる
     stocks = [Stock(s, lib, dm, base_transaction) for s in symbols]
