@@ -185,7 +185,7 @@ class DataManager:
         conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
         with conn:
             conn.execute(
-                f"UPDATE Orders SET Price = {price} WHERE Order_id = {order_id};",
+                f"UPDATE Orders SET Price = {price} WHERE Order_id = '{order_id}';",
             )
 
     def save_profit_loss(self, df):

@@ -114,13 +114,13 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
 
-        deposit_after = lib.deposit()
-        console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
-        console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
+            deposit_after = lib.deposit()
+            console.log(f"[yellow]買付余力：{int(deposit_after):,} 円[/]")
+            console.log(f"[yellow]損益：{int(deposit_before - deposit_after):,} 円[/]")
 
-        breakpoint()
+            breakpoint()
 
-        results = dm.calculate_price_diff_times_count()
-        console.log(results)
+            results = dm.calculate_price_diff_times_count()
+            console.log(results)
 
-        breakpoint()
+            breakpoint()

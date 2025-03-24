@@ -137,7 +137,7 @@ class Stock:
         if result[0]["State"] == 5:
             price = int(result[0]["Details"][2]["Price"])
             console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]を [red]{self.price:,} 円で {self.transaction_unit} 株が約定[/]しました"
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]は [red]{price:,} 円で {self.transaction_unit} 株が約定[/]しました"
             )
             self.dm.update_price(order_id, price)
 
@@ -155,7 +155,8 @@ class Stock:
                 "Count": count,
                 "Order_id": order_id,
                 "Side": str(side),
-            }
+            },
+            index=[0],
         )
         self.dm.save_order(df_data)
 
@@ -177,10 +178,16 @@ class Stock:
         except KeyError:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
             console.log(content)
+            result = -1
 
         if result == 0:
             console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
-            self.save_order(side=1, price=None, order_id=content["OrderId"])
+            self.save_order(
+                side=1,
+                price=None,
+                count=self.transaction_unit,
+                order_id=content["OrderId"],
+            )
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
             console.log(content)

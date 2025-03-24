@@ -261,10 +261,11 @@ class StockLibrary:
             "Side": "1",  # 売り
             "CashMargin": 3,  # 返済
             "MarginTradeType": 1,  # 制度信用
-            "DelivType": 0,  # 指定なし
+            "DelivType": 2,  # 預かり金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
             "Qty": count,  # 注文数量
+            "ClosePositionOrder": 1,  # 決済順序
             "FrontOrderType": 16,  # 執行条件（引成）
             "Price": 0,  # 注文価格（成行なのでゼロ）
             "ExpireDay": 0,  # 当日中
