@@ -13,4 +13,4 @@ predict2:
 check:
 	python crawler.py
 check2:
-	python crawler2.py
+	python crawler_2.py

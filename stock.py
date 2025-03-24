@@ -67,16 +67,16 @@ class Stock:
             buy_position = self.seek_position(side=2)
 
             if buy_position is None:
-                # まだ買い注文を出していない場合、寄付に信用で成行の買い注文を出す
+                # まだ買い注文を入れていない場合、寄付での買い建てを試みる
                 self.execute_margin_buy_market_order_at_opening()
 
             else:
-                # すでに買い注文を出している場合、約定状況を確認する
                 if len(buy_position) != 1:
                     raise AssertionError("買い注文が複数あります")
 
+                # すでに買い注文を入れている場合、約定状況を確認する
                 if self.check_order_status(buy_position["Order_id"].values[0]):
-                    # 買い注文が約定している（買い注文が完結している）場合、フラグを立てる
+                    # 買い注文が約定している（買い建てできている）場合、フラグを立てる
                     self.buy_executed = True
 
         # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文を約定させる
@@ -85,15 +85,16 @@ class Stock:
             sell_position = self.seek_position(side=1)
 
             if sell_position is None:
-                # まだ売り注文を出していない場合、引けに信用で成行の売り注文を出す
+                # まだ売り注文を入れていない場合、引けでの返済を試みる
                 self.execute_margin_sell_market_order_at_closing()
 
             else:
-                # すでに売り注文を出している場合、約定状況を確認する
                 if len(sell_position) != 1:
                     raise AssertionError("売り注文が複数あります")
 
+                # すでに売り注文を入れている場合、約定状況を確認する
                 if self.check_order_status(sell_position["Order_id"].values[0]):
+                    # 売り注文が約定している（返済できている）場合、フラグを立てる
                     self.sell_executed = True
 
         # データを更新する
@@ -103,7 +104,7 @@ class Stock:
         self.volume = []
 
     def execute_margin_buy_market_order_at_opening(self):
-        # 寄付に信用で成行の買い注文を入れる
+        # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
         content = self.lib.execute_margin_buy_market_order_at_opening(
             self.symbol, self.transaction_unit, self.exchange
         )
@@ -111,11 +112,12 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
             console.log(content)
+            result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]買い発注成功[/]")
             self.save_order(
                 side=2,
                 price=None,
@@ -123,7 +125,7 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
             console.log(content)
 
     def check_order_status(self, order_id):
@@ -169,6 +171,7 @@ class Stock:
             return df
 
     def execute_margin_sell_market_order_at_closing(self):
+        # 引けに信用で成行の売り注文を入れる（引け返済）
         content = self.lib.execute_margin_sell_market_order_at_closing(
             self.symbol, self.transaction_unit, self.exchange
         )
@@ -176,12 +179,12 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
             console.log(content)
             result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]発注成功[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[blue]売り発注成功[/]")
             self.save_order(
                 side=1,
                 price=None,
@@ -189,7 +192,7 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]発注失敗[/]")
+            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
             console.log(content)
 
     def check_transaction(self):
