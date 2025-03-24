@@ -99,9 +99,7 @@ class Stock:
 
         # データを更新する
         self.update_data()
-        self.time = []
-        self.price = []
-        self.volume = []
+        self.time, self.price, self.volume = [], [], []
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
