@@ -1,9 +1,11 @@
+from datetime import datetime
 import random
 import signal
 import sys
 import threading
 import time
 
+import pandas as pd
 from rich.console import Console
 
 from data_manager import DataManager
@@ -79,8 +81,8 @@ if __name__ == "__main__":
     # 今回取引する銘柄リストを取得
     dm = DataManager()
     # symbols = [symbol[1] for symbol in dm.fetch_target()]
-    # symbols = ["1329", "1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
-    symbols = ["1475"]  # テスト用銘柄
+    symbols = ["1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
+    # symbols = ["1475"]  # テスト用銘柄
 
     # 銘柄登録
     lib.register(symbols)
@@ -116,7 +118,19 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
 
-            results = dm.calculate_price_diff_times_count()
-            console.log(results)
+            df = dm.load_order()
+
+            # 損益を計算する
+            today = datetime.now().strftime("%Y-%m-%d")
+            df["DateTime"] = pd.to_datetime(df["DateTime"])
+            df_today = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
+
+            df["Value"] = df["Price"] * df["Count"]
+            result = (
+                df.groupby(["Symbol", "Displayname", "Side"])["Value"]
+                .sum()
+                .unstack(fill_value=0)
+            )
+            result["Result"] = result.get(1, 0) - result.get(2, 0)
 
             breakpoint()
