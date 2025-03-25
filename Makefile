@@ -14,3 +14,5 @@ check:
 	python crawler.py
 check2:
 	python crawler_2.py
+eval:
+	python evaluator.py
