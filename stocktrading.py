@@ -1,11 +1,9 @@
-from datetime import datetime
 import random
 import signal
 import sys
 import threading
 import time
 
-import pandas as pd
 from rich.console import Console
 
 from data_manager import DataManager
@@ -118,19 +116,7 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
 
-            df = dm.load_order()
-
             # 損益を計算する
-            today = datetime.now().strftime("%Y-%m-%d")
-            df["DateTime"] = pd.to_datetime(df["DateTime"])
-            df_today = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
-
-            df["Value"] = df["Price"] * df["Count"]
-            result = (
-                df.groupby(["Symbol", "Displayname", "Side"])["Value"]
-                .sum()
-                .unstack(fill_value=0)
-            )
-            result["Result"] = result.get(1, 0) - result.get(2, 0)
+            pl = dm.calc_profitloss()
 
             breakpoint()

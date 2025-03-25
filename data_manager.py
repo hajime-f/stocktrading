@@ -210,6 +210,29 @@ class DataManager:
             )
         return df
 
+    def calc_profitloss(self):
+        df = self.load_order()
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        df["DateTime"] = pd.to_datetime(df["DateTime"])
+        df = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
+
+        df["Value"] = df["Price"] * df["Count"]
+        result = (
+            df.groupby(["Symbol", "Displayname", "Side"])["Value"]
+            .sum()
+            .unstack(fill_value=0)
+        )
+        result["Result"] = result.get(1, 0) - result.get(2, 0)
+        result = result[["Result"]].reset_index()
+
+        result["open"] = df[df["Side"] == 2]["Price"].reset_index(drop=True)
+        result["close"] = df[df["Side"] == 1]["Price"].reset_index(drop=True)
+        result["Count"] = df[df["Side"] == 1]["Count"].reset_index(drop=True)
+
+        result = result[["Symbol", "Displayname", "open", "close", "Count", "Result"]]
+        return result
+
 
 if __name__ == "__main__":
     dm = DataManager()
