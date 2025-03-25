@@ -210,51 +210,6 @@ class DataManager:
             )
         return df
 
-    def calculate_price_diff_times_count(self):
-        """本日日付のデータから、Side1のPrice - Side2のPrice * Count を Symbol ごとに計算する."""
-        df = self.load_order()
-
-        today = datetime.now().strftime("%Y-%m-%d")
-        df["DateTime"] = pd.to_datetime(df["DateTime"])
-
-        df_today = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
-        result = {}
-
-        def calculate_diff_times_count(x):
-            side_1_price = (
-                x[x["Side"] == 1]["Price"].iloc[0]
-                if not x[x["Side"] == 1].empty
-                else None
-            )
-            side_2_price = (
-                x[x["Side"] == 2]["Price"].iloc[0]
-                if not x[x["Side"] == 2].empty
-                else None
-            )
-            side_1_count = (
-                x[x["Side"] == 1]["Count"].iloc[0]
-                if not x[x["Side"] == 1].empty
-                else None
-            )
-            side_2_count = (
-                x[x["Side"] == 2]["Count"].iloc[0]
-                if not x[x["Side"] == 2].empty
-                else None
-            )
-
-            if (
-                side_1_price is not None
-                and side_2_price is not None
-                and side_1_count is not None
-                and side_2_count is not None
-            ):
-                return (side_1_price - side_2_price) * side_1_count
-            else:
-                return None
-
-        result = df_today.groupby("Symbol").apply(calculate_diff_times_count).to_dict()
-        return result
-
 
 if __name__ == "__main__":
     dm = DataManager()
