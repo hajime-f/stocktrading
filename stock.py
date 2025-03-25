@@ -61,7 +61,7 @@ class Stock:
         約５分間隔で呼ばれる関数
         """
 
-        # 買い注文が完結していない場合、まずは買い注文を約定させる
+        # 買い注文が完結していない場合、まずは買い注文（寄成）を約定させる
         if not self.buy_executed:
             # 買い注文の有無を確認する
             buy_position = self.seek_position(side=2)
@@ -79,7 +79,7 @@ class Stock:
                     # 買い注文が約定している（買い建てできている）場合、フラグを立てる
                     self.buy_executed = True
 
-        # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文を約定させる
+        # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文（引成）を約定させる
         if self.buy_executed and not self.sell_executed:
             # 売り注文の有無を確認する
             sell_position = self.seek_position(side=1)
@@ -136,9 +136,14 @@ class Stock:
         # 約定している場合
         if result[0]["State"] == 5:
             price = int(result[0]["Details"][2]["Price"])
-            console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]は [red]{price:,} 円で {self.transaction_unit} 株が約定[/]しました"
-            )
+            if result[0]["Side"] == "1":
+                console.log(
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[red]{price:,} 円で {self.transaction_unit} 株の売りが約定[/]"
+                )
+            else:
+                console.log(
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[red]{price:,} 円で {self.transaction_unit} 株の買いが約定[/]"
+                )
             self.dm.update_price(order_id, price)
 
             return True
