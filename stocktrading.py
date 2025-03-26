@@ -116,7 +116,8 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
 
-            # 損益を計算する
-            pl = dm.calc_profitloss()
-            console.log(pl)
-            breakpoint()
+        # 損益を計算する
+        pl = dm.calc_profitloss()
+        console.log(pl)
+        console.log(pl["Result"].sum())
+        breakpoint()
