@@ -223,12 +223,18 @@ class DataManager:
             .sum()
             .unstack(fill_value=0)
         )
-        result["Result"] = result.get(1, 0) - result.get(2, 0)
-        result = result[["Result"]].reset_index()
+        result["Result"] = result["1"] - result["2"]
+        result = result[["Result"]].reset_index().sort_values("Symbol")
 
-        result["open"] = df[df["Side"] == 2]["Price"].reset_index(drop=True)
-        result["close"] = df[df["Side"] == 1]["Price"].reset_index(drop=True)
-        result["Count"] = df[df["Side"] == 1]["Count"].reset_index(drop=True)
+        result["open"] = (
+            df[df["Side"] == "2"].sort_values("Symbol")["Price"].reset_index(drop=True)
+        )
+        result["close"] = (
+            df[df["Side"] == "1"].sort_values("Symbol")["Price"].reset_index(drop=True)
+        )
+        result["Count"] = (
+            df[df["Side"] == "1"].sort_values("Symbol")["Count"].reset_index(drop=True)
+        )
 
         result = result[["Symbol", "Displayname", "open", "close", "Count", "Result"]]
         return result

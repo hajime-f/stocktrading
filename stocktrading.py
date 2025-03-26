@@ -110,7 +110,7 @@ if __name__ == "__main__":
     try:
         lib.run()
     except Exception as e:
-        console.log(f"[red]エラーが発生しました: {e}")
+        console.log(f"[red]エラーが発生しました: {e}[/]")
     finally:
         # すべてのスレッドが終了するのを待つ
         for thread in threads:
@@ -118,5 +118,5 @@ if __name__ == "__main__":
 
             # 損益を計算する
             pl = dm.calc_profitloss()
-
+            console.log(pl)
             breakpoint()

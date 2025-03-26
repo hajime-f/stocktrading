@@ -138,11 +138,11 @@ class Stock:
             price = int(result[0]["Details"][2]["Price"])
             if result[0]["Side"] == "1":
                 console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[red]{price:,} 円で {self.transaction_unit} 株の売りが約定[/]"
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {self.transaction_unit} 株の売りが約定[/]"
                 )
             else:
                 console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[red]{price:,} 円で {self.transaction_unit} 株の買いが約定[/]"
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {self.transaction_unit} 株の買いが約定[/]"
                 )
             self.dm.update_price(order_id, price)
 
