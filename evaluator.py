@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 import numpy as np
 
@@ -17,7 +18,7 @@ from data_manager import DataManager
 from update_model import UpdateModel
 
 pd.set_option("display.max_rows", None)
-pd.options.display.float_format = "{:.6f}".format
+pd.options.display.float_format = "{:.0f}".format
 
 
 def compile_model(shape1, shape2):
@@ -110,10 +111,13 @@ if __name__ == "__main__":
 
     # そのモデルで実際にどれくらい儲かるかをバックテストする
     max_row = -1
+    dict_df = {}
     for code in stock_list["code"]:
-        df = dm.load_stock_data(code, start="2024-11-01", end="end")
+        df = dm.load_stock_data(code, start="2024-11-06", end="end")
+        df = model.add_technical_indicators(df)
         if max_row < len(df):
             max_row = len(df)
+        dict_df[f"{code}"] = df
 
     list_output = []
 
@@ -123,12 +127,11 @@ if __name__ == "__main__":
         list_result = []
 
         for code, brand in zip(stock_list["code"], stock_list["brand"]):
-            df = dm.load_stock_data(code, start="2024-11-01", end="end")
+            df = dict_df[f"{code}"]
 
             if len(df) < max_row:
                 continue
 
-            df = model.add_technical_indicators(df)
             df_input = df.iloc[i : i + window]
             df_output = df.iloc[i + window : i + window + 1]
 
@@ -136,34 +139,26 @@ if __name__ == "__main__":
             if not flag:
                 continue
             array_X = np.array([array_X])
+            y_pred_proba = pred_model.predict(array_X, verbose=0)
 
-            try:
-                y_pred_proba = pred_model.predict(array_X, verbose=0)
-            except Exception as e:
-                print(e)
-                continue
-
-            try:
-                list_result.append(
-                    [
-                        code,
-                        brand,
-                        y_pred_proba[0][0],
-                        df_output["open"].values[0],
-                        df_output["close"].values[0],
-                    ]
-                )
-            except Exception as e:
-                print(e)
-                continue
+            list_result.append(
+                [
+                    df_output.index[0],
+                    code,
+                    brand,
+                    y_pred_proba[0][0],
+                    df_output["open"].values[0],
+                    df_output["close"].values[0],
+                ]
+            )
 
         df_result = pd.DataFrame(
-            list_result, columns=["code", "brand", "pred", "open", "close"]
+            list_result, columns=["date", "code", "brand", "pred", "open", "close"]
         )
 
         step = 0.001
         for i in np.arange(1, 0.7, -step):
-            df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
+            df_extract = df_result.loc[df_result["pred"] >= i, :]
 
             if len(df_extract) == 50:
                 break
@@ -174,6 +169,7 @@ if __name__ == "__main__":
 
         list_output.append(
             [
+                df_extract["date"],
                 df_extract["open"].sum() * 100,
                 (df_extract["close"] - df_extract["open"]).sum() * 100,
             ]
