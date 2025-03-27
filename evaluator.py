@@ -18,7 +18,7 @@ from data_manager import DataManager
 from update_model import UpdateModel
 
 pd.set_option("display.max_rows", None)
-pd.options.display.float_format = "{:.0f}".format
+pd.options.display.float_format = "{:.6f}".format
 
 
 def compile_model(shape1, shape2):
@@ -45,34 +45,32 @@ if __name__ == "__main__":
     stock_list = dm.load_stock_list()
 
     model = UpdateModel()
-
-    window = 30
-    test_size = 30
-
-    list_X = []
-    list_y = []
-
-    print("データを処理しています。")
+    dict_df = {}
 
     for code in stock_list["code"]:
-        df = dm.load_stock_data(code, start="2019-01-01", end="2024-10-31")
-        if window + 2 * test_size > len(df):
+        df = dm.load_stock_data(code, start="2024-05-01", end="2024-10-31")
+        dict_df[f"{code}"] = model.add_technical_indicators(df)
+
+    window = 30
+    percentage = 1.0
+    list_X, list_y = [], []
+
+    for code in stock_list["code"]:
+        df = dict_df[f"{code}"]
+        if len(df) < window:
             continue
 
-        # テクニカル指標を追加
-        df = model.add_technical_indicators(df)
+        for i in range(len(df) - window):
+            df_input = df.iloc[i : i + window]
+            df_output = df.iloc[i + window : i + window + 1]
 
-        # day_window日以内の終値が当日よりpercentage%以上上昇していたらフラグを立てる
-        df, result = model.add_labels(df, percentage=0.5)
-
-        for i in range(test_size, 0, -1):
-            df_test = df.iloc[-window - i : -i]
-            result_test = result.iloc[-window - i : -i]
-
-            tmp_X, flag = model.prepare_input_data(df_test)
+            tmp_X, flag = model.prepare_input_data(df_input)
             if not flag:
                 continue
-            tmp_y = result_test.tail(1).values
+
+            standard_value = df_input.tail(1)["close"].values
+            flag = df_output["close"].values >= standard_value * (1 + percentage / 100)
+            tmp_y = 1 if flag[0] else 0
 
             list_X.append(tmp_X)
             list_y.append(tmp_y)
@@ -80,9 +78,13 @@ if __name__ == "__main__":
     array_X = np.array(list_X)
     array_y = np.array(list_y)
 
-    array_X_learn, array_X_test, array_y_learn, array_y_test = train_test_split(
-        array_X, array_y, test_size=0.3, random_state=42
-    )
+    num = array_X.shape[0]
+    num_learn = int(num * 0.7)
+
+    array_X_learn = array_X[:num_learn]
+    array_X_test = array_X[num_learn:]
+    array_y_learn = array_y[:num_learn]
+    array_y_test = array_y[num_learn:]
 
     # モデルの学習
     pred_model = compile_model(array_X.shape[1], array_X.shape[2])
@@ -174,6 +176,7 @@ if __name__ == "__main__":
                 (df_extract["close"] - df_extract["open"]).sum() * 100,
             ]
         )
+        breakpoint()
 
-    df_output = pd.DataFrame(list_output, columns=["total", "result"])
+    df_output = pd.DataFrame(list_output, columns=["date", "total", "result"])
     breakpoint()
