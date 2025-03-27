@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import train_test_split
@@ -14,6 +15,9 @@ from tensorflow.keras import metrics
 
 from data_manager import DataManager
 from update_model import UpdateModel
+
+pd.set_option("display.max_rows", None)
+pd.options.display.float_format = "{:.6f}".format
 
 
 def compile_model(shape1, shape2):
@@ -47,10 +51,10 @@ if __name__ == "__main__":
     list_X = []
     list_y = []
 
-    for i, code in enumerate(stock_list["code"]):
-        print(f"{i + 1}/{len(stock_list)}：{code} のデータを処理しています。")
+    print("データを処理しています。")
 
-        df = dm.load_stock_data(code, start="2019-01-01", end="end")
+    for code in stock_list["code"]:
+        df = dm.load_stock_data(code, start="2019-01-01", end="2024-10-31")
         if window + 2 * test_size > len(df):
             continue
 
@@ -93,21 +97,88 @@ if __name__ == "__main__":
     y_pred_proba = pred_model.predict(array_X_test)
 
     # モデルの評価1
-    y_pred = (y_pred_proba > 0.5).astype(int)
-    print(classification_report(array_y_test.reshape(-1), y_pred))
-
-    # モデルの評価2
     y_pred = (y_pred_proba > 0.7).astype(int)
     print(classification_report(array_y_test.reshape(-1), y_pred))
 
-    # モデルの評価3
+    # モデルの評価2
     y_pred = (y_pred_proba > 0.8).astype(int)
     print(classification_report(array_y_test.reshape(-1), y_pred))
 
-    # モデルの評価4
+    # モデルの評価3
     y_pred = (y_pred_proba > 0.85).astype(int)
     print(classification_report(array_y_test.reshape(-1), y_pred))
 
-    # モデルの評価5
-    y_pred = (y_pred_proba > 0.9).astype(int)
-    print(classification_report(array_y_test.reshape(-1), y_pred))
+    # そのモデルで実際にどれくらい儲かるかをバックテストする
+    max_row = -1
+    for code in stock_list["code"]:
+        df = dm.load_stock_data(code, start="2024-11-01", end="end")
+        if max_row < len(df):
+            max_row = len(df)
+
+    list_result = []
+    list_output = []
+    for i in range(max_row - window):
+        print(f"{i + 1}/{max_row - window}：データを処理しています。")
+
+        for code, brand in zip(stock_list["code"], stock_list["brand"]):
+            df = dm.load_stock_data(code, start="2024-11-01", end="end")
+
+            if len(df) < max_row:
+                continue
+
+            df = model.add_technical_indicators(df)
+            df_input = df.iloc[i : i + window]
+            df_output = df.iloc[i + window : i + window + 1]
+
+            if len(df_input) < window:
+                continue
+
+            array_X, flag = model.prepare_input_data(df_input)
+            if not flag:
+                continue
+            array_X = np.array([array_X])
+
+            try:
+                y_pred_proba = pred_model.predict(array_X, verbose=0)
+            except Exception as e:
+                print(e)
+                continue
+
+            try:
+                list_result.append(
+                    [
+                        code,
+                        brand,
+                        y_pred_proba[0][0],
+                        df_output["open"].values[0],
+                        df_output["close"].values[0],
+                    ]
+                )
+            except Exception as e:
+                print(e)
+                continue
+
+        df_result = pd.DataFrame(
+            list_result, columns=["code", "brand", "pred", "open", "close"]
+        )
+
+        step = 0.001
+        for i in np.arange(1, 0.7, -step):
+            df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
+
+            if len(df_extract) == 50:
+                break
+
+            df_extract_next = df_result.loc[df_result["pred"] >= i - step, :]
+            if len(df_extract_next) > 50:
+                break
+
+        list_output.append(
+            [
+                df_extract["open"].sum() * 100,
+                (df_extract["close"] - df_extract["open"]).sum() * 100,
+            ]
+        )
+
+    df_output = pd.DataFrame(list_output, columns=["total", "result"])
+    breakpoint()
