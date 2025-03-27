@@ -119,7 +119,7 @@ if __name__ == "__main__":
     df_result = df_result.loc[df_result.groupby("code")["pred"].idxmax(), :]
 
     step = 0.001
-    for i in np.arange(1, 0.7, -step):
+    for i in np.arange(1, 0.5, -step):
         df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
 
         if len(df_extract) == 50:
