@@ -115,10 +115,12 @@ if __name__ == "__main__":
         if max_row < len(df):
             max_row = len(df)
 
-    list_result = []
     list_output = []
+
     for i in range(max_row - window):
         print(f"{i + 1}/{max_row - window}：データを処理しています。")
+
+        list_result = []
 
         for code, brand in zip(stock_list["code"], stock_list["brand"]):
             df = dm.load_stock_data(code, start="2024-11-01", end="end")
@@ -129,9 +131,6 @@ if __name__ == "__main__":
             df = model.add_technical_indicators(df)
             df_input = df.iloc[i : i + window]
             df_output = df.iloc[i + window : i + window + 1]
-
-            if len(df_input) < window:
-                continue
 
             array_X, flag = model.prepare_input_data(df_input)
             if not flag:
