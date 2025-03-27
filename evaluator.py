@@ -1,8 +1,7 @@
-import datetime
 import pandas as pd
 import numpy as np
 
-from sklearn.model_selection import train_test_split
+from rich.console import Console
 from sklearn.metrics import classification_report
 from keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
@@ -17,6 +16,7 @@ from tensorflow.keras import metrics
 from data_manager import DataManager
 from update_model import UpdateModel
 
+console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 pd.set_option("display.max_rows", None)
 pd.options.display.float_format = "{:.6f}".format
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         dict_df[f"{code}"] = model.add_technical_indicators(df)
 
     window = 30
-    percentage = 1.0
+    percentage = 0.5
     list_X, list_y = [], []
 
     for code in stock_list["code"]:
@@ -101,15 +101,15 @@ if __name__ == "__main__":
 
     # モデルの評価1
     y_pred = (y_pred_proba > 0.7).astype(int)
-    print(classification_report(array_y_test.reshape(-1), y_pred))
+    print(classification_report(array_y_test, y_pred))
 
     # モデルの評価2
     y_pred = (y_pred_proba > 0.8).astype(int)
-    print(classification_report(array_y_test.reshape(-1), y_pred))
+    print(classification_report(array_y_test, y_pred))
 
     # モデルの評価3
     y_pred = (y_pred_proba > 0.85).astype(int)
-    print(classification_report(array_y_test.reshape(-1), y_pred))
+    print(classification_report(array_y_test, y_pred))
 
     # そのモデルで実際にどれくらい儲かるかをバックテストする
     max_row = -1
@@ -159,8 +159,8 @@ if __name__ == "__main__":
         )
 
         step = 0.001
-        for i in np.arange(1, 0.7, -step):
-            df_extract = df_result.loc[df_result["pred"] >= i, :]
+        for i in np.arange(1, 0.85, -step):
+            df_extract = df_result.loc[df_result["pred"] >= i, :].copy()
 
             if len(df_extract) == 50:
                 break
@@ -168,15 +168,21 @@ if __name__ == "__main__":
             df_extract_next = df_result.loc[df_result["pred"] >= i - step, :]
             if len(df_extract_next) > 50:
                 break
-
-        list_output.append(
-            [
-                df_extract["date"],
-                df_extract["open"].sum() * 100,
-                (df_extract["close"] - df_extract["open"]).sum() * 100,
-            ]
-        )
-        breakpoint()
+        try:
+            list_output.append(
+                [
+                    df_extract["date"].iloc[0],
+                    df_extract["open"].sum() * 100,
+                    (df_extract["close"] - df_extract["open"]).sum() * 100,
+                ]
+            )
+        except Exception:
+            pass
 
     df_output = pd.DataFrame(list_output, columns=["date", "total", "result"])
+    df_output.set_index("date", inplace=True)
+    pd.options.display.float_format = "{:.0f}".format
+
+    console.log(df_output)
+    console.log(df_output["result"].mean())
     breakpoint()
