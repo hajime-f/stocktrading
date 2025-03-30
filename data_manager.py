@@ -88,13 +88,14 @@ class DataManager:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
         for code in stocks_df["code"]:
-            data_df = yf.download(code + ".T", period="max", progress=False)
-
-            # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
-            if data_df.empty:
-                with conn:
-                    conn.execute(f"delete from Codes where code = '{code}';")
-                continue
+            try:
+                data_df = yf.download(code + ".T", period="max", progress=False)
+            except Exception:
+                # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
+                if data_df.empty:
+                    with conn:
+                        conn.execute(f"delete from Codes where code = '{code}';")
+                    continue
 
             # データの少ない銘柄は削除・スキップする
             if len(data_df) < 100:
