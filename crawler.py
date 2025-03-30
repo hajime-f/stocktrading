@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     # 予測値が 0.70 以上の銘柄を買った場合
     total_pl = df[df["pred"] >= 0.70]["change"].sum()
-    total_open_price = df[df["pred"] >= 0.80]["open"].sum()
+    total_open_price = df[df["pred"] >= 0.70]["open"].sum()
     print(f"0.70：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
 
     # 予測値が 0.80 以上の銘柄を買った場合
