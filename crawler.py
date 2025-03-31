@@ -60,19 +60,22 @@ if __name__ == "__main__":
         values = crawler.fetch_stock_data()
         data = crawler.extract_todays_data(values)
 
-        open_price = float(data[0].replace(",", ""))
-        close_price = float(data[3].replace(",", ""))
+        try:
+            open_price = float(data[0].replace(",", ""))
+            close_price = float(data[3].replace(",", ""))
 
-        list_data.append(
-            [
-                datetime.now().strftime("%Y-%m-%d"),
-                symbol[0],
-                symbol[1],
-                open_price,
-                close_price,
-                symbol[2],
-            ]
-        )
+            list_data.append(
+                [
+                    datetime.now().strftime("%Y-%m-%d"),
+                    symbol[0],
+                    symbol[1],
+                    open_price,
+                    close_price,
+                    symbol[2],
+                ]
+            )
+        except Exception:
+            pass
 
     df = pd.DataFrame(
         list_data, columns=["date", "code", "brand", "open", "close", "pred"]
