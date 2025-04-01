@@ -10,6 +10,7 @@ from keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
 
 from data_manager import DataManager
+from misc import Misc
 
 
 class UpdateModel:
@@ -124,6 +125,11 @@ class UpdateModel:
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    misc = Misc()
+    if misc.check_day_type(datetime.date.today()):
+        exit()
+
     dm = DataManager()
     stock_list = dm.load_stock_list()
 

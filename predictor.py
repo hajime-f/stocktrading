@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import datetime
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ from keras.models import load_model
 from sklearn.preprocessing import StandardScaler
 
 from data_manager import DataManager
+from misc import Misc
 
 
 class Predictor:
@@ -84,6 +85,11 @@ class Predictor:
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    misc = Misc()
+    if misc.check_day_type(datetime.date.today()):
+        exit()
+
     dm = DataManager()
     list_stocks = dm.load_stock_list()
     df_models = dm.load_model_list()
@@ -129,7 +135,8 @@ if __name__ == "__main__":
         if len(df_extract_next) > 50:
             break
 
-    df_extract.loc[:, "date"] = datetime.now().strftime("%Y-%m-%d")
+    nbd = misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+    df_extract.loc[:, "date"] = nbd
     df_extract = df_extract[["date", "code", "brand", "pred"]]
 
     conn = sqlite3.connect(f"{dm.base_dir}/data/stock_data.db")
