@@ -6,7 +6,7 @@ class Misc:
     def __init__(self):
         pass
 
-    def check_day_type(date_input):
+    def check_day_type(self, date_input):
         """
         与えられた日付が平日、土日、祝日のいずれかを判定する。
 
@@ -41,7 +41,7 @@ class Misc:
         else:
             return 0
 
-    def get_next_business_day(date_input):
+    def get_next_business_day(self, date_input):
         """
         指定された日付の次の営業日（土日祝日を除く平日）を返す。
 

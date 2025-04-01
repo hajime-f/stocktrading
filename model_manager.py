@@ -1,15 +1,21 @@
 import numpy as np
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Bidirectional, LSTM
-from tensorflow.keras.layers import Dropout, Dense, InputLayer, SimpleRNN
-from tensorflow.keras.optimizers import Adam
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import metrics
+from tensorflow.keras.layers import (
+    LSTM,
+    Bidirectional,
+    Dense,
+    Dropout,
+    InputLayer,
+    SimpleRNN,
+)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
 
 
 class ModelManager:
     def __init__(self):
-        pass
+        self.scaler = StandardScaler()
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -75,7 +81,7 @@ class ModelManager:
 
         return np.array(array_std), True
 
-    def compile_lstm(shape1, shape2):
+    def compile_lstm(self, shape1, shape2):
         model = Sequential()
         model.add(InputLayer(shape=(shape1, shape2)))
         model.add(Bidirectional(LSTM(200)))
