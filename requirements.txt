@@ -24,3 +24,4 @@ tensorflow
 keras
 jinja2
 python-dateutil
+jpholiday
