@@ -5,11 +5,9 @@ from model_manager import ModelManager
 
 
 class LongModel(ModelManager):
-    def __init__(self):
+    def __init__(self, percentage):
         super().__init__()
         self.dm = DataManager()
-
-        percentage = 0.5
         self.up_per = 1 + percentage / 100
 
     def fit(self):
@@ -30,11 +28,9 @@ class LongModel(ModelManager):
 
 
 class ShortModel(ModelManager):
-    def __init__(self):
+    def __init__(self, percentage):
         super().__init__()
         self.dm = DataManager()
-
-        percentage = 0.5
         self.down_per = 1 - percentage / 100
 
     def fit(self):
