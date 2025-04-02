@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         )
 
         # モデルの保存
-        now = datetime.now()
+        now = datetime.datetime.now()
         filename = now.strftime(f"model_swingtrade_%Y%m%d_%H%M%S_{window}.keras")
 
         dirname = f"{dm.base_dir}/model"
