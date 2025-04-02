@@ -216,28 +216,28 @@ class ModelManager:
             df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
             dict_df[f"{code}"] = self.add_technical_indicators(df)
 
-            list_result = []
+        list_result = []
 
-            for filename, window in zip(df_models["model_name"], df_models["window"]):
-                model = load_model(os.path.join(f"{dm.base_dir}/model/", filename))
+        for filename, window in zip(df_models["model_name"], df_models["window"]):
+            model = load_model(os.path.join(f"{dm.base_dir}/model/", filename))
 
-                for code, brand in zip(list_stocks["code"], list_stocks["brand"]):
-                    df = dict_df[f"{code}"]
-                    if len(df) < window:
-                        continue
+            for code, brand in zip(list_stocks["code"], list_stocks["brand"]):
+                df = dict_df[f"{code}"]
+                if len(df) < window:
+                    continue
 
-                    # 説明変数
-                    df = df.tail(window)
+                # 説明変数
+                df = df.tail(window)
 
-                    # 入力データの準備
-                    array_X, flag = self.prepare_input_data(df)
-                    if not flag:
-                        continue
+                # 入力データの準備
+                array_X, flag = self.prepare_input_data(df)
+                if not flag:
+                    continue
 
-                    # 予測する
-                    y_pred = model.predict(np.array([array_X]), verbose=0)
+                # 予測する
+                y_pred = model.predict(np.array([array_X]), verbose=0)
 
-                    list_result.append([code, brand, y_pred[0][0]])
+                list_result.append([code, brand, y_pred[0][0]])
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
         df_result = df_result.loc[df_result.groupby("code")["pred"].idxmax(), :]
