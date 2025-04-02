@@ -17,6 +17,7 @@ class LongModel(ModelManager):
 
     def predict(self, df_models):
         df = super().predict(df_models)
+        df.loc[:, "side"] = 2
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
@@ -38,6 +39,7 @@ class ShortModel(ModelManager):
 
     def predict(self, df_models):
         df = super().predict(df_models)
+        df.loc[:, "side"] = 1
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
