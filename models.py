@@ -11,12 +11,12 @@ class LongModel(ModelManager):
 
     def fit(self, percentage):
         up_per = 1 + percentage / 100
-        df_models = self.fit(up_per)
+        df_models = super().fit(up_per)
 
         return df_models
 
     def predict(self, df_models):
-        df = self.predict(df_models)
+        df = super().predict(df_models)
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
@@ -32,12 +32,12 @@ class ShortModel(ModelManager):
 
     def fit(self, percentage):
         down_per = 1 - percentage / 100
-        df_models = self.fit(down_per)
+        df_models = super().fit(down_per)
 
         return df_models
 
     def predict(self, df_models):
-        df = self.predict(df_models)
+        df = super().predict(df_models)
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
