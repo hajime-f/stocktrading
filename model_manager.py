@@ -16,7 +16,7 @@ from tensorflow.keras.layers import (
     InputLayer,
     SimpleRNN,
 )
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 
 from data_manager import DataManager
@@ -204,7 +204,7 @@ class ModelManager:
 
         return model_names
 
-    def predict(self, model_name):
+    def predict(self, df_models):
         dm = DataManager()
         list_stocks = dm.load_stock_list()
 
@@ -215,11 +215,6 @@ class ModelManager:
         for code in list_stocks["code"]:
             df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
             dict_df[f"{code}"] = self.add_technical_indicators(df)
-
-            # モデル名を読み込む
-            conn = sqlite3.connect(f"{dm.base_dir}/data/stock_data.db")
-            with conn:
-                df_models = pd.read_sql_query(f"select * from {model_name};", conn)
 
             list_result = []
 

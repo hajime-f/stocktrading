@@ -5,46 +5,42 @@ from model_manager import ModelManager
 
 
 class LongModel(ModelManager):
-    def __init__(self, percentage):
+    def __init__(self):
         super().__init__()
         self.dm = DataManager()
-        self.up_per = 1 + percentage / 100
 
-    def fit(self):
-        model_names = self.fit(self.up_per)
+    def fit(self, percentage):
+        up_per = 1 + percentage / 100
+        df_models = self.fit(up_per)
 
-        conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
-        with conn:
-            model_names.to_sql("Models_2", conn, if_exists="replace", index=False)
+        return df_models
 
-    def predict(self):
-        df = self.predict("Models_2")
+    def predict(self, df_models):
+        df = self.predict(df_models)
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
-            df.to_sql("Target_2", conn, if_exists="append", index=False)
+            df.to_sql("Target_Long", conn, if_exists="append", index=False)
 
         return df
 
 
 class ShortModel(ModelManager):
-    def __init__(self, percentage):
+    def __init__(self):
         super().__init__()
         self.dm = DataManager()
-        self.down_per = 1 - percentage / 100
 
-    def fit(self):
-        model_names = self.fit(self.down_per)
+    def fit(self, percentage):
+        down_per = 1 - percentage / 100
+        df_models = self.fit(down_per)
 
-        conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
-        with conn:
-            model_names.to_sql("Models_3", conn, if_exists="replace", index=False)
+        return df_models
 
-    def predict(self):
-        df = self.predict("Models_3")
+    def predict(self, df_models):
+        df = self.predict(df_models)
 
         conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
         with conn:
-            df.to_sql("Target_3", conn, if_exists="append", index=False)
+            df.to_sql("Target_Short", conn, if_exists="append", index=False)
 
         return df
