@@ -192,7 +192,9 @@ if __name__ == "__main__":
 
         filename = os.path.join(dirname, filename)
         pred_model.save(filename)
-        model_names.append([datetime.now().strftime("%Y-%m-%d"), filename, window])
+        model_names.append(
+            [datetime.datetime.now().strftime("%Y-%m-%d"), filename, window]
+        )
 
     # モデルのファイル名をデータベースに保存する
     model_names = pd.DataFrame(model_names, columns=["date", "model_name", "window"])
