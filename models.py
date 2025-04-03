@@ -19,7 +19,7 @@ class LongModel(ModelManager):
         df = super().predict(df_models)
         df.loc[:, "side"] = 2
 
-        conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.dm.db)
         with conn:
             df.to_sql("Target_Long", conn, if_exists="append", index=False)
 
@@ -41,7 +41,7 @@ class ShortModel(ModelManager):
         df = super().predict(df_models)
         df.loc[:, "side"] = 1
 
-        conn = sqlite3.connect(f"{self.dm.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.dm.db)
         with conn:
             df.to_sql("Target_Short", conn, if_exists="append", index=False)
 

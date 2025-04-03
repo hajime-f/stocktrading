@@ -139,6 +139,6 @@ if __name__ == "__main__":
     df_extract.loc[:, "date"] = nbd
     df_extract = df_extract[["date", "code", "brand", "pred"]]
 
-    conn = sqlite3.connect(f"{dm.base_dir}/data/stock_data.db")
+    conn = sqlite3.connect(dm.db)
     with conn:
         df_extract.to_sql("Target", conn, if_exists="append", index=False)
