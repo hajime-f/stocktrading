@@ -125,7 +125,7 @@ class ModelManager:
 
         return model
 
-    def fit(self, per):
+    def fit(self, per, opt_model):
         dm = DataManager()
         stock_list = dm.load_stock_list()
 
@@ -173,7 +173,14 @@ class ModelManager:
             array_y = np.array(list_y)
 
             # モデルの学習
-            model = self.compile_lstm(array_X.shape[1], array_X.shape[2])
+            if opt_model == "lstm":
+                model = self.compile_lstm(array_X.shape[1], array_X.shape[2])
+            elif opt_model == "rnn":
+                model = self.compile_rnn(array_X.shape[1], array_X.shape[2])
+            else:
+                raise ValueError(
+                    "不正なモデル名です。「lstm」または「rnn」を指定してください。"
+                )
             model.fit(
                 array_X,
                 array_y,
