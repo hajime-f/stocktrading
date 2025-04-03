@@ -17,6 +17,7 @@ class DataManager:
 
         load_dotenv()
         self.base_dir = os.getenv("BaseDir")
+        self.db = f"{self.base_dir}/data/stock_data.db"
 
     def append_data(self, new_data, index):
         if new_data["CurrentPriceTime"] is not None:
@@ -83,7 +84,7 @@ class DataManager:
         ]
         stocks_df = stocks_df[stocks_df["market"] != "出資証券"]
 
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
 
@@ -130,14 +131,14 @@ class DataManager:
         else:
             query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query(query, conn)
 
         return df
 
     def load_stock_list(self):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query("select * from Codes;", conn)
 
@@ -147,7 +148,7 @@ class DataManager:
         if target_date == "today":
             target_date = datetime.now().strftime("%Y-%m-%d")
 
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query(
                 "select distinct * from Target where date = ?;",
@@ -158,43 +159,43 @@ class DataManager:
         return df.values.tolist()
 
     def save_model_names(self, data_df):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             data_df.to_sql("Models", conn, if_exists="replace", index=False)
 
     def load_model_list(self):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query("select * from Models;", conn)
 
         return df
 
     def save_order(self, data_df):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             data_df.to_sql("Orders", conn, if_exists="append", index=False)
 
     def load_order(self):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query("select * from Orders;", conn)
 
         return df
 
     def update_price(self, order_id, price):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             conn.execute(
                 f"UPDATE Orders SET Price = {price} WHERE Order_id = '{order_id}';",
             )
 
     def save_profit_loss(self, df):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
         with conn:
             df.to_sql("ProfitLoss", conn, if_exists="append", index=False)
 
     def seek_position(self, symbol, side):
-        conn = sqlite3.connect(f"{self.base_dir}/data/stock_data.db")
+        conn = sqlite3.connect(self.db)
 
         # 以下のクエリを実行して、指定した条件に一致する注文データを取得
         with conn:
