@@ -61,10 +61,4 @@ class ThresholdModel(ModelManager):
 
     def predict(self, df_models):
         df = super().predict(df_models)
-        df.loc[:, "side"] = 2
-
-        conn = sqlite3.connect(self.dm.db)
-        with conn:
-            df.to_sql("Target_Threshold", conn, if_exists="append", index=False)
-
         return df
