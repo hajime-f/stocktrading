@@ -34,14 +34,23 @@ $ source ./env/bin/activate
 
 ## 3. .env ファイルの追加
 
-プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。なお、「APIPassword_production」は、証券会社から発行される API パスワード（本番用）です。また、「BaseDir」は、本プログラムが格納されている「stocktrading」ディレクトリへの絶対パスです。
+プログラムディレクトリの直下に、下記のようにパスワード等を記録した .env ファイルを配置してください。
 
 ```:.env
 APIPassword_production=XXXX
 IPAddress=127.0.0.1
 Port=18080
 BaseDir=/path/to/dir/stocktrading
+Email=your@mailaddress.com
+JPXPassword=YYYY
 ```
+
+- APIPassword_production：三菱UFJ eスマート証券から発行される API パスワード（本番用）
+- IPAddress：kabu ステーションが動作する Windows マシンの IP アドレス
+- Port：上記 Windows マシンのポート番号
+- BaseDir：本プログラムが格納されている「stocktrading」ディレクトリへの絶対パス
+- Email：J-Quants API に登録したメールアドレス
+- JPXPassword：J-Quants API に登録したパスワード
 
 ## 4. データベースの初期化
 
