@@ -8,8 +8,10 @@
 
 - Python 3.12\
 2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用します。3.13 では動作しませんので、ご注意ください。
-- [kabuステーションAPI](https://kabucom.github.io/kabusapi/ptal/) \
-[三菱UFJ eスマート証券](https://kabu.com/)が提供する株取引専用の API を使用します。証券口座の開設が別途必要です。
+- kabuステーションAPI\
+[三菱UFJ eスマート証券](https://kabu.com/)が提供する[株取引専用の API](https://kabucom.github.io/kabusapi/ptal/) を使用します。証券口座の開設が別途必要です。
+- J-Quants API\
+日本取引所グループが提供する[株情報取得のための API](https://jpx-jquants.com/)を使用します。有料プラン（ライト）の契約が必要です。
 
 # 動作方法
 
@@ -29,10 +31,6 @@ $ python -m venv env
 $ source ./env/bin/activate
 (env) $ make install
 ```
-
-> [!TIP]
-> インストール時にエラーが出る場合は、```requirements.txt``` から「wheel」と「playsound」をいったん削除し、再度 ```make install``` してみてください。
-> その後、```pip install wheel playsound``` でこれらを別途インストールすれば、うまく動作するかもしれません。
 
 ## 3. .env ファイルの追加
 
