@@ -2,6 +2,7 @@ import datetime
 import pandas as pd
 import sqlite3
 
+from data_manager import DataManager
 from misc import Misc
 from models import LongModel, ShortModel, ThresholdModel
 
@@ -26,9 +27,10 @@ if __name__ == "__main__":
     df_long = long_model.predict(df_long_model_names)
     df_short = short_model.predict(df_short_model_names)
 
+    nbd = misc.get_next_business_day(datetime.date.today())
     df = pd.DataFrame(
         {
-            "date": misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d"),
+            "date": nbd.strftime("%Y-%m-%d"),
             "threshold": df_threshold["pred"].mean(),
             "long": df_long["pred"].mean(),
             "short": df_short["pred"].mean(),
