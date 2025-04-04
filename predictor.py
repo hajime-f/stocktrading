@@ -1,4 +1,6 @@
 import datetime
+import pandas as pd
+import sqlite3
 
 from misc import Misc
 from models import LongModel, ShortModel, ThresholdModel
@@ -24,4 +26,17 @@ if __name__ == "__main__":
     df_long = long_model.predict(df_long_model_names)
     df_short = short_model.predict(df_short_model_names)
 
-    breakpoint()
+    df = pd.DataFrame(
+        {
+            "date": misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d"),
+            "threshold": df_threshold["pred"].mean(),
+            "long": df_long["pred"].mean(),
+            "short": df_short["pred"].mean(),
+            "pl_long": None,
+            "pl_short": None,
+        }
+    )
+    dm = DataManager()
+    conn = sqlite3.connect(dm.db)
+    with conn:
+        df.to_sql("Aggregate", conn, if_exists="append", index=False)
