@@ -1,11 +1,16 @@
+import datetime
+import json
 import os
 import pickle
 import sqlite3
-from datetime import datetime
 
 import pandas as pd
+import requests
 import yfinance as yf
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
+
+from misc import Misc
 
 
 class DataManager:
@@ -17,7 +22,9 @@ class DataManager:
 
         load_dotenv()
         self.base_dir = os.getenv("BaseDir")
-        self.db = f"{self.base_dir}/data/stock_data.db"
+        self.db = f"{self.base_dir}/stock_database.db"
+
+        self.base_url = "https://api.jquants.com/v1"
 
     def append_data(self, new_data, index):
         if new_data["CurrentPriceTime"] is not None:
@@ -40,7 +47,7 @@ class DataManager:
             if d["CurrentPriceTime"] is None:
                 continue
 
-            dt_object = datetime.fromisoformat(
+            dt_object = datetime.datetime.fromisoformat(
                 d["CurrentPriceTime"].replace("Z", "+00:00")
             )
             formatted_datetime = dt_object.strftime("%Y-%m-%d %H:%M")
@@ -55,7 +62,7 @@ class DataManager:
         return price_df
 
     def save_data(self, data_list):
-        now = datetime.now()
+        now = datetime.datetime.now()
         filename = now.strftime("data_%Y%m%d_%H%M%S.pkl")
 
         dirname = f"{self.base_dir}/data"
@@ -68,6 +75,109 @@ class DataManager:
             pickle.dump(data_list, f)
 
         return filename
+
+    def set_token(self):
+        """
+        JPXのAPIを使うためのトークンを取得する
+        """
+
+        # .envファイルから環境変数を読み込む
+        load_dotenv()
+        email = os.getenv("Email")
+        password = os.getenv("JPXPassword")
+
+        # リフレッシュトークンを得る
+        data = {"mailaddress": f"{email}", "password": f"{password}"}
+        r_post = requests.post(
+            self.base_url + "/token/auth_user", data=json.dumps(data)
+        )
+        self.refresh_token = r_post.json()["refreshToken"]
+
+        # リフレッシュトークンを使ってIDトークンを得る
+        r_post = requests.post(
+            self.base_url + f"/token/auth_refresh?refreshtoken={self.refresh_token}"
+        )
+        self.id_token = r_post.json()["idToken"]
+
+    def fetch_stock_list(self):
+        """
+        上場銘柄のリストを取得する
+        """
+
+        headers = {"Authorization": "Bearer {}".format(self.id_token)}
+        r = requests.get(self.base_url + "/listed/info", headers=headers)
+        list_stocks = r.json()["info"]
+
+        return list_stocks
+
+    def update_stock_data(self):
+        """
+        最新の株価データを取得し、SQLiteに保存する
+        """
+
+        list_stocks = self.fetch_stock_list()
+        list_codes = []
+
+        today = datetime.date.today().strftime("%Y%m%d")
+        ago = (datetime.date.today() - relativedelta(years=3)).strftime("%Y%m%d")
+
+        for stock in list_stocks:
+            # 市場区分が「TOKYO PRO MARKET」または「その他」である銘柄を除外する
+            if stock["MarketCode"] == "0109" or stock["MarketCode"] == "0105":
+                continue
+
+            code = stock["Code"][:-1]
+            ep = f"/prices/daily_quotes?code={code}&from={ago}&to={today}"
+
+            headers = {"Authorization": "Bearer {}".format(self.id_token)}
+            r = requests.get(self.base_url + ep, headers=headers)
+            prices = r.json()["daily_quotes"]
+
+            list_prices = []
+
+            for price in prices:
+                if price:
+                    list_prices.append(
+                        [
+                            price["Date"],
+                            price["Open"],
+                            price["High"],
+                            price["Low"],
+                            price["Close"],
+                            price["Volume"],
+                        ]
+                    )
+            df_prices = pd.DataFrame(
+                list_prices,
+                columns=["date", "open", "high", "low", "close", "volume"],
+            )
+
+            # 直近300日間の出来高の平均が50,000未満の銘柄を除外する
+            if df_prices["volume"].tail(300).mean() < 50000:
+                continue
+
+            # データが少ない銘柄を除外する
+            if len(df_prices) < 200:
+                continue
+
+            conn = sqlite3.connect(self.db)
+            with conn:
+                df_prices.to_sql(code, conn, if_exists="replace", index=False)
+
+            list_codes.append(
+                [
+                    stock["Date"],
+                    code,
+                    stock["CompanyName"],
+                    stock["MarketCodeName"],
+                ]
+            )
+
+        df_codes = pd.DataFrame(list_codes, columns=["date", "code", "brand", "market"])
+
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df_codes.to_sql("Codes", conn, if_exists="replace", index=False)
 
     def init_stock_data(self):
         """
@@ -146,7 +256,7 @@ class DataManager:
 
     def fetch_target(self, target_date="today"):
         if target_date == "today":
-            target_date = datetime.now().strftime("%Y-%m-%d")
+            target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         conn = sqlite3.connect(self.db)
         with conn:
@@ -214,7 +324,7 @@ class DataManager:
     def calc_profitloss(self):
         df = self.load_order()
 
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
         df["DateTime"] = pd.to_datetime(df["DateTime"])
         df = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
 
@@ -242,5 +352,11 @@ class DataManager:
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    misc = Misc()
+    if misc.check_day_type(datetime.date.today()):
+        exit()
+
     dm = DataManager()
-    dm.init_stock_data()
+    dm.set_token()
+    dm.update_stock_data()
