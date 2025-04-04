@@ -51,56 +51,51 @@ class Crawler:
 
 if __name__ == "__main__":
     dm = DataManager()
-    symbols = [[symbol[1], symbol[2], symbol[3]] for symbol in dm.fetch_target()]
+    table_name = ["Target_Long", "Target_Short"]
+    pl_name = ["PL_Long", "PL_Short"]
 
-    list_data = []
+    for table, pl in zip(table_name, pl_name):
+        symbols = [[p[1], p[2], p[3]] for p in dm.fetch_target(table_name=table)]
+        list_data = []
 
-    for symbol in symbols:
-        crawler = Crawler(symbol[0])
-        values = crawler.fetch_stock_data()
-        data = crawler.extract_todays_data(values)
+        for s in symbols:
+            crawler = Crawler(s[0])
+            values = crawler.fetch_stock_data()
+            data = crawler.extract_todays_data(values)
 
-        try:
-            open_price = float(data[0].replace(",", ""))
-            close_price = float(data[3].replace(",", ""))
+            try:
+                open_price = float(data[0].replace(",", ""))
+                close_price = float(data[3].replace(",", ""))
 
-            list_data.append(
-                [
-                    datetime.now().strftime("%Y-%m-%d"),
-                    symbol[0],
-                    symbol[1],
-                    open_price,
-                    close_price,
-                    symbol[2],
-                ]
-            )
-        except Exception:
-            pass
+                list_data.append(
+                    [
+                        datetime.now().strftime("%Y-%m-%d"),
+                        s[0],
+                        s[1],
+                        open_price,
+                        close_price,
+                        s[2],
+                    ]
+                )
+            except Exception:
+                pass
 
-    df = pd.DataFrame(
-        list_data, columns=["date", "code", "brand", "open", "close", "pred"]
-    )
-    df["change"] = df["close"] - df["open"]
-    df = df[["date", "code", "brand", "open", "close", "change", "pred"]]
+        df = pd.DataFrame(
+            list_data, columns=["date", "code", "brand", "open", "close", "pred"]
+        )
+        if table_name == "Target_Long":
+            df["change"] = df["close"] - df["open"]
+            total_price = df["open"].sum()
+        else:
+            df["change"] = df["open"] - df["close"]
+            total_price = df["close"].sum()
+        df = df[["date", "code", "brand", "open", "close", "change", "pred"]]
 
-    # 予測モデルが提案するすべての銘柄を買った場合
-    total_pl = df["change"].sum()
-    total_open_price = df["open"].sum()
-    print(f"全部：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
+        total_pl = df["change"].sum()
+        if table_name == "Target_Long":
+            print("買い建て")
+        else:
+            print("売り建て")
+        print(f"{int(total_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
 
-    # 予測値が 0.70 以上の銘柄を買った場合
-    total_pl = df[df["pred"] >= 0.70]["change"].sum()
-    total_open_price = df[df["pred"] >= 0.70]["open"].sum()
-    print(f"0.70：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
-
-    # 予測値が 0.80 以上の銘柄を買った場合
-    total_pl = df[df["pred"] >= 0.80]["change"].sum()
-    total_open_price = df[df["pred"] >= 0.80]["open"].sum()
-    print(f"0.80：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
-
-    # 予測値が 0.85 以上の銘柄を買った場合
-    total_pl = df[df["pred"] >= 0.85]["change"].sum()
-    total_open_price = df[df["pred"] >= 0.85]["open"].sum()
-    print(f"0.85：{int(total_open_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
-
-    dm.save_profit_loss(df)
+        dm.save_profit_loss(df, table_name=pl)
