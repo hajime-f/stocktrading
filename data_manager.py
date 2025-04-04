@@ -254,14 +254,14 @@ class DataManager:
 
         return df
 
-    def fetch_target(self, target_date="today"):
+    def fetch_target(self, table_name="Target", target_date="today"):
         if target_date == "today":
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         conn = sqlite3.connect(self.db)
         with conn:
             df = pd.read_sql_query(
-                "select distinct * from Target where date = ?;",
+                f"select distinct * from {table_name} where date = ?;",
                 conn,
                 params=[target_date],
             )
@@ -299,10 +299,10 @@ class DataManager:
                 f"UPDATE Orders SET Price = {price} WHERE Order_id = '{order_id}';",
             )
 
-    def save_profit_loss(self, df):
+    def save_profit_loss(self, df, table_name="ProfitLoss"):
         conn = sqlite3.connect(self.db)
         with conn:
-            df.to_sql("ProfitLoss", conn, if_exists="append", index=False)
+            df.to_sql(table_name, conn, if_exists="append", index=False)
 
     def seek_position(self, symbol, side):
         conn = sqlite3.connect(self.db)
