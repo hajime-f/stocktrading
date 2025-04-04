@@ -1,4 +1,6 @@
 import datetime
+import sqlite3
+
 from data_manager import DataManager
 
 
@@ -27,4 +29,4 @@ if __name__ == "__main__":
             UPDATE Aggregate SET pl_long = {pl_long}, pl_short = {pl_short}
             WHERE date = '{today}';
             """,
-        )    
+        )
