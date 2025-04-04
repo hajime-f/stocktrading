@@ -2,9 +2,13 @@ import datetime
 import sqlite3
 
 from data_manager import DataManager
+from misc import Misc
 
 
 if __name__ == "__main__":
+    if Misc().check_day_type(datetime.date.today()):
+        exit()
+
     dm = DataManager()
     today = datetime.date.today().strftime("%Y-%m-%d")
 
