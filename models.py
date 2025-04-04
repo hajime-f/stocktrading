@@ -51,7 +51,6 @@ class ShortModel(ModelManager):
 class ThresholdModel(ModelManager):
     def __init__(self):
         super().__init__()
-        self.dm = DataManager()
 
     def fit(self, percentage):
         up_per = 1 + percentage / 100
