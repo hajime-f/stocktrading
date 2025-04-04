@@ -350,6 +350,25 @@ class DataManager:
         result = result[["Symbol", "Displayname", "open", "close", "Count", "Result"]]
         return result
 
+    def load_table_by_date(self, table_name, date):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query(
+                f"select * from {table_name} where date = ?;", conn, params=[date]
+            )
+
+        return df
+
+    def load_open_close_prices(self, code, date):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query(
+                f'select open, close from "{code}" where date = ?;', conn, params=[date]
+            )
+
+        return df
+    
+    
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
