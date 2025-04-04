@@ -153,13 +153,13 @@ class Stock:
     def save_order(self, side, price, count, order_id):
         df_data = pd.DataFrame(
             {
-                "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Symbol": self.symbol,
-                "Displayname": self.disp_name,
-                "Price": price,
-                "Count": count,
-                "Order_id": order_id,
-                "Side": str(side),
+                "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "symbol": self.symbol,
+                "displayname": self.disp_name,
+                "price": price,
+                "count": count,
+                "order_id": order_id,
+                "side": str(side),
             },
             index=[0],
         )
