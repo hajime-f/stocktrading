@@ -75,7 +75,7 @@ class Stock:
                     raise AssertionError("買い注文が複数あります")
 
                 # すでに買い注文を入れている場合、約定状況を確認する
-                if self.check_order_status(buy_position["Order_id"].values[0]):
+                if self.check_order_status(buy_position["order_id"].values[0]):
                     # 買い注文が約定している（買い建てできている）場合、フラグを立てる
                     self.buy_executed = True
 
@@ -93,7 +93,7 @@ class Stock:
                     raise AssertionError("売り注文が複数あります")
 
                 # すでに売り注文を入れている場合、約定状況を確認する
-                if self.check_order_status(sell_position["Order_id"].values[0]):
+                if self.check_order_status(sell_position["order_id"].values[0]):
                     # 売り注文が約定している（返済できている）場合、フラグを立てる
                     self.sell_executed = True
 
