@@ -26,11 +26,11 @@ if __name__ == "__main__":
         oc_prices = dm.load_open_close_prices(row["code"], today)
         pl_short += oc_prices["open"] - oc_prices["close"]
 
-    conn = sqlite3.connect(dm.db)
-    with conn:
-        conn.execute(
-            f""""
-            UPDATE Aggregate SET pl_long = {pl_long}, pl_short = {pl_short}
-            WHERE date = '{today}';
-            """,
-        )
+    # conn = sqlite3.connect(dm.db)
+    # with conn:
+    #     conn.execute(
+    #         f""""
+    #         UPDATE Aggregate SET pl_long = {pl_long}, pl_short = {pl_short}
+    #         WHERE date = '{today}';
+    #         """,
+    #     )
