@@ -27,6 +27,7 @@ if __name__ == "__main__":
     df_long = long_model.predict(df_long_model_names)
     df_short = short_model.predict(df_short_model_names)
 
+    # nbd = datetime.date.today()
     nbd = misc.get_next_business_day(datetime.date.today())
     df = pd.DataFrame(
         {
@@ -36,7 +37,8 @@ if __name__ == "__main__":
             "short": df_short["pred"].mean(),
             "pl_long": None,
             "pl_short": None,
-        }
+        },
+        index=[0],
     )
     dm = DataManager()
     conn = sqlite3.connect(dm.db)

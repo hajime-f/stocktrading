@@ -253,6 +253,7 @@ class ModelManager:
         ex_num = 50
         df_extract = df_filtered.sort_values("pred", ascending=False).head(ex_num)
 
+        # nbd = datetime.date.today().strftime("%Y-%m-%d")
         nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
