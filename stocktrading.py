@@ -60,10 +60,10 @@ def run_polling(st):
 # 時刻監視スレッド用の関数
 def time_watcher():
     """
-    時刻を監視し、15:30を過ぎたら停止イベントを設定する関数
+    時刻を監視し、15:40を過ぎたら停止イベントを設定する関数
     """
 
-    target_time = datetime.time(15, 30)
+    target_time = datetime.time(15, 40)
 
     while not stop_event.is_set():
         now = datetime.datetime.now()
