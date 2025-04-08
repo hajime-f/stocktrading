@@ -83,7 +83,8 @@ if __name__ == "__main__":
         df = pd.DataFrame(
             list_data, columns=["date", "code", "brand", "open", "close", "pred"]
         )
-        if table_name == "Target_Long":
+
+        if table == "Target_Long":
             df["change"] = df["close"] - df["open"]
             total_price = df["open"].sum()
         else:
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         df = df[["date", "code", "brand", "open", "close", "change", "pred"]]
 
         total_pl = df["change"].sum()
-        if table_name == "Target_Long":
+        if table == "Target_Long":
             print("買い建て")
         else:
             print("売り建て")
