@@ -5,7 +5,7 @@ install:
 init:
 	python data_manager.py
 agg:
-	python data_aggregator.py
+	python aggregator.py
 predict:
 	python predictor.py
 check:
