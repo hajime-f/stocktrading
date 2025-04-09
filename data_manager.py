@@ -280,6 +280,13 @@ class DataManager:
 
         return df
 
+    def load_aggregate(self):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query("select * from Aggregate;", conn)
+
+        return df
+
     def save_order(self, data_df):
         conn = sqlite3.connect(self.db)
         with conn:
@@ -367,8 +374,7 @@ class DataManager:
             )
 
         return df
-    
-    
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
