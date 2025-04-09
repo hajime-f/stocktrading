@@ -32,4 +32,4 @@ if __name__ == "__main__":
         UPDATE Aggregate SET pl_long = ?, pl_short = ?
         WHERE date = ?;
         """
-        conn.execute(sql, (pl_long.item(), pl_short.item(), today))
+        conn.execute(sql, (pl_long.item() * 100, pl_short.item() * 100, today))
