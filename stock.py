@@ -1,18 +1,22 @@
+import os
 from datetime import datetime
 
 import pandas as pd
+from dotenv import load_dotenv
 from rich.console import Console
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 
 class Stock:
-    def __init__(self, symbol, lib, dm, base_transaction, exchange=1):
+    def __init__(self, symbol, lib, dm, exchange=1):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
-        self.base_transaction = base_transaction
         self.exchange = exchange
+
+        load_dotenv()
+        self.base_transaction = os.getenv("BaseTransaction")
 
         self.time = []
         self.price = []
