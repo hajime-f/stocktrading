@@ -26,5 +26,4 @@ if __name__ == "__main__":
     clf.fit(df_input, df_output)
 
     y_pred = clf.predict(df_test)
-
-    breakpoint()
+    print(y_pred)
