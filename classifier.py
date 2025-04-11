@@ -1,4 +1,3 @@
-import pandas as pd
 from sklearn.svm import SVC
 
 from data_manager import DataManager
@@ -13,9 +12,6 @@ if __name__ == "__main__":
     dm = DataManager()
 
     df = dm.load_aggregate()
-
-    df["pl_long"] = pd.to_numeric(df["pl_long"], errors="coerce")
-    df["pl_short"] = pd.to_numeric(df["pl_short"], errors="coerce")
     df["result"] = (df["pl_long"] > df["pl_short"]).astype(int)
 
     df_input = df[:-1][["threshold", "long", "short"]]
