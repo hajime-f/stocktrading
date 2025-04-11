@@ -17,14 +17,16 @@ if __name__ == "__main__":
 
     for index, row in df_long.iterrows():
         oc_prices = dm.load_open_close_prices(row["code"], today)
-        pl_long += oc_prices["close"] - oc_prices["open"]
+        if not oc_prices.empty:
+            pl_long += oc_prices["close"] - oc_prices["open"]
 
     df_short = dm.load_table_by_date("Target_Short", today)
     pl_short = 0
 
     for index, row in df_short.iterrows():
         oc_prices = dm.load_open_close_prices(row["code"], today)
-        pl_short += oc_prices["open"] - oc_prices["close"]
+        if not oc_prices.empty:
+            pl_short += oc_prices["open"] - oc_prices["close"]
 
     conn = sqlite3.connect(dm.db)
     with conn:
