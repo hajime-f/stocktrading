@@ -193,7 +193,9 @@ class DataManager:
         for index, df in df_stocks.iterrows():
             code = df["Code"][:-1]
             try:
-                df_prices = yf.download(code + ".T", period="5y", progress=False)
+                df_prices = yf.download(
+                    code + ".T", period="2y", auto_adjust=True, progress=False
+                )
             except Exception:
                 continue
 
