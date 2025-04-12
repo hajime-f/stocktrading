@@ -126,5 +126,6 @@ if __name__ == "__main__":
         pl = dm.calc_profitloss()
         console.log("--- 損益計算結果 ---")
         console.print(pl)
+        console.log("--------------------")
         console.log(f"合計損益: {pl['Result'].sum():,.0f} 円")
         console.log("--------------------")
