@@ -46,7 +46,7 @@ def run_polling(st: Stock):
 
     while not stop_event.is_set():
         try:
-            stop_event.wait(random.uniform(0, 1) * POLLING_INTERVAL_VARIATION)
+            stop_event.wait(random.uniform(0, POLLING_INTERVAL_VARIATION))
             st.polling()
             stop_event.wait(POLLING_INTERVAL)
         except Exception as e:
