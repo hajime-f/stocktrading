@@ -209,7 +209,7 @@ class StockLibrary:
         return content
 
     def buy_at_market_price_with_cash(self, symbol, count, exchange=1):
-        # 預かり金で成行買いする
+        # 預かり金で成行買いする→現物の成行買い
 
         url = self.base_url + "/sendorder"
 
@@ -224,55 +224,6 @@ class StockLibrary:
             "AccountType": 4,  # 特定口座
             "Qty": count,  # 注文数量
             "FrontOrderType": 10,  # 執行条件（成行）
-            "Price": 0,  # 注文価格（成行なのでゼロ）
-            "ExpireDay": 0,  # 当日中
-        }
-        content = self.post_request(url, obj)
-
-        return content
-
-    def execute_margin_buy_market_order_at_opening(self, symbol, count, exchange=1):
-        # 寄付に信用で成行買いする（信用寄成）
-
-        url = self.base_url + "/sendorder"
-
-        obj = {
-            "Symbol": symbol,  # 銘柄コード
-            "Exchange": exchange,  # 市場
-            "SecurityType": 1,  # 株式
-            "Side": "2",  # 買い
-            "CashMargin": 2,  # 新規
-            "MarginTradeType": 1,  # 制度信用
-            "DelivType": 0,  # 指定なし
-            "FundType": "11",  # 信用取引
-            "AccountType": 4,  # 特定口座
-            "Qty": count,  # 注文数量
-            "FrontOrderType": 13,  # 執行条件（寄成）
-            "Price": 0,  # 注文価格（成行なのでゼロ）
-            "ExpireDay": 0,  # 当日中
-        }
-        content = self.post_request(url, obj)
-
-        return content
-
-    def execute_margin_sell_market_order_at_closing(self, symbol, count, exchange=1):
-        # 引けに信用で成行売りする（信用引成）
-
-        url = self.base_url + "/sendorder"
-
-        obj = {
-            "Symbol": symbol,  # 銘柄コード
-            "Exchange": exchange,  # 市場
-            "SecurityType": 1,  # 株式
-            "Side": "1",  # 売り
-            "CashMargin": 3,  # 返済
-            "MarginTradeType": 1,  # 制度信用
-            "DelivType": 2,  # 預かり金
-            "FundType": "11",  # 信用取引
-            "AccountType": 4,  # 特定口座
-            "Qty": count,  # 注文数量
-            "ClosePositionOrder": 1,  # 決済順序
-            "FrontOrderType": 16,  # 執行条件（引成）
             "Price": 0,  # 注文価格（成行なのでゼロ）
             "ExpireDay": 0,  # 当日中
         }
@@ -322,6 +273,104 @@ class StockLibrary:
             "ExpireDay": 0,  # 当日中
         }
 
+        content = self.post_request(url, obj)
+
+        return content
+
+    def execute_margin_buy_market_order_at_opening(self, symbol, count, exchange=1):
+        # 寄付に信用で成行買いする（信用寄成）→寄り付きに買い建てる（新規の買い建玉）
+
+        url = self.base_url + "/sendorder"
+
+        obj = {
+            "Symbol": symbol,  # 銘柄コード
+            "Exchange": exchange,  # 市場
+            "SecurityType": 1,  # 株式
+            "Side": "2",  # 買い
+            "CashMargin": 2,  # 新規
+            "MarginTradeType": 1,  # 制度信用
+            "DelivType": 0,  # 指定なし
+            "FundType": "11",  # 信用取引
+            "AccountType": 4,  # 特定口座
+            "Qty": count,  # 注文数量
+            "FrontOrderType": 13,  # 執行条件（寄成）
+            "Price": 0,  # 注文価格（成行なのでゼロ）
+            "ExpireDay": 0,  # 当日中
+        }
+        content = self.post_request(url, obj)
+
+        return content
+
+    def execute_margin_sell_market_order_at_opening(self, symbol, count, exchange=1):
+        # 寄付に信用で成行売りする（信用寄成）→寄り付きに売り建てる（新規の売り建玉）
+
+        url = self.base_url + "/sendorder"
+
+        obj = {
+            "Symbol": symbol,  # 銘柄コード
+            "Exchange": exchange,  # 市場
+            "SecurityType": 1,  # 株式
+            "Side": "1",  # 売り
+            "CashMargin": 2,  # 新規
+            "MarginTradeType": 1,  # 制度信用
+            "DelivType": 0,  # 指定なし
+            "FundType": "11",  # 信用取引
+            "AccountType": 4,  # 特定口座
+            "Qty": count,  # 注文数量
+            "FrontOrderType": 13,  # 執行条件（寄成）
+            "Price": 0,  # 注文価格（成行なのでゼロ）
+            "ExpireDay": 0,  # 当日中
+        }
+        content = self.post_request(url, obj)
+
+        return content
+
+    def execute_margin_sell_market_order_at_closing(self, symbol, count, exchange=1):
+        # 引けに信用で成行売りする（信用引成）→引けに売り建てる（買い建玉の返済）
+
+        url = self.base_url + "/sendorder"
+
+        obj = {
+            "Symbol": symbol,  # 銘柄コード
+            "Exchange": exchange,  # 市場
+            "SecurityType": 1,  # 株式
+            "Side": "1",  # 売り
+            "CashMargin": 3,  # 返済
+            "MarginTradeType": 1,  # 制度信用
+            "DelivType": 2,  # 預かり金
+            "FundType": "11",  # 信用取引
+            "AccountType": 4,  # 特定口座
+            "Qty": count,  # 注文数量
+            "ClosePositionOrder": 1,  # 決済順序
+            "FrontOrderType": 16,  # 執行条件（引成）
+            "Price": 0,  # 注文価格（成行なのでゼロ）
+            "ExpireDay": 0,  # 当日中
+        }
+        content = self.post_request(url, obj)
+
+        return content
+
+    def execute_margin_buy_market_order_at_closing(self, symbol, count, exchange=1):
+        # 引けに信用で成行買いする（信用引成）→引けに買い建てる（売り建玉の返済）
+
+        url = self.base_url + "/sendorder"
+
+        obj = {
+            "Symbol": symbol,  # 銘柄コード
+            "Exchange": exchange,  # 市場
+            "SecurityType": 1,  # 株式
+            "Side": "2",  # 買い
+            "CashMargin": 3,  # 返済
+            "MarginTradeType": 1,  # 制度信用
+            "DelivType": 2,  # 預かり金
+            "FundType": "11",  # 信用取引
+            "AccountType": 4,  # 特定口座
+            "Qty": count,  # 注文数量
+            "ClosePositionOrder": 1,  # 決済順序
+            "FrontOrderType": 16,  # 執行条件（引成）
+            "Price": 0,  # 注文価格（成行なのでゼロ）
+            "ExpireDay": 0,  # 当日中
+        }
         content = self.post_request(url, obj)
 
         return content
