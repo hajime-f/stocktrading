@@ -183,53 +183,52 @@ class DataManager:
         """
         Yahoo!ファイナンスから日足の株価データを取得し、SQLiteデータベースに保存する
         """
-        stocks_df = pd.read_csv(f"{self.base_dir}/data/data_j.csv")
+        df_stocks = pd.DataFrame(self.fetch_stock_list())
+        list_codes = []
 
-        # market が「ETF・ETN」「PRO Market」「REIT」「出資証券」は削除する
-        stocks_df = stocks_df[stocks_df["market"] != "ETF・ETN"]
-        stocks_df = stocks_df[stocks_df["market"] != "PRO Market"]
-        stocks_df = stocks_df[
-            stocks_df["market"]
-            != "REIT・ベンチャーファンド・カントリーファンド・インフラファンド"
-        ]
-        stocks_df = stocks_df[stocks_df["market"] != "出資証券"]
+        # 市場区分が「TOKYO PRO MARKET」または「その他」である銘柄を除外する
+        df_stocks = df_stocks[df_stocks["MarketCode"] != "0109"]
+        df_stocks = df_stocks[df_stocks["MarketCode"] != "0105"]
+
+        for index, df in df_stocks.iterrows():
+            code = df["Code"][:-1]
+            try:
+                df_prices = yf.download(code + ".T", period="5y", progress=False)
+            except Exception:
+                continue
+
+            # データが少ない銘柄を除外する
+            if len(df_prices) < 200:
+                continue
+
+            df_prices.columns = df_prices.columns.get_level_values(0)
+            df_prices.columns = df_prices.columns.str.lower()
+            df_prices["date"] = df_prices.index
+            df_prices = df_prices.reindex(
+                columns=["date", "open", "high", "low", "close", "volume"]
+            )
+            df_prices = df_prices.reset_index(drop=True)
+            df_prices["date"] = pd.to_datetime(df_prices["date"]).dt.strftime(
+                "%Y-%m-%d"
+            )
+
+            # 直近300日間の出来高の平均が50,000未満の銘柄を除外する
+            if df_prices["volume"].tail(300).mean() < 50000:
+                continue
+
+            conn = sqlite3.connect(self.db)
+            with conn:
+                df_prices.to_sql(code, conn, if_exists="replace", index=False)
+
+            list_codes.append(
+                [df["Date"], code, df["CompanyName"], df["MarketCodeName"]]
+            )
+
+        df_codes = pd.DataFrame(list_codes, columns=["date", "code", "brand", "market"])
 
         conn = sqlite3.connect(self.db)
         with conn:
-            stocks_df.to_sql("Codes", conn, if_exists="replace", index=False)
-
-        for code in stocks_df["code"]:
-            try:
-                data_df = yf.download(code + ".T", period="max", progress=False)
-            except Exception:
-                # なぜかたまにデータが取得できないことがあるので、その場合は削除・スキップする
-                with conn:
-                    conn.execute(f"delete from Codes where code = '{code}';")
-                continue
-
-            # データの少ない銘柄は削除・スキップする
-            if len(data_df) < 100:
-                with conn:
-                    conn.execute(f"delete from Codes where code = '{code}';")
-                continue
-
-            data_df.columns = data_df.columns.get_level_values(0)
-            data_df.columns = data_df.columns.str.lower()
-            data_df["date"] = data_df.index
-            data_df = data_df.reindex(
-                columns=["date", "open", "high", "low", "close", "volume"]
-            )
-            data_df = data_df.reset_index(drop=True)
-            data_df["date"] = pd.to_datetime(data_df["date"]).dt.strftime("%Y-%m-%d")
-
-            # 最近の出来高が小さい銘柄は削除・スキップする
-            if data_df["volume"].tail(500).mean() < 50000:
-                with conn:
-                    conn.execute(f"delete from Codes where code = '{code}';")
-                continue
-
-            with conn:
-                data_df.to_sql(code, conn, if_exists="replace", index=False)
+            df_codes.to_sql("Codes", conn, if_exists="replace", index=False)
 
     def load_stock_data(self, code, start="start", end="end"):
         if start == "start" and end == "end":
@@ -384,4 +383,4 @@ if __name__ == "__main__":
 
     dm = DataManager()
     dm.set_token()
-    dm.update_stock_data()
+    dm.init_stock_data()
