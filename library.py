@@ -144,17 +144,17 @@ class StockLibrary:
         content = self.get_request(url)
         return content["MarginAccountWallet"]
 
-    def fetch_price(self, symbol, exchange):
+    def fetch_price(self, symbol, exchange=1):
         # ある銘柄の時価を得る
         content = self.fetch_board(symbol, exchange)
         return content["CurrentPrice"]
 
-    def fetch_board(self, symbol, exchange):
+    def fetch_board(self, symbol, exchange=1):
         url = self.base_url + "/board/" + str(symbol) + "@" + str(exchange)
         content = self.get_request(url)
         return content
 
-    def fetch_information(self, symbol, exchange):
+    def fetch_information(self, symbol, exchange=1):
         # ある銘柄の情報を得る
         url = self.base_url + "/symbol/" + str(symbol) + "@" + str(exchange)
         content = self.get_request(url)

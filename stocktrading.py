@@ -86,12 +86,11 @@ if __name__ == "__main__":
     wallet_cash = lib.wallet_cash()
     console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
 
-    global stocks
     stocks = {}
     for symbol in target_symbols:
         stock_instance = Stock(symbol, lib, dm)
-        stock_instance.set_information()  # 銘柄情報の設定
-        stocks[symbol] = stock_instance
+        if stock_instance.set_information():
+            stocks[symbol] = stock_instance
 
     # 受信関数を登録
     lib.register_receiver(receive)
