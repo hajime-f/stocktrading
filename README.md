@@ -11,7 +11,7 @@
 - kabuステーションAPI\
 三菱UFJ eスマート証券が提供する[株取引専用のAPI](https://kabucom.github.io/kabusapi/ptal/)を使用します。証券口座の開設が別途必要です。
 - J-Quants API\
-日本取引所グループが提供する[株情報取得のためのAPI](https://jpx-jquants.com/)を使用します。有料プランの契約が必要です。
+日本取引所グループが提供する[株情報取得のためのAPI](https://jpx-jquants.com/)を使用します。無料プランで十分です。
 
 # 動作方法
 
@@ -43,6 +43,7 @@ Port=18080
 BaseDir=/path/to/dir/stocktrading
 Email=your@mailaddress.com
 JPXPassword=YYYY
+BaseTransaction=1
 ```
 
 - APIPassword_production：三菱UFJ eスマート証券から発行される API パスワード（本番用）
@@ -51,10 +52,11 @@ JPXPassword=YYYY
 - BaseDir：本プログラムが格納されている「stocktrading」ディレクトリへの絶対パス
 - Email：J-Quants API に登録したメールアドレス
 - JPXPassword：J-Quants API に登録したパスワード
+- BaseTransaction：取引単位。この値を N にすると、単元株（通常100株）x N の取引を行う。
 
 ## 4. データベースの初期化
 
-J-Quants API 経由で株価データを取得し、データベースを初期化します。なお、下記コマンドは新しいデータ（当日分の株価）の取り込みにも使うので、更新のために毎日実行する必要があります。
+株価データを取得してデータベースを初期化します。なお、下記コマンドは新しいデータ（当日分の株価）の取り込みにも使うので、更新のために毎日実行する必要があります。
 
 ```
 (env) $ make init
