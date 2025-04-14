@@ -26,8 +26,7 @@ class Classifier:
         self.clf.fit(df_input, df_output)
 
     def predict(self, df_test):
-        y_pred = self.clf.predict(df_test)
-        return y_pred
+        return self.clf.predict(df_test)
 
 
 if __name__ == "__main__":
@@ -38,4 +37,3 @@ if __name__ == "__main__":
     clf.fit(df_input, df_output)
     y_pred = clf.predict(df_test)
     print(y_pred)
-    breakpoint()
