@@ -9,15 +9,13 @@ class Classifier:
         self.df = self.dm.load_aggregate()
 
     def prepare_data(self):
-        self.df["result"] = (self.df["pl_long"] > self.df["pl_short"]).astype(int)
-
-        # 変数のスケーリング
         df_tmp = self.df[["threshold", "long", "short"]]
         df_tmp = (df_tmp - df_tmp.mean()) / df_tmp.std()
-
         df_input = df_tmp[:-1]
-        df_output = self.df[:-1]["result"]
         df_test = df_tmp.tail(1)
+
+        self.df["result"] = (self.df["pl_long"] > self.df["pl_short"]).astype(int)
+        df_output = self.df[:-1]["result"]
 
         return df_input, df_output, df_test
 
