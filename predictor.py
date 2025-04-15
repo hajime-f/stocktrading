@@ -2,6 +2,8 @@ import datetime
 import pandas as pd
 import sqlite3
 
+from aggregator import Aggregator
+from classifier import Classifier
 from data_manager import DataManager
 from misc import Misc
 from models import LongModel, ShortModel, ThresholdModel
@@ -12,6 +14,24 @@ if __name__ == "__main__":
     if misc.check_day_type(datetime.date.today()):
         exit()
 
+    #
+    # データベースを更新する
+    #
+    dm = DataManager()
+    dm.set_token()
+    dm.init_stock_data()
+
+    #
+    # その日の取引結果を集計する
+    #
+    agg = Aggregator()
+    pl_long = agg.aggregate("Target_Long")
+    pl_short = agg.aggregate("Target_Short")
+    agg.save_pl(pl_long, pl_short)
+
+    #
+    # 明日の予測を行う
+    #
     threshold_model = ThresholdModel()
     long_model = LongModel()
     short_model = ShortModel()
@@ -40,7 +60,25 @@ if __name__ == "__main__":
         },
         index=[0],
     )
-    dm = DataManager()
     conn = sqlite3.connect(dm.db)
     with conn:
         df.to_sql("Aggregate", conn, if_exists="append", index=False)
+
+    #
+    # Long でいくか Short でいくかを決定する
+    #
+    clf = Classifier()
+    df_input, df_output, df_test = clf.prepare_data()
+    clf.fit(df_input, df_output)
+    pred = clf.predict(df_test)
+
+    if pred[0] == 1:
+        conn = sqlite3.connect(dm.db)
+        with conn:
+            df_long.to_sql("Target", conn, if_exists="append", index=False)
+    elif pred[0] == 0:
+        conn = sqlite3.connect(dm.db)
+        with conn:
+            df_short.to_sql("Target", conn, if_exists="append", index=False)
+    else:
+        raise ValueError("不正な予測値です")
