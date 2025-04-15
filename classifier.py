@@ -33,5 +33,5 @@ if __name__ == "__main__":
     df_input, df_output, df_test = clf.prepare_data()
 
     clf.fit(df_input, df_output)
-    y_pred = clf.predict(df_test)
-    print(y_pred)
+    pred = clf.predict(df_test)
+    print(pred)
