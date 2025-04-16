@@ -75,7 +75,8 @@ if __name__ == "__main__":
     # 今回取引する銘柄リストを取得
     dm = DataManager()
     # target_symbols = [symbol[1] for symbol in dm.fetch_target()]
-    target_symbols = ["1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
+    # target_symbols = ["1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
+    target_symbols = ["1475"]
 
     # 銘柄登録
     lib.register(target_symbols)

@@ -32,7 +32,7 @@ class Stock:
         try:
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
-            self.transaction_unit = self.unit * self.base_transaction
+            self.transaction_unit = self.unit * int(self.base_transaction)
         except KeyError:
             console.log(f"[red] {self.symbol} の情報を取得できませんでした。[/]")
             exit()
@@ -41,12 +41,14 @@ class Stock:
             console.log(f"[red]{e}[/]")
             exit()
 
-        # 高額すぎる銘柄は取引しない
-        price = self.lib.fetch_price(self.symbol, self.exchange)
-        if price >= 7000:
-            return False
-        else:
-            return True
+        return True
+
+        # # 高額すぎる銘柄は取引しない
+        # price = self.lib.fetch_price(self.symbol, self.exchange)
+        # if price >= 7000:
+        #     return False
+        # else:
+        #     return True
 
     def append_data(self, new_data):
         if new_data["CurrentPriceTime"] is not None:
