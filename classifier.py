@@ -10,7 +10,17 @@ class Classifier:
 
     def prepare_data(self):
         df_tmp = self.df[["threshold", "long", "short"]]
-        df_tmp = (df_tmp - df_tmp.mean()) / df_tmp.std()
+
+        df_tmp.loc[:, "threshold"] = (
+            df_tmp["threshold"] - df_tmp["threshold"].mean()
+        ) / df_tmp["threshold"].std()
+        df_tmp.loc[:, "long"] = (df_tmp["long"] - df_tmp["long"].mean()) / df_tmp[
+            "long"
+        ].std()
+        df_tmp.loc[:, "short"] = (df_tmp["short"] - df_tmp["short"].mean()) / df_tmp[
+            "short"
+        ].std()
+
         df_input = df_tmp[:-1]
         df_test = df_tmp.tail(1)
 
