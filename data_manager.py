@@ -358,6 +358,15 @@ class DataManager:
         result = result[["Symbol", "Displayname", "open", "close", "Count", "Result"]]
         return result
 
+    def find_yesterday_close_price(self, symbol):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query(
+                f'select close from "{symbol}" where date = date("now", "-1 day");',
+                conn,
+            )
+        return df["close"].item()
+
     def load_table_by_date(self, table_name, date):
         conn = sqlite3.connect(self.db)
         with conn:
