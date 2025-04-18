@@ -14,12 +14,12 @@ if __name__ == "__main__":
     if misc.check_day_type(datetime.date.today()):
         exit()
 
-    #
-    # データベースを更新する
-    #
+    # #
+    # # データベースを更新する
+    # #
     dm = DataManager()
-    dm.set_token()
-    dm.init_stock_data()
+    # dm.set_token()
+    # dm.init_stock_data()
 
     #
     # その日の取引結果を集計する
