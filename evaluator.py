@@ -1,9 +1,7 @@
 import datetime
-import os
 
 import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
@@ -15,7 +13,7 @@ from tensorflow.keras.layers import (
     InputLayer,
     SimpleRNN,
 )
-from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
 from data_manager import DataManager
@@ -33,7 +31,33 @@ class Evaluator:
         # データを準備する
         for code in stock_list["code"]:
             df = self.dm.load_stock_data(code)
-            self.dict_df[f"{code}"] = self.add_technical_indicators(df)
+            df = self.add_technical_indicators(df)
+            self.dict_df[f"{code}"] = self.normalize_data(df)
+
+    def normalize_data(self, df):
+        price_min = df["low"].min()
+        price_max = df["high"].max()
+
+        df["open"] = (df["open"] - price_min) / (price_max - price_min)
+        df["high"] = (df["high"] - price_min) / (price_max - price_min)
+        df["low"] = (df["low"] - price_min) / (price_max - price_min)
+        df["close_save"] = df["close"]
+        df["close"] = (df["close"] - price_min) / (price_max - price_min)
+        df["MA5"] = (df["MA5"] - price_min) / (price_max - price_min)
+        df["MA25"] = (df["MA25"] - price_min) / (price_max - price_min)
+        df["Upper"] = (df["Upper"] - price_min) / (price_max - price_min)
+        df["Lower"] = (df["Lower"] - price_min) / (price_max - price_min)
+
+        volume_min = df["volume"].min()
+        volume_max = df["volume"].max()
+        df["volume"] = (df["volume"] - volume_min) / (volume_max - volume_min)
+
+        df["MACD"] = df["MACD"] / 100
+        df["SIGNAL"] = df["SIGNAL"] / 100
+        df["HISTOGRAM"] = df["HISTOGRAM"] / 100
+        df["RSI"] = df["RSI"] / 100
+
+        return df
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -65,8 +89,8 @@ class Evaluator:
         df_shift = df.shift(1)
         df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
 
-        # 始値と終値の差を追加する
-        df["trunk"] = df["open"] - df["close"]
+        # # 始値と終値の差を追加する
+        # df["trunk"] = df["open"] - df["close"]
 
         # 移動平均線乖離率を追加する
         df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
@@ -81,8 +105,8 @@ class Evaluator:
         # ボリンジャーバンドの乖離率を追加する
         df["Upper_rate"] = (df["close"] - df["Upper"]) / df["Upper"]
 
-        # 移動平均の差を追加する
-        df["MA_diff"] = df["MA5"] - df["MA25"]
+        # # 移動平均の差を追加する
+        # df["MA_diff"] = df["MA5"] - df["MA25"]
 
         # nan を削除
         df = df.dropna()
@@ -140,22 +164,19 @@ class Evaluator:
 
         for df in self.dict_df.values():
             for i in range(len(df) - window):
-                # 説明変数
                 df_input = df.iloc[i : i + window]
-
-                # 目的変数
                 df_output = df.iloc[i + window : i + window + 1]
 
-                tmp_X, flag = self.prepare_input_data(df_input)
-                if not flag:
-                    continue
+                tmp_X = np.array(df_input.drop("close_save", axis=1))
 
-                standard_value = df_input.tail(1)["close"].values
+                standard_value = df_input.tail(1)["close_save"].item()
+                comp_value = df_output["close_save"].item()
+
                 if per > 1:
-                    flag = df_output["close"].values >= standard_value * per
+                    flag = comp_value >= standard_value * per
                 elif per <= 1:
-                    flag = df_output["close"].values <= standard_value * per
-                tmp_y = 1 if flag[0] else 0
+                    flag = comp_value <= standard_value * per
+                tmp_y = 1 if flag else 0
 
                 list_X.append(tmp_X)
                 list_y.append(tmp_y)
@@ -179,7 +200,7 @@ class Evaluator:
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
-            verbose=0,
+            # verbose=0,
         )
 
         return model
@@ -219,3 +240,4 @@ class Evaluator:
 
 if __name__ == "__main__":
     evaluator = Evaluator()
+    model = evaluator.fit(1.005, "lstm")
