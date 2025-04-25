@@ -2,6 +2,7 @@ import datetime
 
 import numpy as np
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
@@ -62,6 +63,7 @@ class Evaluator:
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
+        df.index = pd.to_datetime(df.index)
 
         # 移動平均線を追加する
         df["MA5"] = df["close"].rolling(window=5).mean()
@@ -158,11 +160,11 @@ class Evaluator:
 
         return model
 
-    def fit(self, per, opt_model):
+    def fit(self, per, opt_model, dict_df_sub):
         window = 30
         list_X, list_y = [], []
 
-        for df in self.dict_df.values():
+        for df in dict_df_sub.values():
             for i in range(len(df) - window):
                 df_input = df.iloc[i : i + window]
                 df_output = df.iloc[i + window : i + window + 1]
@@ -240,4 +242,19 @@ class Evaluator:
 
 if __name__ == "__main__":
     evaluator = Evaluator()
-    model = evaluator.fit(1.005, "lstm")
+
+    for i in range(50, 0, -1):
+        std_day = datetime.date.today() - relativedelta(days=i)
+        ago = std_day - relativedelta(months=3)
+
+        std_day = std_day.strftime("%Y-%m-%d")
+        ago = ago.strftime("%Y-%m-%d")
+
+        dict_df_sub = {}
+
+        for code, df in evaluator.dict_df.items():
+            dict_df_sub[code] = df.loc[ago:std_day]
+
+        print("=======")
+        model = evaluator.fit(1.005, "lstm", dict_df_sub)
+        print("=======\n\n")
