@@ -43,7 +43,7 @@ class Stock:
 
         # 高額すぎる銘柄は取引しない
         try:
-            price = self.dm.find_yesterday_close_price(self.symbol)
+            price = self.dm.find_newest_close_price(self.symbol)
             if price >= 10000:
                 return False
             else:
