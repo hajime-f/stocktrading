@@ -217,6 +217,9 @@ if __name__ == "__main__":
     df_short.loc[:, "side"] = 1
 
     df = pd.concat([df_long, df_short])
+    df = df.sort_values("pred", ascending=False).drop_duplicates(
+        subset=["code"], keep="first"
+    )
 
     dm = DataManager()
     selected_indices = []
