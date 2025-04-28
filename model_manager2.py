@@ -1,4 +1,5 @@
 import datetime
+import sqlite3
 
 import numpy as np
 import pandas as pd
@@ -168,7 +169,7 @@ class ModelManager:
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
-            # verbose=0,
+            verbose=0,
         )
 
         return model
@@ -216,6 +217,17 @@ if __name__ == "__main__":
     df_short.loc[:, "side"] = 1
 
     df = pd.concat([df_long, df_short])
+
+    dm = DataManager()
+    selected_indices = []
+
+    for index, row in df.iterrows():
+        close_price = dm.find_newest_close_price(row["code"])
+        if close_price < 10000:
+            selected_indices.append(index)
+
+    df = df.loc[selected_indices, :]
+
     population_indices = df.index
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
@@ -228,4 +240,8 @@ if __name__ == "__main__":
     )
 
     df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
-    breakpoint()
+    df = df.sort_values("pred", ascending=False).reset_index()
+
+    conn = sqlite3.connect(dm.db)
+    with conn:
+        df.to_sql("Target2", conn, if_exists="append", index=False)
