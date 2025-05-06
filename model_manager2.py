@@ -228,15 +228,13 @@ if __name__ == "__main__":
         close_price = dm.find_newest_close_price(row["code"])
         if close_price < 10000:
             selected_indices.append(index)
-
     df = df.loc[selected_indices, :]
 
-    population_indices = df.index
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
 
     sampled_indices = np.random.choice(
-        a=population_indices,
+        a=df.index,
         size=50,
         replace=False,
         p=probabilities,
