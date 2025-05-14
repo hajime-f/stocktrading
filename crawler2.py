@@ -100,4 +100,4 @@ if __name__ == "__main__":
 
     total_pl = df["change"].sum()
     print(f"{int(total_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
-    dm.save_profit_loss(df)
+    dm.save_profit_loss(df, table_name="ProfitLoss")
