@@ -42,13 +42,10 @@ class Stock:
             exit()
 
         # 高額すぎる銘柄は取引しない
-        try:
-            price = self.dm.find_newest_close_price(self.symbol)
-            if price >= 10000:
-                return False
-            else:
-                return True
-        except Exception:
+        price = self.dm.find_newest_close_price(self.symbol)
+        if price >= 10000:
+            return False
+        else:
             return True
 
     def append_data(self, new_data):
