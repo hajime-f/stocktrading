@@ -40,13 +40,14 @@ class Stock:
             console.log(f"[red]{self.symbol} の情報を取得できませんでした。[/]")
             console.log(f"[red]{e}[/]")
             exit()
+        return True
 
-        # 高額すぎる銘柄は取引しない
-        price = self.dm.find_newest_close_price(self.symbol)
-        if price >= 10000:
-            return False
-        else:
-            return True
+        # # 高額すぎる銘柄は取引しない
+        # price = self.dm.find_newest_close_price(self.symbol)
+        # if price >= 10000:
+        #     return False
+        # else:
+        #     return True
 
     def append_data(self, new_data):
         if new_data["CurrentPriceTime"] is not None:

@@ -99,7 +99,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     # スレッド起動
-    threads = [threading.Thread(target=run_polling, args=(st,)) for st in stocks]
+    threads = [
+        threading.Thread(target=run_polling, args=(st,)) for st in stocks.values()
+    ]
     for thread in threads:
         thread.start()
 
