@@ -89,8 +89,8 @@ if __name__ == "__main__":
     # Stockクラスをインスタンス化して辞書に入れる
     for symbol in target_symbols:
         stock_instance = Stock(symbol, lib, dm)
-        if stock_instance.set_information():
-            stocks[symbol] = stock_instance
+        stock_instance.set_information()
+        stocks[symbol] = stock_instance
 
     # 受信関数を登録
     lib.register_receiver(receive)
