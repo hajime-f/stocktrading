@@ -54,6 +54,7 @@ if __name__ == "__main__":
 
     today = date.today().strftime("%Y-%m-%d")
     df = dm.load_table_by_date("Evaluation", today)
+    # df = dm.load_table_by_date("Evaluation3", today)
 
     trial = df["trial"].max().item()
     total = []
