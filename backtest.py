@@ -124,7 +124,9 @@ class ModelManager:
 
         # データを準備する
         for code in list_stocks["code"]:
-            df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
+            df = dm.load_stock_data(
+                code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
+            )
             df = self.add_technical_indicators(df)
             array_std = self.scaler.fit_transform(np.array(df))
             dict_df[f"{code}"] = pd.DataFrame(array_std)
@@ -182,7 +184,9 @@ class ModelManager:
         ago = nbd - relativedelta(months=4)
 
         for code in list_stocks["code"]:
-            df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
+            df = dm.load_stock_data(
+                code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
+            )
             df = self.add_technical_indicators(df)
             array_std = self.scaler.fit_transform(np.array(df))
             dict_df[f"{code}"] = pd.DataFrame(array_std)
@@ -212,7 +216,7 @@ if __name__ == "__main__":
     misc = Misc()
     ave = pd.DataFrame()
 
-    day = "2025-05-15"
+    day = "2025-04-30"
     nbd = datetime.datetime.strptime(day, "%Y-%m-%d")
 
     while True:
