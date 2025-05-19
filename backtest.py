@@ -280,9 +280,10 @@ if __name__ == "__main__":
 
             total.append(int(sum(change) * 100))
 
-        data = sum(total) / len(total)
+        data = int(sum(total) / len(total))
         tmp = pd.DataFrame(data, columns=["average"], index=[nbd.strftime("%Y-%m-%d")])
-        ave = pd.concat([ave, tmp], axis=1)
+        ave = pd.concat([ave, tmp], axis=0)
 
+    pd.set_option("display.max_rows", None)
     print(ave)
     breakpoint()
