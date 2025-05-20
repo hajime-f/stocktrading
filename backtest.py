@@ -21,6 +21,8 @@ from tensorflow.keras.optimizers import Adam
 from data_manager import DataManager
 from misc import Misc
 
+pd.set_option("display.max_rows", None)
+
 
 class ModelManager:
     def __init__(self):
@@ -220,9 +222,7 @@ if __name__ == "__main__":
     nbd = datetime.datetime.strptime(day, "%Y-%m-%d")
 
     while True:
-        nbd = misc.get_next_business_day(nbd)
-        if nbd >= datetime.date.today():
-            break
+        print(f"{nbd.strftime('%Y-%m-%d')}")
 
         model = mm.fit(per=1.005, opt_model="lstm", nbd=nbd)
         df_long = mm.predict(model, nbd)
@@ -251,12 +251,15 @@ if __name__ == "__main__":
         df_stack = pd.DataFrame()
 
         for i in range(1, trial + 1):
-            sampled_indices = np.random.choice(
-                a=df.index,
-                size=50,
-                replace=False,
-                p=probabilities,
-            )
+            try:
+                sampled_indices = np.random.choice(
+                    a=df.index,
+                    size=50,
+                    replace=False,
+                    p=probabilities,
+                )
+            except Exception:
+                breakpoint()
             df_tmp = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
             df_tmp = df_tmp.sort_values("pred", ascending=False).reset_index(drop=True)
             df_tmp.loc[:, "trial"] = i
@@ -266,16 +269,22 @@ if __name__ == "__main__":
         df_stack = df_stack.reset_index(drop=True)
 
         total = []
+        nbd_next = misc.get_next_business_day(nbd)
 
         for i in range(1, trial + 1):
             df_trial = df_stack.loc[df_stack["trial"] == i, :]
             change = []
 
             for index, row in df_trial.iterrows():
-                prices = dm.load_open_close_prices(row["code"], nbd)
+                prices = dm.load_open_close_prices(
+                    row["code"], nbd_next.strftime("%Y-%m-%d")
+                )
 
-                open_price = prices["open"].item()
-                close_price = prices["close"].item()
+                try:
+                    open_price = prices["open"].item()
+                    close_price = prices["close"].item()
+                except Exception:
+                    breakpoint()
 
                 if row["side"] == 1:
                     change.append(open_price - close_price)
@@ -285,9 +294,14 @@ if __name__ == "__main__":
             total.append(int(sum(change) * 100))
 
         data = int(sum(total) / len(total))
-        tmp = pd.DataFrame(data, columns=["average"], index=[nbd.strftime("%Y-%m-%d")])
+        tmp = pd.DataFrame(
+            data, columns=["average"], index=[nbd_next.strftime("%Y-%m-%d")]
+        )
         ave = pd.concat([ave, tmp], axis=0)
 
-    pd.set_option("display.max_rows", None)
+        nbd = misc.get_next_business_day(nbd)
+        if nbd >= datetime.date.today():
+            break
+
     print(ave)
     breakpoint()
