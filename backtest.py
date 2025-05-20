@@ -119,16 +119,20 @@ class ModelManager:
 
     def fit(self, per, opt_model, nbd):
         dm = DataManager()
-        df_stocks = pd.DataFrame(dm.fetch_stock_list())
+        dm.set_token()
 
+        df_stocks = pd.DataFrame(dm.fetch_stock_list())
         dict_df = {}
         ago = nbd - relativedelta(months=4)
 
         # データを準備する
-        for code in df_stocks["code"]:
+        for _, tmp in df_stocks.iterrows():
+            code = tmp["Code"][:-1]
             df = dm.load_stock_data(
                 code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
             )
+            if df.empty or df["date"].tail(1).item() != nbd.strftime("%Y-%m-%d"):
+                continue
             df = self.add_technical_indicators(df)
             array_std = self.scaler.fit_transform(np.array(df))
             dict_df[f"{code}"] = pd.DataFrame(array_std)
@@ -139,8 +143,8 @@ class ModelManager:
         window = 30
         list_X, list_y = [], []
 
-        for code in df_stocks["code"]:
-            df = dict_df[f"{code}"]
+        for code in dict_df.keys():
+            df = dict_df[code]
 
             for i in range(len(df) - window):
                 df_input = df.iloc[i : i + window]
@@ -180,23 +184,31 @@ class ModelManager:
 
     def predict(self, model, nbd):
         dm = DataManager()
-        df_stocks = pd.DataFrame(dm.fetch_stock_list())
+        dm.set_token()
 
+        df_stocks = pd.DataFrame(dm.fetch_stock_list())
         dict_df = {}
         ago = nbd - relativedelta(months=4)
+        list_com = []
 
-        for code in df_stocks["code"]:
+        for _, tmp in df_stocks.iterrows():
+            code = tmp["Code"][:-1]
             df = dm.load_stock_data(
                 code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
             )
+            if df.empty or df["date"].tail(1).item() != nbd.strftime("%Y-%m-%d"):
+                continue
             df = self.add_technical_indicators(df)
             array_std = self.scaler.fit_transform(np.array(df))
             dict_df[f"{code}"] = pd.DataFrame(array_std)
+            list_com.append([code, df["CompanyName"].item()])
 
+        df_com = pd.DataFrame(list_com, columns=["code", "brand"])
         list_result = []
         window = 30
+        breakpoint()
 
-        for code, brand in zip(df_stocks["code"], df_stocks["brand"]):
+        for code, brand in zip(df_com["code"], df_com["brand"]):
             array_X = np.array(dict_df[f"{code}"].tail(window))
             y_pred = model.predict(np.array([array_X]), verbose=0)
             list_result.append([code, brand, y_pred[0][0]])

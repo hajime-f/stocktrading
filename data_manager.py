@@ -242,9 +242,12 @@ class DataManager:
         else:
             query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df = pd.read_sql_query(query, conn)
+        try:
+            conn = sqlite3.connect(self.db)
+            with conn:
+                df = pd.read_sql_query(query, conn)
+        except pd.errors.DatabaseError:
+            df = pd.DataFrame()
 
         return df
 
