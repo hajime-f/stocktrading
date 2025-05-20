@@ -119,13 +119,13 @@ class ModelManager:
 
     def fit(self, per, opt_model, nbd):
         dm = DataManager()
-        list_stocks = dm.load_stock_list()
+        df_stocks = pd.DataFrame(dm.fetch_stock_list())
 
         dict_df = {}
         ago = nbd - relativedelta(months=4)
 
         # データを準備する
-        for code in list_stocks["code"]:
+        for code in df_stocks["code"]:
             df = dm.load_stock_data(
                 code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
             )
@@ -139,7 +139,7 @@ class ModelManager:
         window = 30
         list_X, list_y = [], []
 
-        for code in list_stocks["code"]:
+        for code in df_stocks["code"]:
             df = dict_df[f"{code}"]
 
             for i in range(len(df) - window):
@@ -180,12 +180,12 @@ class ModelManager:
 
     def predict(self, model, nbd):
         dm = DataManager()
-        list_stocks = dm.load_stock_list()
+        df_stocks = pd.DataFrame(dm.fetch_stock_list())
 
         dict_df = {}
         ago = nbd - relativedelta(months=4)
 
-        for code in list_stocks["code"]:
+        for code in df_stocks["code"]:
             df = dm.load_stock_data(
                 code, start=ago.strftime("%Y-%m-%d"), end=nbd.strftime("%Y-%m-%d")
             )
@@ -196,7 +196,7 @@ class ModelManager:
         list_result = []
         window = 30
 
-        for code, brand in zip(list_stocks["code"], list_stocks["brand"]):
+        for code, brand in zip(df_stocks["code"], df_stocks["brand"]):
             array_X = np.array(dict_df[f"{code}"].tail(window))
             y_pred = model.predict(np.array([array_X]), verbose=0)
             list_result.append([code, brand, y_pred[0][0]])
@@ -205,7 +205,7 @@ class ModelManager:
         df_extract = df_result[df_result["pred"] >= 0.7].copy()
         # df_extract = df_result[df_result["pred"] >= 0.5].copy()
 
-        nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = Misc().get_next_business_day(nbd)
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
@@ -299,8 +299,8 @@ if __name__ == "__main__":
         )
         ave = pd.concat([ave, tmp], axis=0)
 
-        nbd = misc.get_next_business_day(nbd)
-        if nbd >= datetime.date.today():
+        nbd = nbd_next
+        if misc.get_next_business_day(nbd) >= datetime.date.today():
             break
 
     print(ave)

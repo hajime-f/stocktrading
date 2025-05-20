@@ -385,6 +385,22 @@ class DataManager:
 
         return df
 
+    def check_stock_data(self, code, val_date):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query(
+                f'select * from "{code}" order by date desc limit 1;', conn
+            )
+
+        if df.empty:
+            return False
+
+        last_date = df["date"].item()
+        if last_date == val_date:
+            return True
+        else:
+            return False
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
