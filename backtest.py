@@ -143,9 +143,7 @@ class ModelManager:
         window = 30
         list_X, list_y = [], []
 
-        for code in dict_df.keys():
-            df = dict_df[code]
-
+        for df in dict_df.values():
             for i in range(len(df) - window):
                 df_input = df.iloc[i : i + window]
                 df_output = df.iloc[i + window : i + window + 1]
@@ -201,12 +199,11 @@ class ModelManager:
             df = self.add_technical_indicators(df)
             array_std = self.scaler.fit_transform(np.array(df))
             dict_df[f"{code}"] = pd.DataFrame(array_std)
-            list_com.append([code, df["CompanyName"].item()])
+            list_com.append([code, tmp["CompanyName"]])
 
         df_com = pd.DataFrame(list_com, columns=["code", "brand"])
         list_result = []
         window = 30
-        breakpoint()
 
         for code, brand in zip(df_com["code"], df_com["brand"]):
             array_X = np.array(dict_df[f"{code}"].tail(window))
@@ -214,14 +211,15 @@ class ModelManager:
             list_result.append([code, brand, y_pred[0][0]])
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
-        df_extract = df_result[df_result["pred"] >= 0.7].copy()
-        # df_extract = df_result[df_result["pred"] >= 0.5].copy()
+        df_extract = df_result[df_result["pred"] >= 0.8].copy()
 
-        nbd = Misc().get_next_business_day(nbd)
-        df_extract.loc[:, "date"] = nbd
-        df_extract = df_extract[["date", "code", "brand", "pred"]]
-
-        return df_extract
+        try:
+            nbd = Misc().get_next_business_day(nbd)
+            df_extract.loc[:, "date"] = nbd
+            df_extract = df_extract[["date", "code", "brand", "pred"]]
+            return df_extract
+        except Exception:
+            return pd.DataFrame()
 
 
 if __name__ == "__main__":
@@ -230,12 +228,10 @@ if __name__ == "__main__":
     misc = Misc()
     ave = pd.DataFrame()
 
-    day = "2025-04-30"
+    day = "2025-03-31"
     nbd = datetime.datetime.strptime(day, "%Y-%m-%d")
 
     while True:
-        print(f"{nbd.strftime('%Y-%m-%d')}")
-
         model = mm.fit(per=1.005, opt_model="lstm", nbd=nbd)
         df_long = mm.predict(model, nbd)
         df_long.loc[:, "side"] = 2
@@ -270,9 +266,12 @@ if __name__ == "__main__":
                     replace=False,
                     p=probabilities,
                 )
+                df_tmp = df.loc[
+                    sampled_indices, ["date", "code", "brand", "pred", "side"]
+                ]
             except Exception:
-                breakpoint()
-            df_tmp = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
+                df_tmp = df.loc[:, ["date", "code", "brand", "pred", "side"]]
+
             df_tmp = df_tmp.sort_values("pred", ascending=False).reset_index(drop=True)
             df_tmp.loc[:, "trial"] = i
 
@@ -296,7 +295,7 @@ if __name__ == "__main__":
                     open_price = prices["open"].item()
                     close_price = prices["close"].item()
                 except Exception:
-                    breakpoint()
+                    continue
 
                 if row["side"] == 1:
                     change.append(open_price - close_price)
@@ -314,6 +313,8 @@ if __name__ == "__main__":
         nbd = nbd_next
         if misc.get_next_business_day(nbd) >= datetime.date.today():
             break
+
+        print(f"{nbd.strftime('%Y-%m-%d')} - {data} 円")
 
     print(ave)
     breakpoint()
