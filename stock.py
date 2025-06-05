@@ -63,14 +63,14 @@ class Stock:
             self.data = pd.concat([self.data, price_df])
 
     def polling(self):
-                """
+        """
         約５分間隔で呼ばれる関数
         """
 
         if self.side == 1:
-            self.sell_side()   # 売り注文
+            self.sell_side()  # 売り注文
         elif self.side == 2:
-            self.buy_side()    # 買い注文
+            self.buy_side()  # 買い注文
         else:
             raise ValueError("side should be either 1 (sell) or 2 (buy)")
 
@@ -96,7 +96,7 @@ class Stock:
                 if self.check_order_status(sell_position["order_id"].values[0]):
                     # 売り注文が約定している（売り建てできている）場合、フラグを立てる
                     self.sell_executed = True
-                
+
         # 売り注文は完結しているが、買い注文が完結していない場合、買い売り注文（引成）を約定させる
         if self.sell_executed and not self.buy_executed:
             # 買い注文の有無を確認する
@@ -201,7 +201,7 @@ class Stock:
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
             console.log(content)
-            
+
     def check_order_status(self, order_id):
         # 注文の約定状況を確認する
         result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
@@ -298,7 +298,7 @@ class Stock:
         else:
             console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
             console.log(content)
-            
+
     def check_transaction(self):
         if self.buy_executed and self.sell_executed:
             console.log(
