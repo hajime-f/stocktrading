@@ -72,7 +72,7 @@ if __name__ == "__main__":
                 open_price = float(data[0].replace(",", ""))
                 close_price = float(data[3].replace(",", ""))
             except Exception:
-                pass
+                continue
 
             if row["side"] == 1:
                 change.append(open_price - close_price)

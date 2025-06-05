@@ -63,6 +63,21 @@ class Stock:
             self.data = pd.concat([self.data, price_df])
 
     def polling(self):
+        if self.side == 1:
+            self.sell_side()
+        elif self.side == 2:
+            self.buy_side()
+        else:
+            raise ValueError("side should be either 1 (sell) or 2 (buy)")
+
+        # データを更新する
+        self.update_data()
+        self.time, self.price, self.volume = [], [], []
+
+    def sell_side(self):
+        pass
+
+    def buy_side(self):
         """
         約５分間隔で呼ばれる関数
         """
@@ -102,10 +117,6 @@ class Stock:
                 if self.check_order_status(sell_position["order_id"].values[0]):
                     # 売り注文が約定している（返済できている）場合、フラグを立てる
                     self.sell_executed = True
-
-        # データを更新する
-        self.update_data()
-        self.time, self.price, self.volume = [], [], []
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
