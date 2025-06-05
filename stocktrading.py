@@ -5,6 +5,7 @@ import threading
 import time
 from typing import Dict
 
+import pandas as pd
 from rich.console import Console
 
 from data_manager import DataManager
@@ -73,12 +74,20 @@ if __name__ == "__main__":
 
     # 今回取引する銘柄リストを取得
     dm = DataManager()
-    # target_symbols = [symbol[1] for symbol in dm.fetch_target()]
-    # target_symbols = ["1475", "1592", "1586", "1481", "1578", "2552"]  # テスト用銘柄
-    target_symbols = ["1475"]  # テスト用銘柄
+    # target_stocks = dm.fetch_target(table_name="Target", target_date="2025-05-15")
+    target_symbols = [
+        ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+        ["2025-06-02", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
+        # ["2025-06-02", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
+        # ["2025-06-02", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
+        # ["2025-06-02", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
+        # ["2025-06-02", "2552", "上場Ｊリート(東証REIT指数)隔月分配(ミニ)", 0.999, 2],
+    ]
+    columns = ["date", "code", "brand", "pred", "side"]
+    target_stocks = pd.DataFrame(target_symbols, columns=columns)
 
     # 銘柄登録
-    lib.register(target_symbols)
+    lib.register(target_stocks["code"].tolist())
 
     # 取引余力を取得
     wallet_margin = lib.wallet_margin()
@@ -87,8 +96,9 @@ if __name__ == "__main__":
     console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
 
     # Stockクラスをインスタンス化して辞書に入れる
-    for symbol in target_symbols:
-        stock_instance = Stock(symbol, lib, dm)
+    for _, row in target_stocks.iterrows():
+        symbol = row["code"]
+        stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
         stock_instance.set_information()
         stocks[symbol] = stock_instance
 

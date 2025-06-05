@@ -270,7 +270,7 @@ class DataManager:
                 params=[target_date],
             )
 
-        return df.values.tolist()
+        return df
 
     def save_model_names(self, data_df):
         conn = sqlite3.connect(self.db)
