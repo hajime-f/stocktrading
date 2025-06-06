@@ -196,8 +196,8 @@ class ModelManager:
             list_result.append([code, brand, y_pred[0][0]])
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
-        df_extract = df_result[df_result["pred"] >= 0.5].copy()
-        # df_extract = df_result[df_result["pred"] >= 0.7].copy()
+        # df_extract = df_result[df_result["pred"] >= 0.5].copy()
+        df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
         nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
@@ -247,5 +247,5 @@ if __name__ == "__main__":
 
     conn = sqlite3.connect(dm.db)
     with conn:
-        # df.to_sql("Target2", conn, if_exists="append", index=False)
-        df.to_sql("Target3", conn, if_exists="append", index=False)
+        df.to_sql("Target2", conn, if_exists="append", index=False)
+        # df.to_sql("Target3", conn, if_exists="append", index=False)
