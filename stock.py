@@ -305,28 +305,74 @@ class Stock:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[blue]寄付で売って引けで買うことに成功[/]"
                 )
+                return True
             elif self.buy_executed and not self.sell_executed:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[red]売り注文は完結していますが、買い注文が完結していません[/]"
                 )
+                return False
             else:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[red]売り注文すら完結していません[/]"
                 )
+                return False
 
         elif self.side == 2:
             if self.buy_executed and self.sell_executed:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
                 )
+                return True
             elif self.buy_executed and not self.sell_executed:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません[/]"
                 )
+                return False
             else:
                 console.log(
                     f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません[/]"
                 )
+                return False
 
         else:
             raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
+
+    def calc_profitloss(self):
+        if self.side == 1:
+            sell_position = self.dm.seek_position(self.symbol, side=1)
+            sell_price = (
+                sell_position["price"].values[0] if not sell_position.empty else None
+            )
+
+            buy_position = self.dm.seek_position(self.symbol, side=2)
+            buy_price = (
+                buy_position["price"].values[0] if not buy_position.empty else None
+            )
+
+            profit_loss = (
+                (sell_price - buy_price) * self.transaction_unit
+                if sell_price is not None and buy_price is not None
+                else None
+            )
+
+        elif self.side == 2:
+            buy_position = self.dm.seek_position(self.symbol, side=2)
+            buy_price = (
+                buy_position["price"].values[0] if not buy_position.empty else None
+            )
+
+            sell_position = self.dm.seek_position(self.symbol, side=1)
+            sell_price = (
+                sell_position["price"].values[0] if not sell_position.empty else None
+            )
+
+            profit_loss = (
+                (buy_price - sell_price) * self.transaction_unit
+                if sell_price is not None and buy_price is not None
+                else None
+            )
+
+        else:
+            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
+
+        return profit_loss

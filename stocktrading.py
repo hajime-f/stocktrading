@@ -24,6 +24,9 @@ stop_event = threading.Event()
 # 銘柄データを保持する辞書
 stocks: Dict[str, Stock] = {}
 
+# 損益を計算する辞書
+profit_loss: Dict[str, list] = {}
+
 
 # PUSH配信を受信した時に呼ばれる関数
 def receive(data: Dict):
@@ -51,7 +54,8 @@ def run_polling(st):
         time.sleep(POLLING_INTERVAL)
 
     # Ctrl+C が押されたときに実行する処理
-    st.check_transaction()
+    if st.check_transaction():
+        profit_loss[st.symbol] = [st.symbol, st.disp_name, st.calc_profitloss()]
 
 
 # Ctrl+C ハンドラー
@@ -95,6 +99,8 @@ if __name__ == "__main__":
     wallet_cash = lib.wallet_cash()
     console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
 
+    breakpoint()
+
     # Stockクラスをインスタンス化して辞書に入れる
     for _, row in target_stocks.iterrows():
         symbol = row["code"]
@@ -124,9 +130,11 @@ if __name__ == "__main__":
         for thread in threads:
             thread.join()
 
-        # 損益を計算する
-        pl = dm.calc_profitloss()
+        # 損益を表示する
+        pl_sum = 0
         console.log("--- 損益計算結果 ---")
-        console.log(pl)
-        console.log(f"合計損益: {pl['Result'].sum():,.0f} 円")
+        for pl in profit_loss.values():
+            console.log(f"{pl[0]} ({pl[1]}): 損益 = {pl[2]:,.0f} 円")
+            pl_sum += pl[2]
         console.log("--------------------")
+        console.log(f"合計損益: {pl_sum:,.0f} 円")
