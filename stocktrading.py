@@ -14,7 +14,7 @@ from stock import Stock
 
 # 定数の定義
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
-POLLING_INTERVAL_VARIATION = 15  # ポーリング間隔の変動幅 (秒)
+POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
@@ -98,8 +98,6 @@ if __name__ == "__main__":
     console.log(f"[yellow]取引余力（信用）：{int(wallet_margin):,} 円[/]")
     wallet_cash = lib.wallet_cash()
     console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
-
-    breakpoint()
 
     # Stockクラスをインスタンス化して辞書に入れる
     for _, row in target_stocks.iterrows():
