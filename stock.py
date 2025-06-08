@@ -338,17 +338,15 @@ class Stock:
             raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
 
     def calc_profitloss(self):
+        sell_position = self.dm.seek_position(self.symbol, side=1)
+        sell_price = (
+            sell_position["price"].values[0] if not sell_position.empty else None
+        )
+
+        buy_position = self.dm.seek_position(self.symbol, side=2)
+        buy_price = buy_position["price"].values[0] if not buy_position.empty else None
+
         if self.side == 1:
-            sell_position = self.dm.seek_position(self.symbol, side=1)
-            sell_price = (
-                sell_position["price"].values[0] if not sell_position.empty else None
-            )
-
-            buy_position = self.dm.seek_position(self.symbol, side=2)
-            buy_price = (
-                buy_position["price"].values[0] if not buy_position.empty else None
-            )
-
             profit_loss = (
                 (sell_price - buy_price) * self.transaction_unit
                 if sell_price is not None and buy_price is not None
@@ -356,16 +354,6 @@ class Stock:
             )
 
         elif self.side == 2:
-            buy_position = self.dm.seek_position(self.symbol, side=2)
-            buy_price = (
-                buy_position["price"].values[0] if not buy_position.empty else None
-            )
-
-            sell_position = self.dm.seek_position(self.symbol, side=1)
-            sell_price = (
-                sell_position["price"].values[0] if not sell_position.empty else None
-            )
-
             profit_loss = (
                 (buy_price - sell_price) * self.transaction_unit
                 if sell_price is not None and buy_price is not None
