@@ -72,7 +72,7 @@ class Stock:
         elif self.side == 2:
             self.buy_side()  # 買い注文
         else:
-            raise ValueError("side should be either 1 (sell) or 2 (buy)")
+            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
 
         # データを更新する
         self.update_data()
@@ -300,15 +300,33 @@ class Stock:
             console.log(content)
 
     def check_transaction(self):
-        if self.buy_executed and self.sell_executed:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
-            )
-        elif self.buy_executed and not self.sell_executed:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません[/]"
-            )
+        if self.side == 1:
+            if self.buy_executed and self.sell_executed:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で売って引けで買うことに成功[/]"
+                )
+            elif self.buy_executed and not self.sell_executed:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[red]売り注文は完結していますが、買い注文が完結していません[/]"
+                )
+            else:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[red]売り注文すら完結していません[/]"
+                )
+
+        elif self.side == 2:
+            if self.buy_executed and self.sell_executed:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
+                )
+            elif self.buy_executed and not self.sell_executed:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません[/]"
+                )
+            else:
+                console.log(
+                    f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません[/]"
+                )
+
         else:
-            console.log(
-                f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません[/]"
-            )
+            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
