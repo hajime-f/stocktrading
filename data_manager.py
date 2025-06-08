@@ -296,10 +296,17 @@ class DataManager:
         with conn:
             data_df.to_sql("Orders", conn, if_exists="append", index=False)
 
-    def load_order(self):
+    def load_order(self, table_name="Orders", target_date="today"):
+        if target_date == "today":
+            target_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
         conn = sqlite3.connect(self.db)
         with conn:
-            df = pd.read_sql_query("select * from Orders;", conn)
+            df = pd.read_sql_query(
+                f"select distinct * from {table_name} where date = ?;",
+                conn,
+                params=[target_date],
+            )
 
         return df
 
@@ -331,35 +338,6 @@ class DataManager:
                 conn,
             )
         return df
-
-    def calc_profitloss(self):
-        df = self.load_order()
-
-        today = datetime.datetime.now().strftime("%Y-%m-%d")
-        df["DateTime"] = pd.to_datetime(df["DateTime"])
-        df = df[df["DateTime"].dt.date == pd.to_datetime(today).date()]
-
-        df["Value"] = df["Price"] * df["Count"]
-        result = (
-            df.groupby(["Symbol", "Displayname", "Side"])["Value"]
-            .sum()
-            .unstack(fill_value=0)
-        )
-        result["Result"] = result["1"] - result["2"]
-        result = result[["Result"]].reset_index().sort_values("Symbol")
-
-        result["open"] = (
-            df[df["Side"] == "2"].sort_values("Symbol")["Price"].reset_index(drop=True)
-        )
-        result["close"] = (
-            df[df["Side"] == "1"].sort_values("Symbol")["Price"].reset_index(drop=True)
-        )
-        result["Count"] = (
-            df[df["Side"] == "1"].sort_values("Symbol")["Count"].reset_index(drop=True)
-        )
-
-        result = result[["Symbol", "Displayname", "open", "close", "Count", "Result"]]
-        return result
 
     def find_newest_close_price(self, symbol):
         conn = sqlite3.connect(self.db)
