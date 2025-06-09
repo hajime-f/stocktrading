@@ -346,21 +346,10 @@ class Stock:
         buy_position = self.dm.seek_position(self.symbol, side=2)
         buy_price = buy_position["price"].values[0] if not buy_position.empty else None
 
-        if self.side == 1:
-            profit_loss = (
-                (sell_price - buy_price) * self.transaction_unit
-                if sell_price is not None and buy_price is not None
-                else None
-            )
-
-        elif self.side == 2:
-            profit_loss = (
-                (buy_price - sell_price) * self.transaction_unit
-                if sell_price is not None and buy_price is not None
-                else None
-            )
-
-        else:
-            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
+        profit_loss = (
+            (sell_price - buy_price) * self.transaction_unit
+            if sell_price is not None and buy_price is not None
+            else None
+        )
 
         return profit_loss
