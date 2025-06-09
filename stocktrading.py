@@ -59,9 +59,11 @@ def run_polling(st):
 
         time.sleep(POLLING_INTERVAL)
 
-    # Ctrl+C が押されたときに実行する処理
+    # while文を抜けたときに実行する処理
     if st.check_transaction():
         profit_loss[st.symbol] = [st.symbol, st.disp_name, st.calc_profitloss()]
+
+    sys.exit(0)  # プログラムを終了
 
 
 # Ctrl+C ハンドラー
