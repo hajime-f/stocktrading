@@ -3,6 +3,7 @@ import signal
 import sys
 import threading
 import time
+from datetime import datetime
 from typing import Dict
 
 import pandas as pd
@@ -51,6 +52,11 @@ def run_polling(st):
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
         st.polling()
+
+        now = datetime.now()
+        if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
+            stop_event.set()  # 15:30以降はスレッドを停止
+
         time.sleep(POLLING_INTERVAL)
 
     # Ctrl+C が押されたときに実行する処理
