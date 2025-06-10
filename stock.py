@@ -191,7 +191,7 @@ class Stock:
             self.save_order(
                 side=2,
                 price=None,
-                count=self.transaction_unit,
+                qty=self.transaction_unit,
                 order_id=content["OrderId"],
             )
         else:
@@ -216,7 +216,7 @@ class Stock:
             self.save_order(
                 side=1,
                 price=None,
-                count=self.transaction_unit,
+                qty=self.transaction_unit,
                 order_id=content["OrderId"],
             )
         else:
@@ -282,7 +282,7 @@ class Stock:
                 "symbol": self.symbol,
                 "displayname": self.disp_name,
                 "price": price,
-                "count": qty,
+                "qty": qty,
                 "order_id": order_id,
                 "execution_id": ex_id,
                 "side": side,
@@ -291,16 +291,16 @@ class Stock:
         )
         self.dm.save_execution(df_data)
 
-    def save_order(self, side, price, count, order_id):
+    def save_order(self, side, price, qty, order_id):
         df_data = pd.DataFrame(
             {
                 "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "symbol": self.symbol,
                 "displayname": self.disp_name,
                 "price": price,
-                "count": count,
+                "qty": qty,
                 "order_id": order_id,
-                "side": str(side),
+                "side": side,
             },
             index=[0],
         )
@@ -332,7 +332,7 @@ class Stock:
             self.save_order(
                 side=1,
                 price=None,
-                count=self.transaction_unit,
+                qty=self.transaction_unit,
                 order_id=content["OrderId"],
             )
         else:
@@ -357,7 +357,7 @@ class Stock:
             self.save_order(
                 side=2,
                 price=None,
-                count=self.transaction_unit,
+                qty=self.transaction_unit,
                 order_id=content["OrderId"],
             )
         else:
