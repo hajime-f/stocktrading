@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime
 
@@ -209,19 +210,38 @@ class Stock:
         if not result:
             raise AssertionError(f"id：{order_id} に対応する約定情報が取得できません")
 
+        # 約定状況を取り出す
+        state = result[0]["State"]
+
         # 約定している場合
-        if result[0]["State"] == 5:
-            price = int(result[0]["Details"][2]["Price"])
-            if result[0]["Side"] == "1":
+        if state == 5:
+            data = json.loads(result)[0]
+
+            side = data.get("Side")
+            price, qty = None, None
+
+            # DetailsのRecTypeが8であるようなPriceとQtyを取得
+            if "Details" in data and isinstance(data["Details"], list):
+                for detail in data["Details"]:
+                    if detail.get("RecType") == 8:
+                        price = detail.get("Price")
+                        qty = detail.get("Qty")
+                        break
+
+            if side == "1":
                 console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {self.transaction_unit} 株の売りが約定[/]"
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
+                )
+            elif side == "2":
+                console.log(
+                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
                 )
             else:
-                console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {self.transaction_unit} 株の買いが約定[/]"
+                raise AssertionError(
+                    "Side は 1（sell）または 2（buy）である必要があります。"
                 )
-            self.dm.update_price(order_id, price)
 
+            self.dm.update_price(order_id, price)
             return True
 
         return False
