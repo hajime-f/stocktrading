@@ -387,6 +387,15 @@ class DataManager:
         with conn:
             df_data.to_sql("Execution", conn, if_exists="append", index=False)
 
+    def load_execution(self, order_id):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df = pd.read_sql_query(
+                f"select * from Execution where order_id = ?;", conn, params=[order_id]
+            )
+
+        return df
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない

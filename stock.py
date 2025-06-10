@@ -93,9 +93,14 @@ class Stock:
                 if len(sell_position) != 1:
                     raise AssertionError("売り注文が複数あります")
 
+                # 注文IDを取得する
+                order_id = sell_position["order_id"].values[0]
+
                 # すでに売り注文を入れている場合、約定状況を確認する
-                if self.check_order_status(sell_position["order_id"].values[0]):
-                    # 売り注文が約定している（売り建てできている）場合、フラグを立てる
+                execution_data = self.check_order_status(order_id)
+                if execution_data is not None:
+                    # 売り注文が約定している（売り建てできている）場合、その情報を記録してフラグを立てる
+                    self.record_execution(execution_data, order_id)
                     self.sell_executed = True
 
         # 売り注文は完結しているが、買い注文が完結していない場合、買い売り注文（引成）を約定させる
@@ -111,9 +116,14 @@ class Stock:
                 if len(buy_position) != 1:
                     raise AssertionError("買い注文が複数あります")
 
+                # 注文IDを取得する
+                order_id = buy_position["order_id"].values[0]
+
                 # すでに買い注文を入れている場合、約定状況を確認する
-                if self.check_order_status(buy_position["order_id"].values[0]):
-                    # 買い注文が約定している（返済できている）場合、フラグを立てる
+                execution_data = self.check_order_status(order_id)
+                if execution_data is not None:
+                    # 買い注文が約定している（返済できている）場合、その情報を記録してフラグを立てる
+                    self.record_execution(execution_data, order_id)
                     self.buy_executed = True
 
     def buy_side(self):
@@ -130,9 +140,14 @@ class Stock:
                 if len(buy_position) != 1:
                     raise AssertionError("買い注文が複数あります")
 
+                # 注文IDを取得する
+                order_id = buy_position["order_id"].values[0]
+
                 # すでに買い注文を入れている場合、約定状況を確認する
-                if self.check_order_status(buy_position["order_id"].values[0]):
-                    # 買い注文が約定している（買い建てできている）場合、フラグを立てる
+                execution_data = self.check_order_status(order_id)
+                if execution_data is not None:
+                    # 買い注文が約定している（買い建てできている）場合、その情報を記録してフラグを立てる
+                    self.record_execution(execution_data, order_id)
                     self.buy_executed = True
 
         # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文（引成）を約定させる
@@ -148,9 +163,14 @@ class Stock:
                 if len(sell_position) != 1:
                     raise AssertionError("売り注文が複数あります")
 
+                # 注文IDを取得する
+                order_id = sell_position["order_id"].values[0]
+
                 # すでに売り注文を入れている場合、約定状況を確認する
-                if self.check_order_status(sell_position["order_id"].values[0]):
-                    # 売り注文が約定している（返済できている）場合、フラグを立てる
+                execution_data = self.check_order_status(order_id)
+                if execution_data is not None:
+                    # 売り注文が約定している（返済できている）場合、その情報を記録してフラグを立てる
+                    self.record_execution(execution_data, order_id)
                     self.sell_executed = True
 
     def execute_margin_buy_market_order_at_opening(self):
@@ -210,60 +230,66 @@ class Stock:
         if not result:
             raise AssertionError(f"id：{order_id} に対応する約定情報が取得できません")
 
-        # 約定状況を取り出す
-        state = result[0]["State"]
+        if result[0]["State"] == 5:
+            return json.loads(result)[0]
+        else:
+            return None
 
-        # 約定している場合
-        if state == 5:
-            data = json.loads(result)[0]
+    def record_execution(self, data, order_id):
+        # 約定情報がデータベースに保存されているかどうかを確認し、すでにある場合は何もしない
+        df_execution = self.dm.load_execution(order_id)
+        if not df_execution.empty:
+            return
 
-            side = int(data.get("Side"))
-            recv_time = datetime.fromisoformat(data.get("RecvTime")).strftime(
+        side = int(data.get("Side"))
+        recv_time = datetime.fromisoformat(data.get("RecvTime")).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        # DetailsのRecTypeが8であるようなPriceとQtyを取得
+        if "Details" in data and isinstance(data["Details"], list):
+            for detail in data["Details"]:
+                if detail.get("RecType") == 8:
+                    price = detail.get("Price")
+                    qty = detail.get("Qty")
+                    ex_id = detail.get("ExecutionID")
+                    ex_daytime = detail.get("ExecutionDay")
+                    break
+            ex_daytime = datetime.fromisoformat(ex_daytime).strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
+        else:
+            raise AssertionError("約定情報が不正です。")
 
-            # DetailsのRecTypeが8であるようなPriceとQtyを取得
-            if "Details" in data and isinstance(data["Details"], list):
-                for detail in data["Details"]:
-                    if detail.get("RecType") == 8:
-                        price = detail.get("Price")
-                        qty = detail.get("Qty")
-                        ex_id = detail.get("ExecutionID")
-                        ex_daytime = datetime.fromisoformat(
-                            detail.get("ExecutionDay")
-                        ).strftime("%Y-%m-%d %H:%M:%S")
-                        break
-
-            if side == 1:
-                console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
-                )
-            elif side == 2:
-                console.log(
-                    f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
-                )
-            else:
-                raise AssertionError(
-                    "Side は 1（sell）または 2（buy）である必要があります。"
-                )
-            df_data = pd.DataFrame(
-                {
-                    "exectime": ex_daytime,
-                    "recvtime": recv_time,
-                    "symbol": self.symbol,
-                    "displayname": self.disp_name,
-                    "price": price,
-                    "count": qty,
-                    "order_id": order_id,
-                    "execution_id": ex_id,
-                    "side": side,
-                },
-                index=[0],
+        if side == 1:
+            console.log(
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
             )
-            self.dm.save_execution(df_data)
-            return True
+        elif side == 2:
+            console.log(
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
+            )
+        else:
+            raise AssertionError(
+                "Side は 1（sell）または 2（buy）である必要があります。"
+            )
 
-        return False
+        # 約定情報をデータベースに保存
+        df_data = pd.DataFrame(
+            {
+                "exec_time": ex_daytime,
+                "recv_time": recv_time,
+                "symbol": self.symbol,
+                "displayname": self.disp_name,
+                "price": price,
+                "count": qty,
+                "order_id": order_id,
+                "execution_id": ex_id,
+                "side": side,
+            },
+            index=[0],
+        )
+        self.dm.save_execution(df_data)
 
     def save_order(self, side, price, count, order_id):
         df_data = pd.DataFrame(
