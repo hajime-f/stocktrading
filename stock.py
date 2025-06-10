@@ -83,9 +83,9 @@ class Stock:
         # 売り注文が完結していない場合、まずは売り注文（寄成）を約定させる
         if not self.sell_executed:
             # 売り注文の有無を確認する
-            sell_position = self.seek_position(side=1)
+            sell_position = self.dm.seek_position(symbol=self.symbol, side=1)
 
-            if sell_position is None:
+            if sell_position.empty:
                 # まだ売り注文を入れていない場合、寄付での売り建てを試みる
                 self.execute_margin_sell_market_order_at_opening()
 
@@ -106,9 +106,9 @@ class Stock:
         # 売り注文は完結しているが、買い注文が完結していない場合、買い売り注文（引成）を約定させる
         if self.sell_executed and not self.buy_executed:
             # 買い注文の有無を確認する
-            buy_position = self.seek_position(side=2)
+            buy_position = self.dm.seek_position(symbol=self.symbol, side=2)
 
-            if buy_position is None:
+            if buy_position.empty:
                 # まだ買い注文を入れていない場合、引けでの返済を試みる
                 self.execute_margin_buy_market_order_at_closing()
 
@@ -130,9 +130,9 @@ class Stock:
         # 買い注文が完結していない場合、まずは買い注文（寄成）を約定させる
         if not self.buy_executed:
             # 買い注文の有無を確認する
-            buy_position = self.seek_position(side=2)
+            buy_position = self.dm.seek_position(symbol=self.symbol, side=2)
 
-            if buy_position is None:
+            if buy_position.empty:
                 # まだ買い注文を入れていない場合、寄付での買い建てを試みる
                 self.execute_margin_buy_market_order_at_opening()
 
@@ -153,9 +153,9 @@ class Stock:
         # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文（引成）を約定させる
         if self.buy_executed and not self.sell_executed:
             # 売り注文の有無を確認する
-            sell_position = self.seek_position(side=1)
+            sell_position = self.dm.seek_position(symbol=self.symbol, side=1)
 
-            if sell_position is None:
+            if sell_position.empty:
                 # まだ売り注文を入れていない場合、引けでの返済を試みる
                 self.execute_margin_sell_market_order_at_closing()
 
@@ -305,14 +305,6 @@ class Stock:
             index=[0],
         )
         self.dm.save_order(df_data)
-
-    def seek_position(self, side):
-        df = self.dm.seek_position(self.symbol, side)
-
-        if df.empty:
-            return None
-        else:
-            return df
 
     def execute_margin_sell_market_order_at_closing(self):
         # 引けに信用で成行の売り注文を入れる（引け返済）
