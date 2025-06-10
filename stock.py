@@ -216,7 +216,11 @@ class Stock:
         # 約定している場合
         if state == 5:
             data = json.loads(result)[0]
-            side = data.get("Side")
+
+            side = int(data.get("Side"))
+            recv_time = datetime.fromisoformat(data.get("RecvTime")).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             # DetailsのRecTypeが8であるようなPriceとQtyを取得
             if "Details" in data and isinstance(data["Details"], list):
@@ -225,17 +229,16 @@ class Stock:
                         price = detail.get("Price")
                         qty = detail.get("Qty")
                         ex_id = detail.get("ExecutionID")
-                        dt_ex_daytime = datetime.fromisoformat(
+                        ex_daytime = datetime.fromisoformat(
                             detail.get("ExecutionDay")
-                        )
-                        ex_daytime = dt_ex_daytime.strftime("%Y-%m-%d %H:%M:%S")
+                        ).strftime("%Y-%m-%d %H:%M:%S")
                         break
 
-            if side == "1":
+            if side == 1:
                 console.log(
                     f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
                 )
-            elif side == "2":
+            elif side == 2:
                 console.log(
                     f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
                 )
@@ -245,14 +248,15 @@ class Stock:
                 )
             df_data = pd.DataFrame(
                 {
-                    "datetime": dt_ex_daytime,
+                    "exectime": ex_daytime,
+                    "recvtime": recv_time,
                     "symbol": self.symbol,
                     "displayname": self.disp_name,
                     "price": price,
                     "count": qty,
                     "order_id": order_id,
                     "execution_id": ex_id,
-                    "side": str(side),
+                    "side": side,
                 },
                 index=[0],
             )
