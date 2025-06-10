@@ -216,9 +216,7 @@ class Stock:
         # 約定している場合
         if state == 5:
             data = json.loads(result)[0]
-
             side = data.get("Side")
-            price, qty = None, None
 
             # DetailsのRecTypeが8であるようなPriceとQtyを取得
             if "Details" in data and isinstance(data["Details"], list):
@@ -226,6 +224,11 @@ class Stock:
                     if detail.get("RecType") == 8:
                         price = detail.get("Price")
                         qty = detail.get("Qty")
+                        ex_id = detail.get("ExecutionID")
+                        dt_ex_daytime = datetime.fromisoformat(
+                            detail.get("ExecutionDay")
+                        )
+                        ex_daytime = dt_ex_daytime.strftime("%Y-%m-%d %H:%M:%S")
                         break
 
             if side == "1":
@@ -240,8 +243,20 @@ class Stock:
                 raise AssertionError(
                     "Side は 1（sell）または 2（buy）である必要があります。"
                 )
-
-            self.dm.update_price(order_id, price)
+            df_data = pd.DataFrame(
+                {
+                    "datetime": dt_ex_daytime,
+                    "symbol": self.symbol,
+                    "displayname": self.disp_name,
+                    "price": price,
+                    "count": qty,
+                    "order_id": order_id,
+                    "execution_id": ex_id,
+                    "side": str(side),
+                },
+                index=[0],
+            )
+            self.dm.save_execution(df_data)
             return True
 
         return False

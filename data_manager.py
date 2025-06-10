@@ -382,6 +382,11 @@ class DataManager:
         else:
             return False
 
+    def save_execution(self, df_data):
+        conn = sqlite3.connect(self.db)
+        with conn:
+            df_data.to_sql("Execution", conn, if_exists="append", index=False)
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
