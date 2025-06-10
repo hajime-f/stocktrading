@@ -333,7 +333,7 @@ class DataManager:
                 FROM Orders
                 WHERE DATE(datetime) = date('now', 'localtime')
                 AND symbol = {symbol}
-                AND side = {str(side)};
+                AND side = {side};
                 """,
                 conn,
             )
@@ -394,6 +394,23 @@ class DataManager:
                 f"select * from Execution where order_id = ?;", conn, params=[order_id]
             )
 
+        return df
+
+    def seek_execution(self, symbol, side):
+        conn = sqlite3.connect(self.db)
+
+        # 以下のクエリを実行して、指定した条件に一致する注文データを取得
+        with conn:
+            df = pd.read_sql_query(
+                f"""
+                SELECT *
+                FROM Execution
+                WHERE DATE(datetime) = date('now', 'localtime')
+                AND symbol = {symbol}
+                AND side = {side};
+                """,
+                conn,
+            )
         return df
 
 

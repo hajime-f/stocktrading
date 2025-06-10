@@ -140,7 +140,7 @@ if __name__ == "__main__":
         pl_sum = 0
         console.log("--- 損益計算結果 ---")
         for pl in profit_loss.values():
-            console.log(f"{pl[0]} ({pl[1]}): 損益 = {pl[2]:,.0f} 円")
+            console.log(f"{pl[1]} ({pl[0]}): 損益 = {pl[2]:,.0f} 円")
             pl_sum += pl[2]
         console.log("--------------------")
         console.log(f"合計損益: {pl_sum:,.0f} 円")
