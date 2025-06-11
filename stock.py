@@ -393,19 +393,17 @@ class Stock:
         else:
             raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
 
-    def calc_profitloss(self):
+    def fetch_prices(self):
         sell_position = self.dm.seek_execution(self.symbol, side=1)
         sell_price = (
             sell_position["price"].values[0] if not sell_position.empty else None
         )
+        if sell_price is not None:
+            sell_price = sell_price * sell_position["qty"].values[0]
 
         buy_position = self.dm.seek_execution(self.symbol, side=2)
         buy_price = buy_position["price"].values[0] if not buy_position.empty else None
+        if buy_price is not None:
+            buy_price = buy_price * buy_position["qty"].values[0]
 
-        profit_loss = (
-            (sell_price - buy_price) * self.transaction_unit
-            if sell_price is not None and buy_price is not None
-            else None
-        )
-
-        return profit_loss
+        return sell_price, buy_price
