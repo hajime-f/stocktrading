@@ -55,6 +55,12 @@ def run_polling(st):
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
         st.polling()
+
+        now = datetime.now()
+        if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
+            stop_event.set()  # 15:35以降はスレッドを停止
+            break
+
         time.sleep(POLLING_INTERVAL)
 
     # while文を抜けたときに実行する処理
