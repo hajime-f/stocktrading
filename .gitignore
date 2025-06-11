@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 *.keras
 *.db
+log/
 
 # C extensions
 *.so
