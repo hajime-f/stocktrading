@@ -12,6 +12,7 @@ from rich.console import Console
 from data_manager import DataManager
 from library import StockLibrary
 from stock import Stock
+from misc import Misc
 
 # 定数の定義
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
@@ -54,12 +55,6 @@ def run_polling(st):
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
         st.polling()
-
-        now = datetime.now()
-        if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
-            stop_event.set()  # 15:30以降はスレッドを停止
-            break
-
         time.sleep(POLLING_INTERVAL)
 
     # while文を抜けたときに実行する処理
@@ -75,9 +70,15 @@ def signal_handler(sig, frame):
 
     console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
+    sys.exit(0)
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    misc = Misc()
+    if misc.check_day_type(datetime.date.today()):
+        exit()
+
     # 株ライブラリを初期化
     lib = StockLibrary()
 

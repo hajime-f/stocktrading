@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime
 
@@ -263,11 +262,11 @@ class Stock:
 
         if side == 1:
             console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty} 株の売りが約定[/]"
             )
         elif side == 2:
             console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty} 株の買いが約定[/]"
             )
         else:
             raise AssertionError(

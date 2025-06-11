@@ -405,7 +405,7 @@ class DataManager:
                 f"""
                 SELECT *
                 FROM Execution
-                WHERE DATE(datetime) = date('now', 'localtime')
+                WHERE DATE(exec_time) = date('now', 'localtime')
                 AND symbol = {symbol}
                 AND side = {side};
                 """,
