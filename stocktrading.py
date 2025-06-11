@@ -65,7 +65,9 @@ def run_polling(st):
 
     # while文を抜けたときに実行する処理
     if st.check_transaction():
-        profit_loss[st.symbol] = [st.symbol, st.disp_name, st.calc_profitloss()]
+        sell_price, buy_price = st.fetch_prices()
+        profit_loss[st.symbol] = [st.disp_name, st.symbol, sell_price, buy_price]
+    sys.exit(0)
 
 
 # Ctrl+C ハンドラー
@@ -97,10 +99,10 @@ if __name__ == "__main__":
     target_symbols = [
         ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
         ["2025-06-02", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
-        # ["2025-06-02", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
-        # ["2025-06-02", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
-        # ["2025-06-02", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
-        # ["2025-06-02", "2552", "上場Ｊリート(東証REIT指数)隔月分配(ミニ)", 0.999, 2],
+        ["2025-06-02", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
+        ["2025-06-02", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
+        ["2025-06-02", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
+        ["2025-06-02", "2552", "上場Ｊリート(東証REIT指数)隔月分配(ミニ)", 0.999, 2],
     ]
     columns = ["date", "code", "brand", "pred", "side"]
     target_stocks = pd.DataFrame(target_symbols, columns=columns)
@@ -147,7 +149,13 @@ if __name__ == "__main__":
         pl_sum = 0
         console.log("--- 損益計算結果 ---")
         for pl in profit_loss.values():
-            console.log(f"{pl[1]} ({pl[0]}): 損益 = {pl[2]:,.0f} 円")
-            pl_sum += pl[2]
+            if pl[2] is not None and pl[3] is not None:
+                diff = pl[2] - pl[3]
+                console.log(
+                    f"{pl[0]} ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
+                )
+                pl_sum += diff
+            else:
+                console.log(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
         console.log("--------------------")
         console.log(f"合計損益: {pl_sum:,.0f} 円")
