@@ -49,6 +49,8 @@ def run_polling(st):
     約５分間隔でstockクラスのpolling関数を呼ぶ関数
     """
 
+    console.log(f"[blue]{st.disp_name}({st.symbol}): 取引を開始します。[/]")
+
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
         st.polling()
@@ -56,14 +58,13 @@ def run_polling(st):
         now = datetime.now()
         if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
             stop_event.set()  # 15:30以降はスレッドを停止
+            break
 
         time.sleep(POLLING_INTERVAL)
 
     # while文を抜けたときに実行する処理
     if st.check_transaction():
         profit_loss[st.symbol] = [st.symbol, st.disp_name, st.calc_profitloss()]
-
-    sys.exit(0)  # プログラムを終了
 
 
 # Ctrl+C ハンドラー
@@ -74,7 +75,6 @@ def signal_handler(sig, frame):
 
     console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
-    sys.exit(0)  # プログラムを終了
 
 
 if __name__ == "__main__":

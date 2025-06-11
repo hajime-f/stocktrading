@@ -103,7 +103,7 @@ class Stock:
                     self.record_execution(execution_data, order_id)
                     self.sell_executed = True
 
-        # 売り注文は完結しているが、買い注文が完結していない場合、買い売り注文（引成）を約定させる
+        # 売り注文は完結しているが、買い注文が完結していない場合、次に買い注文（引成）を約定させる
         if self.sell_executed and not self.buy_executed:
             # 買い注文の有無を確認する
             buy_position = self.dm.seek_position(symbol=self.symbol, side=2)
@@ -231,7 +231,7 @@ class Stock:
             raise AssertionError(f"id：{order_id} に対応する約定情報が取得できません")
 
         if result[0]["State"] == 5:
-            return json.loads(result)[0]
+            return result[0]
         else:
             return None
 
