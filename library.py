@@ -107,8 +107,12 @@ class StockLibrary:
         await self.stream(self.receive_func)
 
     def run(self):
-        self.loop = asyncio.get_event_loop()
-        self.loop.run_until_complete(self._run())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self.loop = loop
+
+        # self.loop = asyncio.get_event_loop()
+        # self.loop.run_until_complete(self._run())
 
         return True
 
