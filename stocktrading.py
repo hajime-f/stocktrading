@@ -75,8 +75,7 @@ def signal_handler(sig, frame):
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
-    misc = Misc()
-    if misc.check_day_type(date.today()):
+    if Misc().check_day_type(date.today()):
         exit()
 
     # 株ライブラリを初期化
@@ -170,5 +169,12 @@ if __name__ == "__main__":
                 console.log(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
         console.log("--------------------")
         console.log(f"合計損益: {pl_sum:,.0f} 円")
+
+        # 損益を記録
+        result = pd.DataFrame(
+            [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
+            columns=["date", "cash", "profit_loss"],
+        )
+        dm.save_result(result)
 
         sys.exit(0)
