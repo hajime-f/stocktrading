@@ -3,7 +3,7 @@ import signal
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict
 
 import pandas as pd
@@ -11,8 +11,8 @@ from rich.console import Console
 
 from data_manager import DataManager
 from library import StockLibrary
-from stock import Stock
 from misc import Misc
+from stock import Stock
 
 # 定数の定義
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
@@ -50,7 +50,7 @@ def run_polling(st):
     約５分間隔でstockクラスのpolling関数を呼ぶ関数
     """
 
-    console.log(f"[blue]{st.disp_name}({st.symbol}): 取引を開始します。[/]")
+    console.log(f"[blue]{st.disp_name} ({st.symbol}): 取引を開始します。[/]")
 
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
@@ -84,7 +84,7 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     # 土日祝日は実行しない
     misc = Misc()
-    if misc.check_day_type(datetime.date.today()):
+    if misc.check_day_type(date.today()):
         exit()
 
     # 株ライブラリを初期化

@@ -260,6 +260,11 @@ class Stock:
         else:
             raise AssertionError("約定情報が不正です。")
 
+        if float(price).is_integer():
+            price = int(price)
+        if float(qty).is_integer():
+            qty = int(qty)
+
         if side == 1:
             console.log(
                 f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty} 株の売りが約定[/]"
