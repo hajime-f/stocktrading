@@ -149,8 +149,8 @@ if __name__ == "__main__":
             if stop_event.is_set():
                 break
 
-            # 1秒ごとにチェック
-            time.sleep(1)
+            # 10秒ごとにチェック
+            time.sleep(10)
 
     except Exception as e:
         console.log(f"[red]エラーが発生しました: {e}[/]")
