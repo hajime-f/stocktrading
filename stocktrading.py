@@ -60,7 +60,13 @@ def run_polling(st):
     # while文を抜けたときに実行する処理
     if st.check_transaction():
         sell_price, buy_price = st.fetch_prices()
-        profit_loss[st.symbol] = [st.disp_name, st.symbol, sell_price, buy_price]
+        profit_loss[st.symbol] = [
+            st.disp_name,
+            st.symbol,
+            sell_price,
+            buy_price,
+            st.side,
+        ]
 
 
 # Ctrl+C ハンドラー
@@ -157,6 +163,9 @@ if __name__ == "__main__":
 
         # 損益を表示する
         pl_sum = 0
+        list_result = []
+        today = date.today().strftime("%Y-%m-%d")
+
         console.log("--- 損益計算結果 ---")
         for pl in profit_loss.values():
             if pl[2] is not None and pl[3] is not None:
@@ -165,15 +174,29 @@ if __name__ == "__main__":
                     f"{pl[0]} ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
                 )
                 pl_sum += diff
+                list_result.append([today, pl[0], pl[1], pl[2], pl[3], diff, pl[4]])
             else:
                 console.log(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
         console.log("--------------------")
         console.log(f"合計損益: {pl_sum:,.0f} 円")
 
         # 損益を記録
+        plofit_loss = pd.DataFrame(
+            list_result,
+            columns=[
+                "date",
+                "brand",
+                "symbol",
+                "sell_price",
+                "buy_price",
+                "profit_loss",
+                "side",
+            ],
+        )
+        dm.save_profit_loss(profit_loss)
+
         result = pd.DataFrame(
-            [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
-            columns=["date", "cash", "profit_loss"],
+            [today, wallet_cash, pl_sum], columns=["date", "cash", "profit_loss"]
         )
         dm.save_result(result)
 
