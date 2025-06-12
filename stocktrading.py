@@ -50,24 +50,17 @@ def run_polling(st):
     約５分間隔でstockクラスのpolling関数を呼ぶ関数
     """
 
-    console.log(f"[blue]{st.disp_name} ({st.symbol}): 取引を開始します。[/]")
+    console.log(f"[blue]{st.disp_name} ({st.symbol}): 取引開始[/]")
 
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
         st.polling()
-
-        now = datetime.now()
-        if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-            stop_event.set()  # 15:35以降はスレッドを停止
-            break
-
         time.sleep(POLLING_INTERVAL)
 
     # while文を抜けたときに実行する処理
     if st.check_transaction():
         sell_price, buy_price = st.fetch_prices()
         profit_loss[st.symbol] = [st.disp_name, st.symbol, sell_price, buy_price]
-    sys.exit(0)
 
 
 # Ctrl+C ハンドラー
@@ -78,7 +71,6 @@ def signal_handler(sig, frame):
 
     console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
-    sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -129,17 +121,36 @@ if __name__ == "__main__":
     # Ctrl+C ハンドラーを登録
     signal.signal(signal.SIGINT, signal_handler)
 
-    # スレッド起動
+    # スレッドを準備
     threads = [
         threading.Thread(target=run_polling, args=(st,)) for st in stocks.values()
     ]
+    push_receiver_thread = threading.Thread(target=lib.run, daemon=True)
+
+    # スレッドを起動
     for thread in threads:
         thread.start()
+    push_receiver_thread.start()
+    console.log("[green]すべての処理を開始しました。15:35 に自動終了します。[/]")
 
     try:
-        lib.run()
+        while True:
+            now = datetime.now()
+            if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
+                console.log("[green]終了処理を開始します。[/]")
+                stop_event.set()
+
+            # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
+            if stop_event.is_set():
+                break
+
+            # 1秒ごとにチェック
+            time.sleep(1)
+
     except Exception as e:
         console.log(f"[red]エラーが発生しました: {e}[/]")
+        stop_event.set()
+
     finally:
         # すべてのスレッドが終了するのを待つ
         for thread in threads:
@@ -159,3 +170,5 @@ if __name__ == "__main__":
                 console.log(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
         console.log("--------------------")
         console.log(f"合計損益: {pl_sum:,.0f} 円")
+
+        sys.exit(0)
