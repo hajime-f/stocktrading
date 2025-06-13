@@ -1,13 +1,22 @@
-from logging import getLogger
-import logging.config
+import re
+from logging import Formatter, LogRecord, config, getLogger
+
 import yaml
+
+
+class StripRichFormatter(Formatter):
+    def format(self, record: LogRecord) -> str:
+        formatted_log = super().format(record)
+        stripped_log = re.sub(r"\[(/?[\w\s#]*)\]", "", formatted_log)
+
+        return stripped_log
 
 
 class Logger:
     def __init__(self, path="log_conf.yaml"):
         with open(path, "rt") as f:
-            config = yaml.safe_load(f.read())
-        logging.config.dictConfig(config)
+            log_config = yaml.safe_load(f.read())
+            config.dictConfig(log_config)
         self.logger = getLogger(__name__)
 
     def info(self, message):
@@ -24,12 +33,3 @@ class Logger:
 
     def critical(self, message):
         self.logger.critical(message)
-
-
-if __name__ == "__main__":
-    with open("log_conf.yaml", "rt") as f:
-        config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
-
-    logger = getLogger(__name__)
-    logger.info("これはテストです。")
