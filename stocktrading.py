@@ -43,7 +43,7 @@ def receive(data: Dict):
 
 # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
 def run_polling(st):
-    logger.info(f"[blue]{st.disp_name} ({st.symbol}): 取引が正常に開始されました。[/]")
+    logger.info(f"[blue]{st.disp_name} ({st.symbol}): 取引を開始します。[/]")
 
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
@@ -145,14 +145,15 @@ if __name__ == "__main__":
     push_receiver_thread = threading.Thread(target=lib.run, daemon=True)
 
     # スレッドを起動
-    for thread in threads:
-        thread.start()
-    push_receiver_thread.start()
-    logger.info(
-        "[green]すべてのスレッドを起動しました。プログラムは 15:35 に自動終了します。[/]"
-    )
-
     try:
+        logger.info("スレッドを起動しています。")
+        for thread in threads:
+            thread.start()
+            push_receiver_thread.start()
+        logger.info(
+            "[green]すべてのスレッドを起動しました。プログラムは 15:35 に自動終了します。[/]"
+        )
+
         while True:
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
@@ -166,9 +167,18 @@ if __name__ == "__main__":
             # 10秒ごとにチェック
             time.sleep(10)
 
-    except Exception as e:
-        logger.error(f"[red]エラーが発生しました: {e}[/]")
+    except RuntimeError:
+        logger.error("[bold red]スレッドの起動に失敗しました。[/]", exc_info=True)
         stop_event.set()
+        sys.exit(1)
+
+    except Exception:
+        logger.error(
+            "[bold red]メインスレッドで予期せぬエラーが発生しました。[/]",
+            exc_info=True,
+        )
+        stop_event.set()
+        sys.exit(1)
 
     finally:
         # すべてのスレッドが終了するのを待つ
