@@ -32,10 +32,6 @@ profit_loss: Dict[str, list] = {}
 
 # PUSH配信を受信した時に呼ばれる関数
 def receive(data: Dict):
-    """
-    PUSH配信を受信した時に呼ばれる関数
-    """
-
     # 受信したデータに対応する銘柄を取得する
     symbol = data.get("Symbol")
 
@@ -46,10 +42,6 @@ def receive(data: Dict):
 
 # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
 def run_polling(st):
-    """
-    約５分間隔でstockクラスのpolling関数を呼ぶ関数
-    """
-
     console.log(f"[blue]{st.disp_name} ({st.symbol}): 取引開始[/]")
 
     while not stop_event.is_set():
@@ -71,10 +63,6 @@ def run_polling(st):
 
 # Ctrl+C ハンドラー
 def signal_handler(sig, frame):
-    """
-    Ctrl+C ハンドラー
-    """
-
     console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
 
