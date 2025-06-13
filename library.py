@@ -3,19 +3,18 @@ import json
 import os
 import traceback
 import urllib.request
+from logging import getLogger
 
 import websockets
 from dotenv import load_dotenv
 from rich.console import Console
 
 console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
+logger = getLogger(__name__)
 
 
 class StockLibrary:
-    def __init__(self, logger):
-        # ロガーインスタンスの設定
-        self.logger = logger
-
+    def __init__(self):
         # .envファイルから環境変数を読み込む
         load_dotenv()
 

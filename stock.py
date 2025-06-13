@@ -1,17 +1,19 @@
 import os
 import sys
 from datetime import datetime
+from logging import getLogger
 
 import pandas as pd
 from dotenv import load_dotenv
 
+logger = getLogger(__name__)
+
 
 class Stock:
-    def __init__(self, symbol, lib, dm, logger, side, brand_name, exchange=1):
+    def __init__(self, symbol, lib, dm, side, brand_name, exchange=1):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
-        self.logger = logger
         self.side = side
         self.brand_name = brand_name
         self.exchange = exchange
@@ -35,16 +37,12 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * int(self.base_transaction)
         except KeyError as e:
-            self.logger.error(
-                f"[bold red] {self.symbol} の情報を取得できませんでした。[/]"
-            )
-            self.logger.error(f"[bold red]{e}[/]")
+            logger.error(f"[bold red] {self.symbol} の情報を取得できませんでした。[/]")
+            logger.error(f"[bold red]{e}[/]")
             sys.exit(1)
         except Exception as e:
-            self.logger.error(
-                f"[bold red]{self.symbol} の情報を取得できませんでした。[/]"
-            )
-            self.logger.error(f"[bold red]{e}[/]")
+            logger.error(f"[bold red]{self.symbol} の情報を取得できませんでした。[/]")
+            logger.error(f"[bold red]{e}[/]")
             sys.exit(1)
 
     def append_data(self, new_data):
@@ -76,7 +74,9 @@ class Stock:
         elif self.side == 2:
             self.buy_side()  # 買い注文
         else:
-            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
+            logger.error(
+                "[bold red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+            )
 
         # データを更新する
         self.update_data()
@@ -94,7 +94,9 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    raise AssertionError("売り注文が複数あります")
+                    logger.error(
+                        f"[bold red]{self.disp_name}（{self.symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    )
 
                 # 注文IDを取得する
                 order_id = sell_position["order_id"].values[0]
@@ -117,7 +119,9 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    raise AssertionError("買い注文が複数あります")
+                    logger.error(
+                        f"[bold red]{self.disp_name}（{self.symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    )
 
                 # 注文IDを取得する
                 order_id = buy_position["order_id"].values[0]
@@ -141,7 +145,9 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    raise AssertionError("買い注文が複数あります")
+                    logger.error(
+                        f"[bold red]{self.disp_name}（{self.symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    )
 
                 # 注文IDを取得する
                 order_id = buy_position["order_id"].values[0]
@@ -164,7 +170,9 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    raise AssertionError("売り注文が複数あります")
+                    logger.error(
+                        f"[bold red]{self.disp_name}（{self.symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    )
 
                 # 注文IDを取得する
                 order_id = sell_position["order_id"].values[0]
@@ -185,12 +193,16 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[bold red]買い発注に失敗しました。[/]"
+            )
+            logger.error(content)
             result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]買い発注成功[/]")
+            logger.info(
+                f"{self.disp_name}（{self.symbol}）：[blue]買い発注に成功しました。[/]"
+            )
             self.save_order(
                 side=2,
                 price=None,
@@ -198,8 +210,10 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[bold red]買い発注に失敗しました。[/]"
+            )
+            logger.error(content)
 
     def execute_margin_sell_market_order_at_opening(self):
         # 寄付に信用で成行の売り注文を入れる（寄付売り建て）
@@ -210,12 +224,16 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+            )
+            logger.error(content)
             result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]売り発注成功[/]")
+            logger.info(
+                f"{self.disp_name}（{self.symbol}）：[blue]売り発注に成功しました。[/]"
+            )
             self.save_order(
                 side=1,
                 price=None,
@@ -223,15 +241,19 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+            )
+            logger.error(content)
 
     def check_order_status(self, order_id):
         # 注文の約定状況を確認する
         result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
 
         if not result:
-            raise AssertionError(f"id：{order_id} に対応する約定情報が取得できません")
+            logger.error(
+                f"[bold red]id：{order_id} に対応する約定情報が取得できませんでした。[/]"
+            )
 
         if result[0]["State"] == 5:
             return result[0]
@@ -262,7 +284,7 @@ class Stock:
                 "%Y-%m-%d %H:%M:%S"
             )
         else:
-            raise AssertionError("約定情報が不正です。")
+            logger.error("[bold red]約定情報が不正です。[/]")
 
         if float(price).is_integer():
             price = int(price)
@@ -270,12 +292,12 @@ class Stock:
             qty = int(qty)
 
         if side == 1:
-            console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定[/]"
+            logger.info(
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定しました。[/]"
             )
         elif side == 2:
-            console.log(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定[/]"
+            logger.info(
+                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定しました。[/]"
             )
         else:
             raise AssertionError(
@@ -323,12 +345,16 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+            )
+            logger.error(content)
             result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]売り発注成功[/]")
+            logger.info(
+                f"{self.disp_name}（{self.symbol}）：[blue]売り発注に成功しました。[/]"
+            )
             self.save_order(
                 side=1,
                 price=None,
@@ -336,8 +362,10 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]売り発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+            )
+            logger.error(content)
 
     def execute_margin_buy_market_order_at_closing(self):
         # 引けに信用で成行の買い注文を入れる（引け返済）
@@ -348,12 +376,16 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]買い発注に失敗しました。[/]"
+            )
+            logger.error(content)
             result = -1
 
         if result == 0:
-            console.log(f"{self.disp_name}（{self.symbol}）：[blue]買い発注成功[/]")
+            logger.info(
+                f"{self.disp_name}（{self.symbol}）：[blue]買い発注に成功しました。[/]"
+            )
             self.save_order(
                 side=2,
                 price=None,
@@ -361,46 +393,50 @@ class Stock:
                 order_id=content["OrderId"],
             )
         else:
-            console.log(f"{self.disp_name}（{self.symbol}）：[red]買い発注失敗[/]")
-            console.log(content)
+            logger.error(
+                f"{self.disp_name}（{self.symbol}）：[red]買い発注に失敗しました。[/]"
+            )
+            logger.error(content)
 
     def check_transaction(self):
         if self.side == 1:
             if self.buy_executed and self.sell_executed:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で売って引けで買うことに成功[/]"
+                logger.info(
+                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で売って引けで買うことに成功しました。[/]"
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[red]売り注文は完結していますが、買い注文が完結していません[/]"
+                logger.warning(
+                    f"{self.disp_name}（{self.symbol}）：[red]売り注文は完結していますが、買い注文が完結していません。[/]"
                 )
                 return False
             else:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[red]売り注文すら完結していません[/]"
+                logger.error(
+                    f"{self.disp_name}（{self.symbol}）：[red]売り注文すら完結していません。[/]"
                 )
                 return False
 
         elif self.side == 2:
             if self.buy_executed and self.sell_executed:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功[/]"
+                logger.info(
+                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功しました。[/]"
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません[/]"
+                logger.warning(
+                    f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
                 )
                 return False
             else:
-                console.log(
-                    f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません[/]"
+                logger.error(
+                    f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません。[/]"
                 )
                 return False
 
         else:
-            raise ValueError("side は 1 (sell) または 2 (buy) である必要があります")
+            logger.error(
+                "[bold red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+            )
 
     def fetch_prices(self):
         sell_position = self.dm.seek_execution(self.symbol, side=1)

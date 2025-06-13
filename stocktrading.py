@@ -1,25 +1,28 @@
+import os
 import random
 import signal
 import sys
 import threading
 import time
-from datetime import datetime, date
+from datetime import date, datetime
+from logging import config, getLogger
 from typing import Dict
 
 import pandas as pd
+import yaml
+from dotenv import load_dotenv
 
 from data_manager import DataManager
 from library import StockLibrary
-from logger import Logger
 from misc import Misc
 from stock import Stock
+
+# .envファイルから環境変数を読み込む
+load_dotenv()
 
 # 定数の定義
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
 POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
-
-# ロガーを初期化
-logger = Logger()
 
 # スレッドを停止させるためのイベント
 stop_event = threading.Event()
@@ -27,8 +30,18 @@ stop_event = threading.Event()
 # 銘柄データを保持する辞書
 stocks: Dict[str, Stock] = {}
 
-# 損益を計算する辞書
+# 損益を保持する辞書
 profit_loss: Dict[str, list] = {}
+
+# ロガーを初期化
+log_conf_file = f"{os.getenv('BaseDir')}/{os.getenv('LogConfigFile')}"
+try:
+    with open(log_conf_file, "rt") as f:
+        config.dictConfig(yaml.safe_load(f.read()))
+except FileNotFoundError:
+    print(f"{log_conf_file} が見つかりません。ログ設定ファイルを確認してください。")
+    sys.exit(1)
+logger = getLogger(__name__)
 
 
 # PUSH配信を受信した時に呼ばれる関数
@@ -41,7 +54,7 @@ def receive(data: Dict):
         stocks[symbol].append_data(data)
 
 
-# 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
+# 約５分間隔でstockクラスのpolling関数を呼ぶ関数
 def run_polling(st):
     logger.info(f"[blue]{st.disp_name} ({st.symbol}): 取引を開始します。[/]")
 
@@ -97,7 +110,7 @@ if __name__ == "__main__":
         exit()
 
     # 株ライブラリを初期化
-    lib = StockLibrary(logger)
+    lib = StockLibrary()
 
     # 登録銘柄リストからすべての銘柄を削除する
     lib.unregister_all()
@@ -128,7 +141,7 @@ if __name__ == "__main__":
     # Stockクラスをインスタンス化して辞書に入れる
     for _, row in target_stocks.iterrows():
         symbol = row["code"]
-        stock_instance = Stock(symbol, lib, dm, logger, row["side"], row["brand"])
+        stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
         stock_instance.set_information()
         stocks[symbol] = stock_instance
 
@@ -157,7 +170,9 @@ if __name__ == "__main__":
         while True:
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-                logger.info("[green]終了処理を開始します。[/]")
+                logger.info(
+                    "[green]終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
+                )
                 stop_event.set()
 
             # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
