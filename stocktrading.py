@@ -64,7 +64,7 @@ def run_polling(st):
 
 # Ctrl+C ハンドラー
 def signal_handler(sig, frame):
-    logger.warning("[red]Ctrl+C が押されました。終了処理を行います。[/]")
+    logger.warning("[bold red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
 
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     # スレッドを起動
     try:
-        logger.info("スレッドを起動しています。")
+        logger.info("[green]スレッドを起動しています。[/]")
         for thread in threads:
             thread.start()
             push_receiver_thread.start()
@@ -167,16 +167,15 @@ if __name__ == "__main__":
             # 10秒ごとにチェック
             time.sleep(10)
 
-    except RuntimeError:
-        logger.error("[bold red]スレッドの起動に失敗しました。[/]", exc_info=True)
+    except RuntimeError as e:
+        logger.error("[bold red]スレッドの起動に失敗しました。[/]")
+        logger.error(f"[bold red]{e}[/]")
         stop_event.set()
         sys.exit(1)
 
-    except Exception:
-        logger.error(
-            "[bold red]メインスレッドで予期せぬエラーが発生しました。[/]",
-            exc_info=True,
-        )
+    except Exception as e:
+        logger.error("[bold red]メインスレッドで予期せぬエラーが発生しました。[/]")
+        logger.error(f"[bold red]{e}[/]")
         stop_event.set()
         sys.exit(1)
 
@@ -189,7 +188,7 @@ if __name__ == "__main__":
         pl_sum, list_result = display_profitloss()
 
         # 損益を記録
-        plofit_loss = pd.DataFrame(
+        profit_loss = pd.DataFrame(
             list_result,
             columns=[
                 "date",
