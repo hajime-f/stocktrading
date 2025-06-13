@@ -7,10 +7,10 @@ from datetime import datetime, date
 from typing import Dict
 
 import pandas as pd
-from rich.console import Console
 
 from data_manager import DataManager
 from library import StockLibrary
+from logger import Logger
 from misc import Misc
 from stock import Stock
 
@@ -18,7 +18,8 @@ from stock import Stock
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
 POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
 
-console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
+# ロガーを初期化
+logger = Logger()
 
 # スレッドを停止させるためのイベント
 stop_event = threading.Event()
@@ -42,7 +43,7 @@ def receive(data: Dict):
 
 # 約５分間隔でstockクラスのpolling関数を呼ぶように設定する
 def run_polling(st):
-    console.log(f"[blue]{st.disp_name} ({st.symbol}): 取引開始[/]")
+    logger.info(f"[blue]{st.disp_name} ({st.symbol}): 取引が正常に開始されました。[/]")
 
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
@@ -63,7 +64,7 @@ def run_polling(st):
 
 # Ctrl+C ハンドラー
 def signal_handler(sig, frame):
-    console.log("[red]Ctrl+C が押されました。終了処理を行います。[/]")
+    logger.warning("[red]Ctrl+C が押されました。終了処理を行います。[/]")
     stop_event.set()  # スレッド停止イベントを設定
 
 
@@ -73,19 +74,19 @@ def display_profitloss():
     list_result = []
     today = date.today().strftime("%Y-%m-%d")
 
-    console.log("--- 損益計算結果 ---")
+    logger.info("--- 損益計算結果 ---")
     for pl in profit_loss.values():
         if pl[2] is not None and pl[3] is not None:
             diff = pl[2] - pl[3]
-            console.log(
+            logger.info(
                 f"{pl[0]} ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
             )
             pl_sum += diff
             list_result.append([today, pl[0], pl[1], pl[2], pl[3], diff, pl[4]])
         else:
-            console.log(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
-    console.log("--------------------")
-    console.log(f"合計損益: {pl_sum:,.0f} 円")
+            logger.warning(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
+    logger.info("--------------------")
+    logger.info(f"合計損益: {pl_sum:,.0f} 円")
 
     return pl_sum, list_result
 
@@ -96,7 +97,7 @@ if __name__ == "__main__":
         exit()
 
     # 株ライブラリを初期化
-    lib = StockLibrary()
+    lib = StockLibrary(logger)
 
     # 登録銘柄リストからすべての銘柄を削除する
     lib.unregister_all()
@@ -120,14 +121,14 @@ if __name__ == "__main__":
 
     # 取引余力を取得
     wallet_margin = lib.wallet_margin()
-    console.log(f"[yellow]取引余力（信用）：{int(wallet_margin):,} 円[/]")
+    logger.info(f"[yellow]取引余力（信用）：{int(wallet_margin):,} 円[/]")
     wallet_cash = lib.wallet_cash()
-    console.log(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
+    logger.info(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
 
     # Stockクラスをインスタンス化して辞書に入れる
     for _, row in target_stocks.iterrows():
         symbol = row["code"]
-        stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
+        stock_instance = Stock(symbol, lib, dm, logger, row["side"], row["brand"])
         stock_instance.set_information()
         stocks[symbol] = stock_instance
 
@@ -147,13 +148,15 @@ if __name__ == "__main__":
     for thread in threads:
         thread.start()
     push_receiver_thread.start()
-    console.log("[green]すべての処理を開始しました。15:35 に自動終了します。[/]")
+    logger.info(
+        "[green]すべてのスレッドを起動しました。プログラムは 15:35 に自動終了します。[/]"
+    )
 
     try:
         while True:
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-                console.log("[green]終了処理を開始します。[/]")
+                logger.info("[green]終了処理を開始します。[/]")
                 stop_event.set()
 
             # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
@@ -164,7 +167,7 @@ if __name__ == "__main__":
             time.sleep(10)
 
     except Exception as e:
-        console.log(f"[red]エラーが発生しました: {e}[/]")
+        logger.error(f"[red]エラーが発生しました: {e}[/]")
         stop_event.set()
 
     finally:
