@@ -3,6 +3,7 @@ import re
 from logging import Formatter, LogRecord
 
 import jpholiday
+import yaml
 
 
 class Misc:
@@ -92,3 +93,27 @@ class StripRichFormatter(Formatter):
         stripped_log = re.sub(r"\[(/?[\w\s#]*)\]", "", formatted_log)
 
         return stripped_log
+
+
+class MessageManager:
+    def __init__(self, file_path="log_messages.yaml"):
+        try:
+            with open(file_path, "rt", encoding="utf-8") as f:
+                self._messages = yaml.safe_load(f)
+        except FileNotFoundError:
+            self._messages = {}
+            print(f"警告: メッセージ定義ファイル '{file_path}' が見つかりません。")
+
+    def get(self, key: str, **kwargs) -> str:
+        try:
+            template = self._messages
+            for k in key.split("."):
+                template = template[k]
+
+            if not isinstance(template, str):
+                return f"メッセージキー '{key}' は有効な文字列ではありません。"
+
+            return template.format(**kwargs)
+
+        except (KeyError, TypeError):
+            return f"メッセージキー '{key}' が見つかりませんでした。"

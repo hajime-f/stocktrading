@@ -1,16 +1,18 @@
 import asyncio
 import json
 import os
+import sys
 import traceback
 import urllib.request
 from logging import getLogger
 
 import websockets
 from dotenv import load_dotenv
-from rich.console import Console
 
-console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
+from misc import MessageManager
+
 logger = getLogger(__name__)
+msg = MessageManager()
 
 
 class StockLibrary:
@@ -22,24 +24,22 @@ class StockLibrary:
         try:
             self.api_password = os.getenv("APIPassword_production")
         except KeyError:
-            console.log(
-                "\U000026a0[red]APIパスワードが環境変数に設定されていません。[/]"
-            )
-            exit()
+            logger.critical(msg.get("errors.api_not_found"))
+            sys.exit(1)
 
         # IPアドレスの設定
         try:
             self.ip_address = os.getenv("IPAddress")
         except KeyError:
-            console.log("\U000026a0[red]IPアドレスが環境変数に設定されていません。[/]")
-            exit()
+            logger.critical(msg.get("errors.api_not_found"))
+            sys.exit(1)
 
         # ポート番号の設定
         try:
             self.port = os.getenv("Port")
         except KeyError:
-            console.log("\U000026a0[red]ポート番号が環境変数に設定されていません。[/]")
-            exit()
+            logger.critical(msg.get("errors.port_not_found"))
+            sys.exit(1)
 
         # エンドポイントの設定
         self.base_url = f"http://{self.ip_address}:{self.port}/kabusapi/"
@@ -56,8 +56,8 @@ class StockLibrary:
         try:
             self.token = content["Token"]
         except KeyError:
-            console.log("\U000026a0[red]APIトークンを取得できませんでした。[/]")
-            exit()
+            logger.critical(msg.get("errors.api_token_key_error"))
+            sys.exit(1)
 
         # Websocketの設定
         self.ws_uri = f"ws://{self.ip_address}:{self.port}/kabusapi/websocket"
@@ -88,20 +88,20 @@ class StockLibrary:
                             websockets.exceptions.ConnectionClosedError,
                             websockets.exceptions.ConnectionClosedOK,
                         ) as e:
-                            console.log(f"接続が閉じられました：{e}")
+                            logger.error(msg.get("errors.connection_closed"), reason=e)
                             self.closed.set()
                             break
                         except asyncio.TimeoutError:
-                            console.log("タイムアウトしました。")
+                            logger.error(msg.get("errors.connection_timeout"))
                             self.closed.set()
                             break
                         except Exception as e:
-                            console.log(f"エラーが発生しました：{e}")
+                            logger.error(msg.get("errors.connection_error"), reason=e)
                             traceback.print_exc()
                             self.closed.set()
                             break
             except Exception as e:
-                console.log(f"接続エラーが発生しました：{e}")
+                logger.error(msg.get("errors.connection_error"), reason=e)
                 traceback.print_exc()
                 self.closed.set()
 
@@ -207,10 +207,10 @@ class StockLibrary:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            console.log(f"\U000026a0[red]{e}[/]")
+            logger.critical(msg.get("errors.http_error"), reason=e)
             content = json.loads(e.read())
         except Exception as e:
-            console.log(f"\U000026a0[red]{e}[/]")
+            logger.critical(msg.get("errors.http_other_error"), reason=e)
 
         return content
 

@@ -14,11 +14,8 @@ from dotenv import load_dotenv
 
 from data_manager import DataManager
 from library import StockLibrary
-from misc import Misc
+from misc import Misc, MessageManager
 from stock import Stock
-
-# .envファイルから環境変数を読み込む
-load_dotenv()
 
 # 定数の定義
 POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
@@ -33,15 +30,24 @@ stocks: Dict[str, Stock] = {}
 # 損益を保持する辞書
 profit_loss: Dict[str, list] = {}
 
+# メッセージマネージャーのインスタンス化
+msg = MessageManager()
+
 # ロガーを初期化
-log_conf_file = f"{os.getenv('BaseDir')}/{os.getenv('LogConfigFile')}"
+logger = getLogger(__name__)
+load_dotenv()
+path_name = os.getenv("BaseDir")
+file_name = os.getenv("LogConfigFile")
+if file_name is None:
+    logger.critical(msg.get("errors.env_not_found", env_file=".env"))
+    sys.exit(1)
+log_conf_file = f"{path_name}/{file_name}"
 try:
     with open(log_conf_file, "rt") as f:
         config.dictConfig(yaml.safe_load(f.read()))
 except FileNotFoundError:
-    print(f"{log_conf_file} が見つかりません。ログ設定ファイルを確認してください。")
+    logger.critical(msg.get("errors.file_not_found", path=path_name))
     sys.exit(1)
-logger = getLogger(__name__)
 
 
 # PUSH配信を受信した時に呼ばれる関数
@@ -105,9 +111,10 @@ def display_profitloss():
 
 
 if __name__ == "__main__":
-    # 土日祝日は実行しない
-    if Misc().check_day_type(date.today()):
-        exit()
+    # # 土日祝日は実行しない
+    # if Misc().check_day_type(date.today()):
+    #     logger.error(msg.get("errors.holiday"))
+    #     exit()
 
     # 株ライブラリを初期化
     lib = StockLibrary()
@@ -133,10 +140,8 @@ if __name__ == "__main__":
     lib.register(target_stocks["code"].tolist())
 
     # 取引余力を取得
-    wallet_margin = lib.wallet_margin()
-    logger.info(f"[yellow]取引余力（信用）：{int(wallet_margin):,} 円[/]")
-    wallet_cash = lib.wallet_cash()
-    logger.info(f"[yellow]取引余力（現物）：{int(wallet_cash):,} 円[/]")
+    wallet_cash = f"{int(lib.wallet_cash()):,}"
+    logger.info(msg.get("info.wallet_cash", wallet_cash=wallet_cash))
 
     # Stockクラスをインスタンス化して辞書に入れる
     for _, row in target_stocks.iterrows():
