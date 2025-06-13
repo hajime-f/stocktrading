@@ -41,6 +41,7 @@ APIPassword_production=XXXX
 IPAddress=127.0.0.1
 Port=18080
 BaseDir=/path/to/dir/stocktrading
+LogConfigFile=log_conf.yaml
 Email=your@mailaddress.com
 JPXPassword=YYYY
 BaseTransaction=1
@@ -50,6 +51,7 @@ BaseTransaction=1
 - IPAddress：kabu ステーションが動作する Windows マシンの IP アドレス
 - Port：上記 Windows マシンのポート番号
 - BaseDir：本プログラムが格納されている「stocktrading」ディレクトリへの絶対パス
+- LogConfigFile：ログ出力の設定を記載した YAML ファイルの名前
 - Email：J-Quants API に登録したメールアドレス
 - JPXPassword：J-Quants API に登録したパスワード
 - BaseTransaction：取引単位。この値を N にすると、単元株（通常100株）x N の取引を行う。
