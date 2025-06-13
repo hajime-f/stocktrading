@@ -1,11 +1,9 @@
 import os
+import sys
 from datetime import datetime
 
 import pandas as pd
 from dotenv import load_dotenv
-from rich.console import Console
-
-console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 
 class Stock:
@@ -36,13 +34,18 @@ class Stock:
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * int(self.base_transaction)
-        except KeyError:
-            console.log(f"[red] {self.symbol} の情報を取得できませんでした。[/]")
-            exit()
+        except KeyError as e:
+            self.logger.error(
+                f"[bold red] {self.symbol} の情報を取得できませんでした。[/]"
+            )
+            self.logger.error(f"[bold red]{e}[/]")
+            sys.exit(1)
         except Exception as e:
-            console.log(f"[red]{self.symbol} の情報を取得できませんでした。[/]")
-            console.log(f"[red]{e}[/]")
-            exit()
+            self.logger.error(
+                f"[bold red]{self.symbol} の情報を取得できませんでした。[/]"
+            )
+            self.logger.error(f"[bold red]{e}[/]")
+            sys.exit(1)
 
     def append_data(self, new_data):
         if new_data["CurrentPriceTime"] is not None:
