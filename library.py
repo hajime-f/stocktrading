@@ -12,7 +12,10 @@ console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 
 class StockLibrary:
-    def __init__(self):
+    def __init__(self, logger):
+        # ロガーインスタンスの設定
+        self.logger = logger
+
         # .envファイルから環境変数を読み込む
         load_dotenv()
 

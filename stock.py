@@ -9,10 +9,11 @@ console = Console(log_time_format="%Y-%m-%d %H:%M:%S")
 
 
 class Stock:
-    def __init__(self, symbol, lib, dm, side, brand_name, exchange=1):
+    def __init__(self, symbol, lib, dm, logger, side, brand_name, exchange=1):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
+        self.logger = logger
         self.side = side
         self.brand_name = brand_name
         self.exchange = exchange
