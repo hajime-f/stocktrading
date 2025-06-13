@@ -9,14 +9,14 @@ formatters:
 handlers:
   console:
     class: rich.logging.RichHandler
-    level: DEBUG
+    level: INFO
     formatter: console
 
   info_file_handler:
     class: logging.handlers.RotatingFileHandler
-    level: INFO
+    level: DEBUG
     formatter: simple
-    filename: ./logs/info.log
+    filename: ./logs/stocktrading.log
     maxBytes: 10485760
     backupCount: 20
     encoding: utf8
