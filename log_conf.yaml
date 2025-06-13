@@ -9,7 +9,7 @@ formatters:
     format: "%(asctime)s %(filename)s (%(name)s:%(lineno)s) - %(thread)d %(funcName)s [%(levelname)s]: %(message)s"
   
   file_plain:
-    '()': 'logger.StripRichFormatter'
+    '()': 'misc.StripRichFormatter'
     format: "%(asctime)s %(filename)s (%(name)s:%(lineno)s) - %(thread)d %(funcName)s [%(levelname)s]: %(message)s"
 
 handlers:

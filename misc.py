@@ -1,4 +1,7 @@
 import datetime
+import re
+from logging import Formatter, LogRecord
+
 import jpholiday
 
 
@@ -81,3 +84,11 @@ class Misc:
             else:
                 # 平日でなければ次の日へ
                 next_day += datetime.timedelta(days=1)
+
+
+class StripRichFormatter(Formatter):
+    def format(self, record: LogRecord) -> str:
+        formatted_log = super().format(record)
+        stripped_log = re.sub(r"\[(/?[\w\s#]*)\]", "", formatted_log)
+
+        return stripped_log
