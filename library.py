@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 msg = MessageManager()
 
 
-class StockLibrary:
+class Library:
     def __init__(self):
         # .envファイルから環境変数を読み込む
         load_dotenv()
