@@ -25,6 +25,11 @@ class DataManager:
         self.db = f"{self.base_dir}/stock_database.db"
 
         self.base_url = "https://api.jquants.com/v1"
+        self.conn = sqlite3.connect(self.db)
+
+    def __del__(self):
+        if self.conn:
+            self.conn.close()
 
     def append_data(self, new_data, index):
         if new_data["CurrentPriceTime"] is not None:
@@ -160,9 +165,8 @@ class DataManager:
             if len(df_prices) < 200:
                 continue
 
-            conn = sqlite3.connect(self.db)
-            with conn:
-                df_prices.to_sql(code, conn, if_exists="replace", index=False)
+            if self.conn:
+                df_prices.to_sql(code, self.conn, if_exists="replace", index=False)
 
             list_codes.append(
                 [
@@ -175,9 +179,8 @@ class DataManager:
 
         df_codes = pd.DataFrame(list_codes, columns=["date", "code", "brand", "market"])
 
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df_codes.to_sql("Codes", conn, if_exists="replace", index=False)
+        if self.conn:
+            df_codes.to_sql("Codes", self.conn, if_exists="replace", index=False)
 
     def init_stock_data(self):
         """
@@ -218,9 +221,8 @@ class DataManager:
             if df_prices["volume"].tail(300).mean() < 50000:
                 continue
 
-            conn = sqlite3.connect(self.db)
-            with conn:
-                df_prices.to_sql(code, conn, if_exists="replace", index=False)
+            if self.conn:
+                df_prices.to_sql(code, self.conn, if_exists="replace", index=False)
 
             list_codes.append(
                 [df["Date"], code, df["CompanyName"], df["MarketCodeName"]]
@@ -228,9 +230,8 @@ class DataManager:
 
         df_codes = pd.DataFrame(list_codes, columns=["date", "code", "brand", "market"])
 
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df_codes.to_sql("Codes", conn, if_exists="replace", index=False)
+        if self.conn:
+            df_codes.to_sql("Codes", self.conn, if_exists="replace", index=False)
 
     def load_stock_data(self, code, start="start", end="end"):
         if start == "start" and end == "end":
@@ -243,18 +244,16 @@ class DataManager:
             query = f'select * from "{code}" where date >= "{start}" and date <= "{end}" order by date;'
 
         try:
-            conn = sqlite3.connect(self.db)
-            with conn:
-                df = pd.read_sql_query(query, conn)
+            if self.conn:
+                df = pd.read_sql_query(query, self.conn)
         except pd.errors.DatabaseError:
             df = pd.DataFrame()
 
         return df
 
     def load_stock_list(self):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df = pd.read_sql_query("select * from Codes;", conn)
+        if self.conn:
+            df = pd.read_sql_query("select * from Codes;", self.conn)
 
         return df
 
@@ -262,71 +261,61 @@ class DataManager:
         if target_date == "today":
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
                 f"select distinct * from {table_name} where date = ?;",
-                conn,
+                self.conn,
                 params=[target_date],
             )
 
         return df
 
     def save_model_names(self, data_df):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            data_df.to_sql("Models", conn, if_exists="replace", index=False)
+        if self.conn:
+            data_df.to_sql("Models", self.conn, if_exists="replace", index=False)
 
     def load_model_list(self):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df = pd.read_sql_query("select * from Models;", conn)
+        if self.conn:
+            df = pd.read_sql_query("select * from Models;", self.conn)
 
         return df
 
     def load_aggregate(self):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df = pd.read_sql_query("select * from Aggregate;", conn)
+        if self.conn:
+            df = pd.read_sql_query("select * from Aggregate;", self.conn)
 
         return df
 
     def save_order(self, data_df):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            data_df.to_sql("Orders", conn, if_exists="append", index=False)
+        if self.conn:
+            data_df.to_sql("Orders", self.conn, if_exists="append", index=False)
 
     def load_order(self, table_name="Orders", target_date="today"):
         if target_date == "today":
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
                 f"select distinct * from {table_name} where date = ?;",
-                conn,
+                self.conn,
                 params=[target_date],
             )
 
         return df
 
     def update_price(self, order_id, price):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            conn.execute(
+        if self.conn:
+            self.conn.execute(
                 f"UPDATE Orders SET price = {price} WHERE order_id = '{order_id}';",
             )
 
     def save_profit_loss(self, df, table_name="ProfitLoss"):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df.to_sql(table_name, conn, if_exists="append", index=False)
+        if self.conn:
+            df.to_sql(table_name, self.conn, if_exists="append", index=False)
 
     def seek_position(self, symbol, side):
-        conn = sqlite3.connect(self.db)
-
         # 以下のクエリを実行して、指定した条件に一致する注文データを取得
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
                 f"""
                 SELECT *
@@ -335,42 +324,40 @@ class DataManager:
                 AND symbol = {symbol}
                 AND side = {side};
                 """,
-                conn,
+                self.conn,
             )
         return df
 
     def find_newest_close_price(self, symbol):
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
                 f'select close from "{symbol}" order by date desc limit 1;',
-                conn,
+                self.conn,
             )
         return df["close"].item()
 
     def load_table_by_date(self, table_name, date):
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
-                f"select * from {table_name} where date = ?;", conn, params=[date]
+                f"select * from {table_name} where date = ?;", self.conn, params=[date]
             )
 
         return df
 
     def load_open_close_prices(self, code, date):
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
-                f'select open, close from "{code}" where date = ?;', conn, params=[date]
+                f'select open, close from "{code}" where date = ?;',
+                self.conn,
+                params=[date],
             )
 
         return df
 
     def check_stock_data(self, code, val_date):
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
-                f'select * from "{code}" order by date desc limit 1;', conn
+                f'select * from "{code}" order by date desc limit 1;', self.conn
             )
 
         if df.empty:
@@ -383,24 +370,22 @@ class DataManager:
             return False
 
     def save_execution(self, df_data):
-        conn = sqlite3.connect(self.db)
-        with conn:
-            df_data.to_sql("Execution", conn, if_exists="append", index=False)
+        if self.conn:
+            df_data.to_sql("Execution", self.conn, if_exists="append", index=False)
 
     def load_execution(self, order_id):
-        conn = sqlite3.connect(self.db)
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
-                f"select * from Execution where order_id = ?;", conn, params=[order_id]
+                f"select * from Execution where order_id = ?;",
+                self.conn,
+                params=[order_id],
             )
 
         return df
 
     def seek_execution(self, symbol, side):
-        conn = sqlite3.connect(self.db)
-
         # 以下のクエリを実行して、指定した条件に一致する注文データを取得
-        with conn:
+        if self.conn:
             df = pd.read_sql_query(
                 f"""
                 SELECT *
@@ -409,9 +394,13 @@ class DataManager:
                 AND symbol = {symbol}
                 AND side = {side};
                 """,
-                conn,
+                self.conn,
             )
         return df
+
+    def save_result(self, df_result):
+        if self.conn:
+            df_result.to_sql("Result", self.conn, if_exists="append", index=False)
 
 
 if __name__ == "__main__":
