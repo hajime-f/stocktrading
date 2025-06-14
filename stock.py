@@ -484,7 +484,7 @@ class Stock:
             if self.buy_executed and self.sell_executed:
                 logger.info(
                     msg.get(
-                        "sell_transaction_success",
+                        "info.sell_transaction_success",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
@@ -493,7 +493,7 @@ class Stock:
             elif self.buy_executed and not self.sell_executed:
                 logger.warning(
                     msg.get(
-                        "transaction_failed_1",
+                        "errors.transaction_failed_1",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
@@ -502,7 +502,7 @@ class Stock:
             else:
                 logger.error(
                     msg.get(
-                        "transaction_failed_2",
+                        "errors.transaction_failed_2",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
@@ -513,7 +513,7 @@ class Stock:
             if self.buy_executed and self.sell_executed:
                 logger.info(
                     msg.get(
-                        "buy_transaction_success",
+                        "info.buy_transaction_success",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
@@ -522,7 +522,7 @@ class Stock:
             elif self.buy_executed and not self.sell_executed:
                 logger.warning(
                     msg.get(
-                        "transaction_failed_3",
+                        "errors.transaction_failed_3",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
@@ -531,7 +531,7 @@ class Stock:
             else:
                 logger.error(
                     msg.get(
-                        "transaction_failed_4",
+                        "errors.transaction_failed_4",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
                     )
