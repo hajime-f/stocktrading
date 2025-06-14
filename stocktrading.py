@@ -62,7 +62,9 @@ def receive(data: Dict):
 
 # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
 def run_polling(st):
-    logger.info(f"[blue]{st.disp_name} ({st.symbol}): 取引を開始します。[/]")
+    logger.info(
+        msg.get("info.transaction_start", symbol=st.symbol, disp_name=st.disp_name)
+    )
 
     while not stop_event.is_set():
         time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
@@ -83,7 +85,7 @@ def run_polling(st):
 
 # Ctrl+C ハンドラー
 def signal_handler(sig, frame):
-    logger.warning("[bold red]Ctrl+C が押されました。終了処理を行います。[/]")
+    logger.warning(msg.get("info.terminate"))
     stop_event.set()  # スレッド停止イベントを設定
 
 
@@ -98,23 +100,26 @@ def display_profitloss():
         if pl[2] is not None and pl[3] is not None:
             diff = pl[2] - pl[3]
             logger.info(
-                f"{pl[0]} ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
+                f"[yellow]{pl[0]}[/] ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
             )
             pl_sum += diff
             list_result.append([today, pl[0], pl[1], pl[2], pl[3], diff, pl[4]])
         else:
             logger.warning(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
     logger.info("--------------------")
-    logger.info(f"合計損益: {pl_sum:,.0f} 円")
+    logger.info(f"[red]合計損益[/]: {pl_sum:,.0f} 円")
 
     return pl_sum, list_result
 
 
 if __name__ == "__main__":
-    # # 土日祝日は実行しない
-    # if Misc().check_day_type(date.today()):
-    #     logger.error(msg.get("errors.holiday"))
-    #     exit()
+    # 土日祝日は実行しない
+    if Misc().check_day_type(date.today()):
+        logger.error(msg.get("errors.holiday"))
+        exit()
+
+    today = date.today().strftime("%Y年%m月%d日")
+    logger.info(msg.get("info.program_start", today=today))
 
     # 株ライブラリを初期化
     lib = StockLibrary()
@@ -164,20 +169,16 @@ if __name__ == "__main__":
 
     # スレッドを起動
     try:
-        logger.info("[green]スレッドを起動しています。[/]")
+        logger.info(msg.get("info.thread_starting"))
         for thread in threads:
             thread.start()
-            push_receiver_thread.start()
-        logger.info(
-            "[green]すべてのスレッドを起動しました。プログラムは 15:35 に自動終了します。[/]"
-        )
+        push_receiver_thread.start()
+        logger.info(msg.get("info.all_thread_started"))
 
         while True:
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-                logger.info(
-                    "[green]終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
-                )
+                logger.info(msg.get("info.time_terminate"))
                 stop_event.set()
 
             # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
@@ -188,14 +189,12 @@ if __name__ == "__main__":
             time.sleep(10)
 
     except RuntimeError as e:
-        logger.error("[bold red]スレッドの起動に失敗しました。[/]")
-        logger.error(f"[bold red]{e}[/]")
+        logger.critical(msg.get("error.thread_launch_failed", reason=e))
         stop_event.set()
         sys.exit(1)
 
     except Exception as e:
-        logger.error("[bold red]メインスレッドで予期せぬエラーが発生しました。[/]")
-        logger.error(f"[bold red]{e}[/]")
+        logger.critical(msg.get("error.thread_unexpected_error", reason=e))
         stop_event.set()
         sys.exit(1)
 

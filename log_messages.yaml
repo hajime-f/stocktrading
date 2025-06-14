@@ -1,0 +1,50 @@
+# ==================================
+# アプリケーションメッセージ定義
+# ==================================
+
+# --- エラーメッセージ ---
+errors:
+  # ファイルが見つからない
+  file_not_found: "ログ設定ファイルが '{path}' に見つかりませんでした。プログラムを終了します。"
+
+  # 環境変数が見つからない
+  env_not_found: "ログ設定ファイルに関する定義が環境変数 {env_file} に設定されていません。プログラムを終了します。"
+  api_not_found: "[bold red]APIパスワードが環境変数に設定されていません。[/]"
+  ip_address_not_found: "[bold red]IPアドレスが環境変数に設定されていません。[/]"
+  port_not_found: "[bold red]ポート番号が環境変数に設定されていません。[/]"
+  api_token_key_error: "[bold red]APIトークンを取得できませんでした。[/]"
+
+  # 接続エラー
+  connection_closed: "[red]接続が閉じられました。理由: {reason}[/]"
+  connection_timeout: "[red]タイムアウトしました。[/]"
+  connection_error: "[red]接続エラーが発生しました。理由: {reason}[/]"
+  http_error: "[bold red]HTTPエラーが発生しました。理由: {reason}[/]"
+  http_other_error: "[bold red]その他のHTTPエラーが発生しました。理由: {reason}[/]"
+
+  # スレッド
+  thread_launch_failed: "[bold red]スレッドの起動に失敗しました。理由: {reason}[/]"
+  thread_unexpected_error: "[bold red]メインスレッドで予期せぬエラーが発生しました。理由: {reason}[/]"
+  
+  # 土日祝日
+  holiday: "[red]本日は土日祝日です。プログラムを終了します。[/]"
+
+  
+# --- 情報メッセージ ---
+info:
+  # プログラムの開始・終了
+  program_start: "[green]=== プログラムを開始します（{today}）===[/]"
+  program_end: "[green]=== プログラムを終了します ===[/]"
+  thread_starting: "[green]スレッドを起動しています。[/]"
+  all_thread_started: "[green]すべてのスレッドを正常に起動しました。プログラムは 15:35 に自動終了します。[/]"
+  terminate: "[bold red]Ctrl+C が押されました。終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
+  time_terminate: "[green]15:35 を過ぎたので終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
+
+  # 取引余力
+  wallet_cash: "[yellow]取引余力（現金残高）：{wallet_cash} 円[/]"
+
+  # 取引の開始・終了
+  transaction_start: "[yellow]{disp_name}[/] ([cyan]{symbol}[/]): [blue]スレッドが正常に起動しました。取引を開始します。[/]"
+
+  # 注文関連
+  order_success: "{disp_name}（{symbol}）：[green]{side}発注に成功しました。[/] (ID: {order_id})"
+  order_status_check: "[cyan]{disp_name} ({symbol}) の注文状態を確認します...[/]"
