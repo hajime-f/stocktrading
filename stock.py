@@ -6,7 +6,10 @@ from logging import getLogger
 import pandas as pd
 from dotenv import load_dotenv
 
+from misc import MessageManager
+
 logger = getLogger(__name__)
+msg = MessageManager()
 
 
 class Stock:
@@ -37,12 +40,10 @@ class Stock:
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * int(self.base_transaction)
         except KeyError as e:
-            logger.error(f"[bold red] {self.symbol} の情報を取得できませんでした。[/]")
-            logger.error(f"[bold red]{e}[/]")
+            logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
             sys.exit(1)
         except Exception as e:
-            logger.error(f"[bold red]{self.symbol} の情報を取得できませんでした。[/]")
-            logger.error(f"[bold red]{e}[/]")
+            logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
             sys.exit(1)
 
     def append_data(self, new_data):
@@ -74,9 +75,7 @@ class Stock:
         elif self.side == 2:
             self.buy_side()  # 買い注文
         else:
-            logger.error(
-                "[bold red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
-            )
+            logger.warning(msg.get("errors.unexpected_side_value"))
 
         # データを更新する
         self.update_data()
@@ -94,8 +93,12 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    logger.error(
-                        f"[bold red]{self.disp_name}（{self.symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    logger.warning(
+                        msg.get(
+                            "errors.unexpected_orders_sell",
+                            disp_name=self.disp_name,
+                            symbol=self.symbol,
+                        )
                     )
 
                 # 注文IDを取得する
@@ -119,8 +122,12 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    logger.error(
-                        f"[bold red]{self.disp_name}（{self.symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    logger.warning(
+                        msg.get(
+                            "errors.unexpected_orders_buy",
+                            disp_name=self.disp_name,
+                            symbol=self.symbol,
+                        )
                     )
 
                 # 注文IDを取得する
@@ -145,8 +152,12 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    logger.error(
-                        f"[bold red]{self.disp_name}（{self.symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    logger.warning(
+                        msg.get(
+                            "errors.unexpected_orders_buy",
+                            disp_name=self.disp_name,
+                            symbol=self.symbol,
+                        )
                     )
 
                 # 注文IDを取得する
@@ -170,8 +181,12 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    logger.error(
-                        f"[bold red]{self.disp_name}（{self.symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
+                    logger.warning(
+                        msg.get(
+                            "errors.unexpected_orders_sell",
+                            disp_name=self.disp_name,
+                            symbol=self.symbol,
+                        )
                     )
 
                 # 注文IDを取得する
@@ -194,24 +209,38 @@ class Stock:
             result = content["Result"]
         except KeyError:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[bold red]買い発注に失敗しました。[/]"
+                msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
             result = -1
 
         if result == 0:
+            order_id = content["OrderId"]
             logger.info(
-                f"{self.disp_name}（{self.symbol}）：[blue]買い発注に成功しました。[/]"
+                msg.get(
+                    "info.buy_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
             )
             self.save_order(
                 side=2,
                 price=None,
                 qty=self.transaction_unit,
-                order_id=content["OrderId"],
+                order_id=order_id,
             )
         else:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[bold red]買い発注に失敗しました。[/]"
+                msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
 
@@ -225,24 +254,38 @@ class Stock:
             result = content["Result"]
         except KeyError:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+                msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
             result = -1
 
         if result == 0:
+            order_id = content["OrderId"]
             logger.info(
-                f"{self.disp_name}（{self.symbol}）：[blue]売り発注に成功しました。[/]"
+                msg.get(
+                    "info.sell_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
             )
             self.save_order(
                 side=1,
                 price=None,
                 qty=self.transaction_unit,
-                order_id=content["OrderId"],
+                order_id=order_id,
             )
         else:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+                msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
 
@@ -251,9 +294,8 @@ class Stock:
         result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
 
         if not result:
-            logger.error(
-                f"[bold red]id：{order_id} に対応する約定情報が取得できませんでした。[/]"
-            )
+            logger.error(msg.get("errors.execution_info_failed", order_id=order_id))
+            return None
 
         if result[0]["State"] == 5:
             return result[0]
@@ -284,25 +326,36 @@ class Stock:
                 "%Y-%m-%d %H:%M:%S"
             )
         else:
-            logger.error("[bold red]約定情報が不正です。[/]")
+            logger.error(msg.get("errors.execution_info_invalid"))
+            logger.error(data)
 
         if float(price).is_integer():
-            price = int(price)
+            price = f"{int(price):,}"
         if float(qty).is_integer():
-            qty = int(qty)
+            qty = f"{int(qty):,}"
 
         if side == 1:
             logger.info(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の売りが約定しました。[/]"
+                msg.get(
+                    "info.sell_executed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    price=price,
+                    qty=qty,
+                )
             )
         elif side == 2:
             logger.info(
-                f"[yellow]{self.disp_name}（{self.symbol}）[/]：[cyan]{price:,} 円で {qty:,} 株の買いが約定しました。[/]"
+                msg.get(
+                    "info.buy_executed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    price=price,
+                    qty=qty,
+                )
             )
         else:
-            raise AssertionError(
-                "Side は 1（sell）または 2（buy）である必要があります。"
-            )
+            logger.warning(msg.get("errors.unexpected_side_value"))
 
         # 約定情報をデータベースに保存
         df_data = pd.DataFrame(
@@ -346,24 +399,38 @@ class Stock:
             result = content["Result"]
         except KeyError:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+                msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
             result = -1
 
         if result == 0:
+            order_id = content["OrderId"]
             logger.info(
-                f"{self.disp_name}（{self.symbol}）：[blue]売り発注に成功しました。[/]"
+                msg.get(
+                    "info.sell_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
             )
             self.save_order(
                 side=1,
                 price=None,
                 qty=self.transaction_unit,
-                order_id=content["OrderId"],
+                order_id=order_id,
             )
         else:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]売り発注に失敗しました。[/]"
+                msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
 
@@ -377,24 +444,38 @@ class Stock:
             result = content["Result"]
         except KeyError:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]買い発注に失敗しました。[/]"
+                msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
             result = -1
 
         if result == 0:
+            order_id = content["OrderId"]
             logger.info(
-                f"{self.disp_name}（{self.symbol}）：[blue]買い発注に成功しました。[/]"
+                msg.get(
+                    "info.buy_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
             )
             self.save_order(
                 side=2,
                 price=None,
                 qty=self.transaction_unit,
-                order_id=content["OrderId"],
+                order_id=order_id,
             )
         else:
             logger.error(
-                f"{self.disp_name}（{self.symbol}）：[red]買い発注に失敗しました。[/]"
+                msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
             )
             logger.error(content)
 
@@ -402,41 +483,63 @@ class Stock:
         if self.side == 1:
             if self.buy_executed and self.sell_executed:
                 logger.info(
-                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で売って引けで買うことに成功しました。[/]"
+                    msg.get(
+                        "sell_transaction_success",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
                 logger.warning(
-                    f"{self.disp_name}（{self.symbol}）：[red]売り注文は完結していますが、買い注文が完結していません。[/]"
+                    msg.get(
+                        "transaction_failed_1",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return False
             else:
                 logger.error(
-                    f"{self.disp_name}（{self.symbol}）：[red]売り注文すら完結していません。[/]"
+                    msg.get(
+                        "transaction_failed_2",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return False
 
         elif self.side == 2:
             if self.buy_executed and self.sell_executed:
                 logger.info(
-                    f"{self.disp_name}（{self.symbol}）：[blue]寄付で買って引けで売ることに成功しました。[/]"
+                    msg.get(
+                        "buy_transaction_success",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
                 logger.warning(
-                    f"{self.disp_name}（{self.symbol}）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
+                    msg.get(
+                        "transaction_failed_3",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return False
             else:
                 logger.error(
-                    f"{self.disp_name}（{self.symbol}）：[red]買い注文すら完結していません。[/]"
+                    msg.get(
+                        "transaction_failed_4",
+                        symbol=self.symbol,
+                        disp_name=self.disp_name,
+                    )
                 )
                 return False
 
         else:
-            logger.error(
-                "[bold red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、正しく動作していませんので、至急バグの特定・解消が必要です。[/]"
-            )
+            logger.warning(msg.get("errors.unexpected_side_value"))
 
     def fetch_prices(self):
         sell_position = self.dm.seek_execution(self.symbol, side=1)

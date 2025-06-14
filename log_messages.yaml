@@ -24,6 +24,28 @@ errors:
   # スレッド
   thread_launch_failed: "[bold red]スレッドの起動に失敗しました。理由: {reason}[/]"
   thread_unexpected_error: "[bold red]メインスレッドで予期せぬエラーが発生しました。理由: {reason}[/]"
+
+  # 情報が取得できない
+  info_failed: "[bold red] {symbol} の情報を取得できませんでした。理由: {reason}[/]"
+
+  # 不正な値
+  unexpected_side_value: "[red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
+  unexpected_orders_sell: "[red]{disp_name}（{symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
+  unexpected_orders_buy: "[red]{disp_name}（{symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
+
+  # 発注に失敗
+  buy_order_failed: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い発注に失敗しました。[/]"
+  sell_order_failed: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]売り発注に失敗しました。[/]"
+
+  # 約定情報が取得できない
+  execution_info_failed: "[red]id：{order_id} に対応する約定情報が取得できませんでした。[/]"
+  execution_info_invalid: "[red]約定情報が不正です。[/]"
+
+  # 取引失敗
+  transaction_failed_1: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]売り注文は完結していますが、買い注文が完結していません。[/]"
+  transaction_failed_2: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]売り注文すら完結していません。[/]"
+  transaction_failed_3: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
+  transaction_failed_4: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]買い注文すら完結していません。[/]"
   
   # 土日祝日
   holiday: "[red]本日は土日祝日です。プログラムを終了します。[/]"
@@ -38,13 +60,22 @@ info:
   all_thread_started: "[green]すべてのスレッドを正常に起動しました。プログラムは 15:35 に自動終了します。[/]"
   terminate: "[bold red]Ctrl+C が押されました。終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
   time_terminate: "[green]15:35 を過ぎたので終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
-
+  
   # 取引余力
   wallet_cash: "[yellow]取引余力（現金残高）：{wallet_cash} 円[/]"
 
   # 取引の開始・終了
   transaction_start: "[yellow]{disp_name}[/] ([cyan]{symbol}[/]): [blue]スレッドが正常に起動しました。取引を開始します。[/]"
 
+  # 取引成功
+  sell_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で売って引けで買うことに成功しました。[/]"
+  buy_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で買って引けで売ることに成功しました。[/]"
+  
+  # 約定
+  sell_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の売りが約定しました。"
+  buy_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の買いが約定しました。"
+  
   # 注文関連
-  order_success: "{disp_name}（{symbol}）：[green]{side}発注に成功しました。[/] (ID: {order_id})"
+  buy_order_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]買い発注に成功しました。[/] (ID: {order_id})"
+  sell_order_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]売り発注に成功しました。[/] (ID: {order_id})"
   order_status_check: "[cyan]{disp_name} ({symbol}) の注文状態を確認します...[/]"

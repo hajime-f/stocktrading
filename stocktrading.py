@@ -13,7 +13,7 @@ import yaml
 from dotenv import load_dotenv
 
 from data_manager import DataManager
-from library import StockLibrary
+from library import Library
 from misc import Misc, MessageManager
 from stock import Stock
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     logger.info(msg.get("info.program_start", today=today))
 
     # 株ライブラリを初期化
-    lib = StockLibrary()
+    lib = Library()
 
     # 登録銘柄リストからすべての銘柄を削除する
     lib.unregister_all()
@@ -189,12 +189,12 @@ if __name__ == "__main__":
             time.sleep(10)
 
     except RuntimeError as e:
-        logger.critical(msg.get("error.thread_launch_failed", reason=e))
+        logger.critical(msg.get("errors.thread_launch_failed", reason=e))
         stop_event.set()
         sys.exit(1)
 
     except Exception as e:
-        logger.critical(msg.get("error.thread_unexpected_error", reason=e))
+        logger.critical(msg.get("errors.thread_unexpected_error", reason=e))
         stop_event.set()
         sys.exit(1)
 
@@ -227,4 +227,5 @@ if __name__ == "__main__":
         )
         dm.save_result(result)
 
+        logger.info(msg.get("info.program_end"))
         sys.exit(0)
