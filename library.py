@@ -64,9 +64,6 @@ class Library:
         self.timeout_sec = 36000
         self.closed = asyncio.Event()
 
-    def __call__(self, func):
-        return func
-
     def register_receiver(self, func):
         # 受信関数を登録
         self.receive_func = func
