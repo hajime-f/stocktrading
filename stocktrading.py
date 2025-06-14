@@ -65,8 +65,6 @@ def run_polling(st):
     logger.info(
         msg.get("info.transaction_start", symbol=st.symbol, disp_name=st.disp_name)
     )
-
-    # 最後にポーリングした時刻を記録
     last_polling_time = time.time()
 
     while not stop_event.is_set():
@@ -125,8 +123,8 @@ def display_profitloss():
 if __name__ == "__main__":
     # 土日祝日は実行しない
     if Misc().check_day_type(date.today()):
-        logger.error(msg.get("errors.holiday"))
-        exit()
+        logger.warning(msg.get("errors.holiday"))
+        sys.exit(0)
 
     today = date.today().strftime("%Y年%m月%d日")
     logger.info(msg.get("info.program_start", today=today))
