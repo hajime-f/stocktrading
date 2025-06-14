@@ -66,10 +66,20 @@ def run_polling(st):
         msg.get("info.transaction_start", symbol=st.symbol, disp_name=st.disp_name)
     )
 
+    # 最後にポーリングした時刻を記録
+    last_polling_time = time.time()
+
     while not stop_event.is_set():
-        time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
-        st.polling()
-        time.sleep(POLLING_INTERVAL)
+        if time.time() - last_polling_time >= POLLING_INTERVAL:
+            time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
+
+            if stop_event.is_set():
+                break
+
+            st.polling()
+            last_polling_time = time.time()
+
+        time.sleep(1)
 
     # while文を抜けたときに実行する処理
     if st.check_transaction():
