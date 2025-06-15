@@ -9,9 +9,9 @@ errors:
 
   # 環境変数が見つからない
   env_not_found: "ログ設定ファイルに関する定義が環境変数 {env_file} に設定されていません。プログラムを終了します。"
-  api_not_found: "[bold red]APIパスワードが環境変数に設定されていません。[/]"
-  ip_address_not_found: "[bold red]IPアドレスが環境変数に設定されていません。[/]"
-  port_not_found: "[bold red]ポート番号が環境変数に設定されていません。[/]"
+  api_not_found: "[bold red]APIパスワードが環境変数に正しく設定されていません。[/]"
+  ip_address_not_found: "[bold red]IPアドレスが環境変数に正しく設定されていません。[/]"
+  port_not_found: "[bold red]ポート番号が環境変数に正しく設定されていません。[/]"
   api_token_key_error: "[bold red]APIトークンを取得できませんでした。[/]"
 
   # 接続エラー
@@ -20,10 +20,14 @@ errors:
   connection_error: "[red]接続エラーが発生しました。理由: {reason}[/]"
   http_error: "[bold red]HTTPエラーが発生しました。理由: {reason}[/]"
   http_other_error: "[bold red]その他のHTTPエラーが発生しました。理由: {reason}[/]"
+  register_failed: "[bold red]銘柄の登録に失敗しました。[/]"
+  unregister_failed: "[bold red]登録銘柄の全解除に失敗しました。[/]"
+  wallet_cash_not_found: "[bold red]取引余力（現金残高）を取得できませんでした。[/]"
 
   # スレッド
   thread_launch_failed: "[bold red]スレッドの起動に失敗しました。理由: {reason}[/]"
   thread_unexpected_error: "[bold red]メインスレッドで予期せぬエラーが発生しました。理由: {reason}[/]"
+  push_thread_error: "[bold red]プッシュ配信スレッドでエラーが発生しました。理由: {reason}[/]"
 
   # 情報が取得できない
   info_failed: "[bold red] {symbol} の情報を取得できませんでした。理由: {reason}[/]"
@@ -67,6 +71,10 @@ info:
   # 取引の開始・終了
   transaction_start: "[yellow]{disp_name}[/] ([cyan]{symbol}[/]): [blue]スレッドが正常に起動しました。取引を開始します。[/]"
 
+  # PUSH配信
+  push_thread_start: "[green]プッシュ配信の受信を開始します。[/]"
+  push_thread_end: "[green]プッシュ配信の受信を終了します。[/]"
+  
   # 取引成功
   sell_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で売って引けで買うことに成功しました。[/]"
   buy_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で買って引けで売ることに成功しました。[/]"

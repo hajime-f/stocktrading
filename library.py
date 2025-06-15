@@ -111,7 +111,7 @@ class Library:
                 logger.error(msg.get("errors.connection_error"), reason=e)
                 traceback.print_exc()
                 self.closed.set()
-                
+
             if stop_event.is_set():
                 break
             await asyncio.sleep(5)
@@ -129,14 +129,15 @@ class Library:
             self.loop.run_until_complete(self._run(stop_event))
 
         except Exception as e:
-            # スレッド内で予期せぬエラーが発生した場合のログ出力
-            logger.critical(msg.get("errors.push_thread_error", reason=e), exc_info=True)
+            logger.critical(
+                msg.get("errors.push_thread_error", reason=e), exc_info=True
+            )
             stop_event.set()
-            
+
         finally:
             logger.info(msg.get("info.push_thread_end"))
             self.loop.close()
-        
+
         return True
 
     def register(self, symbol_list, exchange=1):
@@ -158,7 +159,7 @@ class Library:
         except KeyError:
             logger.critical(msg.get("errors.register_failed"))
             raise APIError
-        
+
         return content
 
     def unregister_all(self):
@@ -170,7 +171,7 @@ class Library:
         content = self.throw_request(req)
 
         try:
-            result = content["RegistList"]:
+            result = content["RegistList"]
             if not result:
                 return
             else:
@@ -184,13 +185,33 @@ class Library:
         # 現物の取引余力を問い合わせる
         url = self.base_url + "/wallet/cash"
         content = self.get_request(url)
-        return content["StockAccountWallet"]
+
+        try:
+            result = content["StockAccountWallet"]
+            if result:
+                return result
+            else:
+                logger.critical(msg.get("errors.wallet_cash_not_found"))
+                raise APIError
+        except KeyError:
+            logger.critical(msg.get("errors.wallet_cash_not_found"))
+            raise APIError
 
     def wallet_margin(self):
         # 信用の取引余力を問い合わせる
         url = self.base_url + "/wallet/margin"
         content = self.get_request(url)
-        return content["MarginAccountWallet"]
+
+        try:
+            result = content["MarginAccountWallet"]
+            if result:
+                return result
+            else:
+                logger.critical(msg.get("errors.wallet_cash_not_found"))
+                raise APIError
+        except KeyError:
+            logger.critical(msg.get("errors.wallet_cash_not_found"))
+            raise APIError
 
     def fetch_price(self, symbol, exchange=1):
         # ある銘柄の時価を得る
