@@ -28,9 +28,10 @@ class DataManager:
 
         self.base_url = "https://api.jquants.com/v1"
 
-    def __del__(self):
-        if self.conn:
-            self.conn.close()
+    def close(self):
+        if hasattr(self.thread_local, "conn"):
+            self.thread_local.conn.close()
+            del self.thread_local.con
 
     def _get_connection(self):
         # 今のスレッドに 'conn' 属性があるかチェック
