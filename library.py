@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import sys
 import traceback
 import urllib.request
 from logging import getLogger

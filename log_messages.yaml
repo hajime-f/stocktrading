@@ -70,6 +70,7 @@ info:
 
   # 取引の開始・終了
   transaction_start: "[yellow]{disp_name}[/] ([cyan]{symbol}[/]): [blue]スレッドが正常に起動しました。取引を開始します。[/]"
+  transaction_end: "[yellow]{disp_name}[/] ([cyan]{symbol}[/]): [blue]スレッドを終了させ、取引を終了します。[/]"  
 
   # PUSH配信
   push_thread_start: "[green]プッシュ配信の受信を開始します。[/]"
