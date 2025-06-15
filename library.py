@@ -78,14 +78,14 @@ class Library:
         # 受信関数を登録
         self.receive_func = func
 
-    async def stream(self, func):
-        while True:
+    async def stream(self, func, stop_event):
+        while not stop_event.is_set():
             try:
                 async with websockets.connect(
                     self.ws_uri, ping_timeout=self.timeout_sec
                 ) as ws:
                     self.closed.clear()
-                    while not self.closed.is_set():
+                    while not self.closed.is_set() and not stop_event.is_set():
                         try:
                             response = await asyncio.wait_for(
                                 ws.recv(), timeout=self.timeout_sec
@@ -111,18 +111,32 @@ class Library:
                 logger.error(msg.get("errors.connection_error"), reason=e)
                 traceback.print_exc()
                 self.closed.set()
+                
+            if stop_event.is_set():
+                break
+            await asyncio.sleep(5)
 
-    async def _run(self):
-        await self.stream(self.receive_func)
+    async def _run(self, stop_event):
+        await self.stream(self.receive_func, stop_event)
 
-    def run(self):
+    def run(self, stop_event):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.loop = loop
 
-        # self.loop = asyncio.get_event_loop()
-        # self.loop.run_until_complete(self._run())
+        try:
+            logger.info(msg.get("info.push_thread_start"))
+            self.loop.run_until_complete(self._run(stop_event))
 
+        except Exception as e:
+            # スレッド内で予期せぬエラーが発生した場合のログ出力
+            logger.critical(msg.get("errors.push_thread_error", reason=e), exc_info=True)
+            stop_event.set()
+            
+        finally:
+            logger.info(msg.get("info.push_thread_end"))
+            self.loop.close()
+        
         return True
 
     def register(self, symbol_list, exchange=1):
