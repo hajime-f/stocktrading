@@ -62,22 +62,29 @@ def receive(data: Dict):
 
 # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
 def run_polling(st):
-    logger.info(
-        msg.get("info.transaction_start", symbol=st.symbol, disp_name=st.disp_name)
-    )
-    last_polling_time = time.time()
+    try:
+        logger.info(
+            msg.get("info.transaction_start", symbol=st.symbol, disp_name=st.disp_name)
+        )
+        last_polling_time = time.time()
 
-    while not stop_event.is_set():
-        if time.time() - last_polling_time >= POLLING_INTERVAL:
-            time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
+        while not stop_event.is_set():
+            if time.time() - last_polling_time >= POLLING_INTERVAL:
+                time.sleep(random.uniform(0, POLLING_INTERVAL_VARIATION))
 
-            if stop_event.is_set():
-                break
+                if stop_event.is_set():
+                    break
 
-            st.polling()
-            last_polling_time = time.time()
+                st.polling()
+                last_polling_time = time.time()
 
-        time.sleep(1)
+            time.sleep(1)
+
+    finally:
+        st.dm.close()
+        logger.info(
+            msg.get("info.transaction_end", symbol=st.symbol, disp_name=st.disp_name)
+        )
 
     # while文を抜けたときに実行する処理
     if st.check_transaction():
@@ -173,7 +180,9 @@ if __name__ == "__main__":
     threads = [
         threading.Thread(target=run_polling, args=(st,)) for st in stocks.values()
     ]
-    push_receiver_thread = threading.Thread(target=lib.run, daemon=True)
+    push_receiver_thread = threading.Thread(
+        target=lib.run, args=(stop_event,), daemon=True
+    )
 
     # スレッドを起動
     try:
@@ -228,6 +237,7 @@ if __name__ == "__main__":
             ],
         )
         dm.save_profit_loss(profit_loss)
+        dm.close()
 
         result = pd.DataFrame(
             [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
