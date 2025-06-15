@@ -9,6 +9,7 @@ from logging import getLogger
 import websockets
 from dotenv import load_dotenv
 
+from exception import ConfigurationError, APIError
 from misc import MessageManager
 
 logger = getLogger(__name__)
@@ -23,23 +24,32 @@ class Library:
         # APIパスワードの設定
         try:
             self.api_password = os.getenv("APIPassword_production")
+            if not self.api_password:
+                logger.critical(msg.get("errors.api_not_found"))
+                raise ConfigurationError
         except KeyError:
             logger.critical(msg.get("errors.api_not_found"))
-            sys.exit(1)
+            raise ConfigurationError
 
         # IPアドレスの設定
         try:
             self.ip_address = os.getenv("IPAddress")
+            if not self.ip_address:
+                logger.critical(msg.get("errors.ip_address_not_found"))
+                raise ConfigurationError
         except KeyError:
-            logger.critical(msg.get("errors.api_not_found"))
-            sys.exit(1)
+            logger.critical(msg.get("errors.ip_address_not_found"))
+            raise ConfigurationError
 
         # ポート番号の設定
         try:
             self.port = os.getenv("Port")
+            if not self.port:
+                logger.critical(msg.get("errors.port_not_found"))
+                raise ConfigurationError
         except KeyError:
             logger.critical(msg.get("errors.port_not_found"))
-            sys.exit(1)
+            raise ConfigurationError
 
         # エンドポイントの設定
         self.base_url = f"http://{self.ip_address}:{self.port}/kabusapi/"
@@ -57,7 +67,7 @@ class Library:
             self.token = content["Token"]
         except KeyError:
             logger.critical(msg.get("errors.api_token_key_error"))
-            sys.exit(1)
+            raise APIError
 
         # Websocketの設定
         self.ws_uri = f"ws://{self.ip_address}:{self.port}/kabusapi/websocket"
@@ -122,8 +132,19 @@ class Library:
         obj = {"Symbols": []}
         for symbol in symbol_list:
             obj["Symbols"].append({"Symbol": symbol, "Exchange": 1})
-
         content = self.put_request(url, obj)
+
+        try:
+            result = content["RegistList"]
+            if result:
+                return
+            else:
+                logger.critical(msg.get("errors.register_failed"))
+                raise APIError
+        except KeyError:
+            logger.critical(msg.get("errors.register_failed"))
+            raise APIError
+        
         return content
 
     def unregister_all(self):
@@ -133,7 +154,17 @@ class Library:
         req.add_header("Content-Type", "application/json")
         req.add_header("X-API-KEY", self.token)
         content = self.throw_request(req)
-        return content
+
+        try:
+            result = content["RegistList"]:
+            if not result:
+                return
+            else:
+                logger.critical(msg.get("errors.unregister_failed"))
+                raise APIError
+        except KeyError:
+            logger.critical(msg.get("errors.unregister_failed"))
+            raise APIError
 
     def wallet_cash(self):
         # 現物の取引余力を問い合わせる
