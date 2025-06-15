@@ -95,7 +95,7 @@ class Library:
                             websockets.exceptions.ConnectionClosedError,
                             websockets.exceptions.ConnectionClosedOK,
                         ) as e:
-                            logger.error(msg.get("errors.connection_closed"), reason=e)
+                            logger.error(msg.get("errors.connection_closed", reason=e))
                             self.closed.set()
                             break
                         except asyncio.TimeoutError:
@@ -103,12 +103,12 @@ class Library:
                             self.closed.set()
                             break
                         except Exception as e:
-                            logger.error(msg.get("errors.connection_error"), reason=e)
+                            logger.error(msg.get("errors.connection_error", reason=e))
                             traceback.print_exc()
                             self.closed.set()
                             break
             except Exception as e:
-                logger.error(msg.get("errors.connection_error"), reason=e)
+                logger.error(msg.get("errors.connection_error", reason=e))
                 traceback.print_exc()
                 self.closed.set()
 
@@ -270,10 +270,10 @@ class Library:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            logger.critical(msg.get("errors.http_error"), reason=e)
+            logger.critical(msg.get("errors.http_error", reason=e))
             content = json.loads(e.read())
         except Exception as e:
-            logger.critical(msg.get("errors.http_other_error"), reason=e)
+            logger.critical(msg.get("errors.http_other_error", reason=e))
 
         return content
 
