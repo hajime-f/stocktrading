@@ -31,10 +31,10 @@ class DataManager:
     def close(self):
         if hasattr(self.thread_local, "conn"):
             self.thread_local.conn.close()
-            del self.thread_local.con
+            del self.thread_local.conn
 
     def _get_connection(self):
-        # 今のスレッドに 'conn' 属性があるかチェック
+        # 今のスレッドにconn属性があるかチェック
         if not hasattr(self.thread_local, "conn"):
             # なければ、このスレッド専用の接続を作成
             self.thread_local.conn = sqlite3.connect(self.db)
