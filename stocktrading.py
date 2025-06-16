@@ -17,10 +17,8 @@ from library import Library
 from misc import Misc, MessageManager
 from stock import Stock
 
-logger = getLogger(__name__)
 
-
-class StackTrading:
+class StockTrading:
     def __init__(self):
         # 定数の定義
         self.POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
@@ -39,6 +37,7 @@ class StackTrading:
         self.msg = MessageManager()
 
         # ロガーの初期化
+        self.logger = getLogger(__name__)
         self._make_logger()
 
     def _make_logger(self):
@@ -47,14 +46,14 @@ class StackTrading:
         path_name = os.getenv("BaseDir")
         file_name = os.getenv("LogConfigFile")
         if file_name is None:
-            logger.critical(self.msg.get("errors.env_not_found", env_file=".env"))
+            self.logger.critical(self.msg.get("errors.env_not_found", env_file=".env"))
             sys.exit(1)
         log_conf_file = f"{path_name}/{file_name}"
         try:
             with open(log_conf_file, "rt") as f:
                 config.dictConfig(yaml.safe_load(f.read()))
         except FileNotFoundError:
-            logger.critical(self.msg.get("errors.file_not_found", path=path_name))
+            self.logger.critical(self.msg.get("errors.file_not_found", path=path_name))
             sys.exit(1)
 
     # PUSH配信を受信した時に呼ばれる関数
@@ -68,33 +67,24 @@ class StackTrading:
 
     # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
     def run_polling(self, st):
-        try:
-            logger.info(
-                self.msg.get(
-                    "info.transaction_start", symbol=st.symbol, disp_name=st.disp_name
-                )
+        self.logger.info(
+            self.msg.get(
+                "info.transaction_start", symbol=st.symbol, disp_name=st.disp_name
             )
-            last_polling_time = time.time()
+        )
+        last_polling_time = time.time()
 
-            while not self.stop_event.is_set():
-                if time.time() - last_polling_time >= self.POLLING_INTERVAL:
-                    time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
+        while not self.stop_event.is_set():
+            if time.time() - last_polling_time >= self.POLLING_INTERVAL:
+                time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
 
-                    if self.stop_event.is_set():
-                        break
+                if self.stop_event.is_set():
+                    break
 
-                    st.polling()
-                    last_polling_time = time.time()
+                st.polling()
+                last_polling_time = time.time()
 
-                time.sleep(1)
-
-        finally:
-            st.dm.close()
-            logger.info(
-                self.msg.get(
-                    "info.transaction_end", symbol=st.symbol, disp_name=st.disp_name
-                )
-            )
+            time.sleep(1)
 
         # while文を抜けたときに実行する処理
         if st.check_transaction():
@@ -109,7 +99,7 @@ class StackTrading:
 
     # Ctrl+C ハンドラー
     def signal_handler(self, sig, frame):
-        logger.warning(self.msg.get("info.terminate"))
+        self.logger.warning(self.msg.get("info.terminate"))
         self.stop_event.set()  # スレッド停止イベントを設定
 
     def display_profitloss(self):
@@ -118,30 +108,32 @@ class StackTrading:
         list_result = []
         today = date.today().strftime("%Y-%m-%d")
 
-        logger.info("--- 損益計算結果 ---")
+        self.logger.info("--- 損益計算結果 ---")
         for pl in self.profit_loss.values():
             if pl[2] is not None and pl[3] is not None:
                 diff = pl[2] - pl[3]
-                logger.info(
+                self.logger.info(
                     f"[yellow]{pl[0]}[/] ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
                 )
                 pl_sum += diff
                 list_result.append([today, pl[0], pl[1], pl[2], pl[3], diff, pl[4]])
             else:
-                logger.warning(f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。")
-        logger.info("--------------------")
-        logger.info(f"[red]合計損益[/]: {pl_sum:,.0f} 円")
+                self.logger.warning(
+                    f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。"
+                )
+        self.logger.info("--------------------")
+        self.logger.info(f"[red]合計損益[/]: {pl_sum:,.0f} 円")
 
         return pl_sum, list_result
 
     def main(self):
         # 土日祝日は実行しない
         if Misc().check_day_type(date.today()):
-            logger.warning(self.msg.get("errors.holiday"))
+            self.logger.warning(self.msg.get("errors.holiday"))
             sys.exit(0)
 
         today = date.today().strftime("%Y年%m月%d日")
-        logger.info(self.msg.get("info.program_start", today=today))
+        self.logger.info(self.msg.get("info.program_start", today=today))
 
         # 株ライブラリを初期化
         lib = Library()
@@ -174,7 +166,7 @@ class StackTrading:
 
         # 取引余力を取得
         wallet_cash = f"{int(lib.wallet_cash()):,}"
-        logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
+        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
 
         # Stockクラスをインスタンス化して辞書に入れる
         for _, row in target_stocks.iterrows():
@@ -200,17 +192,17 @@ class StackTrading:
 
         # スレッドを起動
         try:
-            logger.info(self.msg.get("info.thread_starting"))
+            self.logger.info(self.msg.get("info.thread_starting"))
             for thread in threads:
                 thread.start()
             push_receiver_thread.start()
-            logger.info(self.msg.get("info.all_thread_started"))
+            self.logger.info(self.msg.get("info.all_thread_started"))
 
             while True:
                 now = datetime.now()
                 if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-                    logger.info(self.msg.get("info.time_terminate"))
-                    stop_event.set()
+                    self.logger.info(self.msg.get("info.time_terminate"))
+                    self.stop_event.set()
 
                 # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
                 if self.stop_event.is_set():
@@ -220,12 +212,14 @@ class StackTrading:
                 time.sleep(10)
 
         except RuntimeError as e:
-            logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))
+            self.logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))
             self.stop_event.set()
             sys.exit(1)
 
         except Exception as e:
-            logger.critical(self.msg.get("errors.thread_unexpected_error", reason=e))
+            self.logger.critical(
+                self.msg.get("errors.thread_unexpected_error", reason=e)
+            )
             self.stop_event.set()
             sys.exit(1)
 
@@ -238,7 +232,7 @@ class StackTrading:
             pl_sum, list_result = self.display_profitloss()
 
             # 損益を記録
-            self.profit_loss = pd.DataFrame(
+            df_profit_loss = pd.DataFrame(
                 list_result,
                 columns=[
                     "date",
@@ -250,7 +244,7 @@ class StackTrading:
                     "side",
                 ],
             )
-            dm.save_profit_loss(self.profit_loss)
+            dm.save_profit_loss(df_profit_loss)
             dm.close()
 
             result = pd.DataFrame(
@@ -259,10 +253,10 @@ class StackTrading:
             )
             dm.save_result(result)
 
-            logger.info(self.msg.get("info.program_end"))
+            self.logger.info(self.msg.get("info.program_end"))
             sys.exit(0)
 
 
 if __name__ == "__main__":
-    stocktrading = StackTrading()
+    stocktrading = StockTrading()
     stocktrading.main()
