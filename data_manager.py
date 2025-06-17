@@ -276,10 +276,14 @@ class DataManager:
 
         if target_date == "today":
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        sql_query = f"select distinct * from '{table_name}' where date = ?;"
 
         with conn:
-            sql_query = f"select distinct * from '{table_name}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(target_date))
+            try:
+                df = pd.read_sql_query(sql_query, conn, params=[target_date])
+            except pd.errors.DatabaseError as e:
+                self.logger.error(f"データベースエラー: {e}")
+                df = pd.DataFrame()
 
         return df
 
@@ -315,7 +319,7 @@ class DataManager:
 
         with conn:
             sql_query = f"select distinct * from '{table_name}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(target_date))
+            df = pd.read_sql_query(sql_query, conn, params=[target_date])
 
         return df
 
@@ -323,7 +327,7 @@ class DataManager:
         conn = self._get_connection()
         with conn:
             sql_query = "update Orders set price = ? where order_id = ?;"
-            conn.execute(sql_query, params=(price, order_id))
+            conn.execute(sql_query, params=[price, order_id])
 
     def save_profit_loss(self, df, table_name="ProfitLoss"):
         conn = self._get_connection()
@@ -342,7 +346,7 @@ class DataManager:
             and symbol = ?
             and side = ?;
             """
-            df = pd.read_sql_query(sql_query, conn, params=(symbol, side))
+            df = pd.read_sql_query(sql_query, conn, params=[symbol, side])
         return df
 
     def find_newest_close_price(self, symbol):
@@ -356,7 +360,7 @@ class DataManager:
         conn = self._get_connection()
         with conn:
             sql_query = f"select * from '{table_name}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(date))
+            df = pd.read_sql_query(sql_query, conn, params=[date])
 
         return df
 
@@ -364,7 +368,7 @@ class DataManager:
         conn = self._get_connection()
         with conn:
             sql_query = f"select open, close from '{code}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(date))
+            df = pd.read_sql_query(sql_query, conn, params=[date])
 
         return df
 
@@ -394,7 +398,7 @@ class DataManager:
             df = pd.read_sql_query(
                 "select * from Execution where order_id = ?;",
                 conn,
-                params=(order_id),
+                params=[order_id],
             )
 
         return df
@@ -411,7 +415,7 @@ class DataManager:
                 and symbol = ?
                 and side = ?;
             """
-            df = pd.read_sql_query(sql_query, conn, params=(symbol, side))
+            df = pd.read_sql_query(sql_query, conn, params=[symbol, side])
 
         return df
 
