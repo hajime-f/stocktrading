@@ -69,36 +69,51 @@ class StockTrading:
 
     # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
     def run_polling(self, st):
-        self.logger.info(
-            self.msg.get(
-                "info.transaction_start", symbol=st.symbol, disp_name=st.disp_name
+        try:
+            self.logger.info(
+                self.msg.get(
+                    "info.transaction_start", symbol=st.symbol, disp_name=st.disp_name
+                )
             )
-        )
-        last_polling_time = time.time()
+            last_polling_time = time.time()
 
-        while not self.stop_event.is_set():
-            if time.time() - last_polling_time >= self.POLLING_INTERVAL:
-                time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
+            while not self.stop_event.is_set():
+                if time.time() - last_polling_time >= self.POLLING_INTERVAL:
+                    time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
 
-                if self.stop_event.is_set():
-                    break
+                    if self.stop_event.is_set():
+                        break
 
-                st.polling()
-                last_polling_time = time.time()
+                    st.polling()
+                    last_polling_time = time.time()
 
-            time.sleep(1)
+                time.sleep(1)
 
-        # while文を抜けたときに実行する処理
-        if st.check_transaction():
-            sell_price, buy_price = st.fetch_prices()
-            with self.profit_loss_lock:
-                self.profit_loss[st.symbol] = [
-                    st.disp_name,
-                    st.symbol,
-                    sell_price,
-                    buy_price,
-                    st.side,
-                ]
+            # while文を抜けたときに実行する処理
+            if st.check_transaction():
+                sell_price, buy_price = st.fetch_prices()
+                with self.profit_loss_lock:
+                    self.profit_loss[st.symbol] = [
+                        st.disp_name,
+                        st.symbol,
+                        sell_price,
+                        buy_price,
+                        st.side,
+                    ]
+
+        except Exception as e:
+            self.logger.critical(
+                self.msg.get(
+                    "errors.polling_thread_error",
+                    thread_name=threading.current_thread().name,
+                    reason=e,
+                ),
+                exc_info=True,
+            )
+            self.stop_event.set()
+
+        finally:
+            st.dm.close()
 
     # Ctrl+C ハンドラー
     def signal_handler(self, sig, frame):
