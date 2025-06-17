@@ -223,11 +223,12 @@ class StockTrading:
                 # 10秒ごとにチェック
                 time.sleep(10)
 
-        except (ConfigurationError, APIError):
-            self.stop_event.set()
+        except (ConfigurationError, APIError) as e:
+            self.logger.critical(e)
             sys.exit(1)
 
-        except DataProcessingError:
+        except DataProcessingError as e:
+            self.logger.critical(e)
             self.stop_event.set()
             sys.exit(1)
 

@@ -5,7 +5,7 @@ from logging import getLogger
 import pandas as pd
 from dotenv import load_dotenv
 
-from exception import APIError, DataProcessingError
+from exception import DataProcessingError
 from misc import MessageManager
 
 logger = getLogger(__name__)
@@ -34,17 +34,15 @@ class Stock:
         self.data = pd.DataFrame()
 
     def set_information(self):
-        content = self.lib.fetch_information(self.symbol, self.exchange)
         try:
+            content = self.lib.fetch_information(self.symbol, self.exchange)
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
             self.transaction_unit = self.unit * int(self.base_transaction)
-        except KeyError as e:
-            logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
-            raise APIError
-        except Exception as e:
-            logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
-            raise APIError
+        except (KeyError, TypeError, ValueError, Exception) as e:
+            raise DataProcessingError(
+                msg.get("errors.info_failed", symbol=self.symbol)
+            ) from e
 
     def append_data(self, new_data):
         if new_data["CurrentPriceTime"] is not None:

@@ -31,7 +31,7 @@ errors:
   polling_thread_error: "[bold red]スレッド内でエラーが発生しました。理由: {reason}[/]"
 
   # 情報が取得できない
-  info_failed: "[bold red] {symbol} の情報を取得できませんでした。理由: {reason}[/]"
+  info_failed: "[bold red] {symbol} の情報を取得できませんでした。[/]"
 
   # 不正な値
   unexpected_side_value: "[red]side が 1（sell）/ 2（buy）以外の値をとっています。[/]"
