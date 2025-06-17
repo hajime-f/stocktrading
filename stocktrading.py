@@ -42,6 +42,12 @@ class StockTrading:
         self.logger = getLogger(__name__)
         self._init_logger()
 
+        # 株ライブラリを初期化
+        self.lib = Library()
+
+        # データマネージャーを初期化
+        self.dm = DataManager()
+
     def _init_logger(self):
         # ロガーを初期化
         load_dotenv()
@@ -57,6 +63,52 @@ class StockTrading:
         except FileNotFoundError:
             self.logger.critical(self.msg.get("errors.file_not_found", path=path_name))
             sys.exit(1)
+
+    def register_stocks(self):
+        # 今回取引する銘柄リストを取得
+        # target_stocks = dm.fetch_target()
+        target_symbols = [
+            ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+        ]
+        columns = ["date", "code", "brand", "pred", "side"]
+        target_stocks = pd.DataFrame(target_symbols, columns=columns)
+
+        try:
+            # 登録銘柄リストからすべての銘柄をいったん削除する
+            self.lib.unregister_all()
+
+            # 銘柄登録
+            self.lib.register(target_stocks["code"].tolist())
+
+        except APIError as e:
+            self.logger.critical(e)
+            sys.exit(1)
+
+        # Stockクラスをインスタンス化して辞書に入れる
+        for _, row in target_stocks.iterrows():
+            symbol = row["code"]
+            stock_instance = Stock(symbol, self.lib, self.dm, row["side"], row["brand"])
+            stock_instance.set_information()
+            self.stocks[symbol] = stock_instance
+
+    def prepare_threads(self):
+        # スレッドを準備
+        threads = [
+            threading.Thread(target=self.run_polling, args=(st,))
+            for st in self.stocks.values()
+        ]
+        push_receiver_thread = threading.Thread(
+            target=self.lib.run, args=(self.stop_event,), daemon=True
+        )
+
+        # スレッドを起動
+        self.logger.info(self.msg.get("info.thread_starting"))
+        for thread in threads:
+            thread.start()
+        push_receiver_thread.start()
+        self.logger.info(self.msg.get("info.all_thread_started"))
+
+        return threads
 
     # PUSH配信を受信した時に呼ばれる関数
     def receive(self, data: Dict):
@@ -149,66 +201,52 @@ class StockTrading:
 
         return pl_sum, list_result
 
-    def main(self):
-        # 土日祝日は実行しない
-        if Misc().check_day_type(date.today()):
-            self.logger.warning(self.msg.get("errors.holiday"))
-            sys.exit(0)
+    def process_profitloss(self, wallet_cash):
+        # 損益を表示する
+        pl_sum, list_result = self.display_profitloss()
 
+        # 損益を記録
+        df_profit_loss = pd.DataFrame(
+            list_result,
+            columns=[
+                "date",
+                "brand",
+                "symbol",
+                "sell_price",
+                "buy_price",
+                "profit_loss",
+                "side",
+            ],
+        )
+        self.dm.save_profit_loss(df_profit_loss)
+        self.dm.close()
+
+        result = pd.DataFrame(
+            [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
+            columns=["date", "cash", "profit_loss"],
+        )
+        self.dm.save_result(result)
+
+    def main(self):
         today = date.today().strftime("%Y年%m月%d日")
         self.logger.info(self.msg.get("info.program_start", today=today))
 
         try:
-            # 株ライブラリを初期化
-            lib = Library()
-
-            # 登録銘柄リストからすべての銘柄を削除する
-            lib.unregister_all()
-
-            # 今回取引する銘柄リストを取得
-            dm = DataManager()
-            # target_stocks = dm.fetch_target(table_name="Target", target_date="2025-05-15")
-            target_symbols = [
-                ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
-            ]
-            columns = ["date", "code", "brand", "pred", "side"]
-            target_stocks = pd.DataFrame(target_symbols, columns=columns)
-
-            # 銘柄登録
-            lib.register(target_stocks["code"].tolist())
+            # 銘柄を登録する
+            self.register_stocks()
 
             # 取引余力を取得
-            wallet_cash = f"{int(lib.wallet_cash()):,}"
+            wallet_cash = f"{int(self.lib.wallet_cash()):,}"
             self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
 
-            # Stockクラスをインスタンス化して辞書に入れる
-            for _, row in target_stocks.iterrows():
-                symbol = row["code"]
-                stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
-                stock_instance.set_information()
-                self.stocks[symbol] = stock_instance
-
             # 受信関数を登録
-            lib.register_receiver(self.receive)
+            self.lib.register_receiver(self.receive)
 
             # Ctrl+C ハンドラーを登録
             signal.signal(signal.SIGINT, self.signal_handler)
 
             # スレッドを準備
-            threads = [
-                threading.Thread(target=self.run_polling, args=(st,))
-                for st in self.stocks.values()
-            ]
-            push_receiver_thread = threading.Thread(
-                target=lib.run, args=(self.stop_event,), daemon=True
-            )
-
-            # スレッドを起動
-            self.logger.info(self.msg.get("info.thread_starting"))
-            for thread in threads:
-                thread.start()
-            push_receiver_thread.start()
-            self.logger.info(self.msg.get("info.all_thread_started"))
+            threads = self.prepare_threads()
 
             while True:
                 now = datetime.now()
@@ -222,10 +260,6 @@ class StockTrading:
 
                 # 10秒ごとにチェック
                 time.sleep(10)
-
-        except (ConfigurationError, APIError) as e:
-            self.logger.critical(e)
-            sys.exit(1)
 
         except DataProcessingError as e:
             self.logger.critical(e)
@@ -249,35 +283,23 @@ class StockTrading:
             for thread in threads:
                 thread.join()
 
-            # 損益を表示する
-            pl_sum, list_result = self.display_profitloss()
-
-            # 損益を記録
-            df_profit_loss = pd.DataFrame(
-                list_result,
-                columns=[
-                    "date",
-                    "brand",
-                    "symbol",
-                    "sell_price",
-                    "buy_price",
-                    "profit_loss",
-                    "side",
-                ],
-            )
-            dm.save_profit_loss(df_profit_loss)
-            dm.close()
-
-            result = pd.DataFrame(
-                [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
-                columns=["date", "cash", "profit_loss"],
-            )
-            dm.save_result(result)
+            # 損益の表示と記録
+            self.process_profitloss(wallet_cash)
 
             self.logger.info(self.msg.get("info.program_end"))
             sys.exit(0)
 
 
 if __name__ == "__main__":
-    stocktrading = StockTrading()
+    # 土日祝日は実行しない
+    if Misc().check_day_type(date.today()):
+        print("本日は土日祝日です。プログラムを終了します。")
+        sys.exit(0)
+
+    try:
+        stocktrading = StockTrading()
+    except (ConfigurationError, APIError) as e:
+        print(e)
+        sys.exit(1)
+
     stocktrading.main()
