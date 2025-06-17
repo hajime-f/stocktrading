@@ -1,11 +1,11 @@
 import os
-import sys
 from datetime import datetime
 from logging import getLogger
 
 import pandas as pd
 from dotenv import load_dotenv
 
+from exception import APIError, DataProcessingError
 from misc import MessageManager
 
 logger = getLogger(__name__)
@@ -41,10 +41,10 @@ class Stock:
             self.transaction_unit = self.unit * int(self.base_transaction)
         except KeyError as e:
             logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
-            sys.exit(1)
+            raise APIError
         except Exception as e:
             logger.critical(msg.get("errors.info_failed", symbol=self.symbol, reason=e))
-            sys.exit(1)
+            raise APIError
 
     def append_data(self, new_data):
         if new_data["CurrentPriceTime"] is not None:
@@ -75,7 +75,8 @@ class Stock:
         elif self.side == 2:
             self.buy_side()  # 買い注文
         else:
-            logger.warning(msg.get("errors.unexpected_side_value"))
+            logger.critical(msg.get("errors.unexpected_side_value"))
+            raise DataProcessingError
 
         # データを更新する
         self.update_data()
@@ -93,13 +94,14 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    logger.warning(
+                    logger.critical(
                         msg.get(
                             "errors.unexpected_orders_sell",
                             disp_name=self.disp_name,
                             symbol=self.symbol,
                         )
                     )
+                    raise DataProcessingError
 
                 # 注文IDを取得する
                 order_id = sell_position["order_id"].values[0]
@@ -122,13 +124,14 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    logger.warning(
+                    logger.critical(
                         msg.get(
                             "errors.unexpected_orders_buy",
                             disp_name=self.disp_name,
                             symbol=self.symbol,
                         )
                     )
+                    raise DataProcessingError
 
                 # 注文IDを取得する
                 order_id = buy_position["order_id"].values[0]
@@ -152,13 +155,14 @@ class Stock:
 
             else:
                 if len(buy_position) != 1:
-                    logger.warning(
+                    logger.critical(
                         msg.get(
                             "errors.unexpected_orders_buy",
                             disp_name=self.disp_name,
                             symbol=self.symbol,
                         )
                     )
+                    raise DataProcessingError
 
                 # 注文IDを取得する
                 order_id = buy_position["order_id"].values[0]
@@ -181,13 +185,14 @@ class Stock:
 
             else:
                 if len(sell_position) != 1:
-                    logger.warning(
+                    logger.critical(
                         msg.get(
                             "errors.unexpected_orders_sell",
                             disp_name=self.disp_name,
                             symbol=self.symbol,
                         )
                     )
+                    raise DataProcessingError
 
                 # 注文IDを取得する
                 order_id = sell_position["order_id"].values[0]

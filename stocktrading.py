@@ -13,9 +13,9 @@ import yaml
 from dotenv import load_dotenv
 
 from data_manager import DataManager
-from exception import ConfigurationError, APIError
+from exception import APIError, ConfigurationError, DataProcessingError
 from library import Library
-from misc import Misc, MessageManager
+from misc import MessageManager, Misc
 from stock import Stock
 
 
@@ -224,6 +224,11 @@ class StockTrading:
                 time.sleep(10)
 
         except (ConfigurationError, APIError):
+            self.stop_event.set()
+            sys.exit(1)
+
+        except DataProcessingError:
+            self.stop_event.set()
             sys.exit(1)
 
         except RuntimeError as e:

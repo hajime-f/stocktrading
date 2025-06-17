@@ -34,9 +34,9 @@ errors:
   info_failed: "[bold red] {symbol} の情報を取得できませんでした。理由: {reason}[/]"
 
   # 不正な値
-  unexpected_side_value: "[red]side が 1（sell）/ 2（buy）以外の値をとっています。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
-  unexpected_orders_sell: "[red]{disp_name}（{symbol}）に対する売り注文が複数検出されました。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
-  unexpected_orders_buy: "[red]{disp_name}（{symbol}）に対する買い注文が複数検出されました。プログラムは停止しませんが、至急バグの特定・解消が必要です。[/]"
+  unexpected_side_value: "[red]side が 1（sell）/ 2（buy）以外の値をとっています。[/]"
+  unexpected_orders_sell: "[red]{disp_name}（{symbol}）に対する売り注文が複数検出されました。[/]"
+  unexpected_orders_buy: "[red]{disp_name}（{symbol}）に対する買い注文が複数検出されました。[/]"
 
   # 発注に失敗
   buy_order_failed: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い発注に失敗しました。[/]"
