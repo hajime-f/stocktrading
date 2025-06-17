@@ -13,6 +13,7 @@ import yaml
 from dotenv import load_dotenv
 
 from data_manager import DataManager
+from exception import ConfigurationError, APIError
 from library import Library
 from misc import Misc, MessageManager
 from stock import Stock
@@ -38,9 +39,9 @@ class StockTrading:
 
         # ロガーの初期化
         self.logger = getLogger(__name__)
-        self._make_logger()
+        self._init_logger()
 
-    def _make_logger(self):
+    def _init_logger(self):
         # ロガーを初期化
         load_dotenv()
         path_name = os.getenv("BaseDir")
@@ -135,63 +136,52 @@ class StockTrading:
         today = date.today().strftime("%Y年%m月%d日")
         self.logger.info(self.msg.get("info.program_start", today=today))
 
-        # 株ライブラリを初期化
-        lib = Library()
-
-        # 登録銘柄リストからすべての銘柄を削除する
-        lib.unregister_all()
-
-        # 今回取引する銘柄リストを取得
-        dm = DataManager()
-        # target_stocks = dm.fetch_target(table_name="Target", target_date="2025-05-15")
-        target_symbols = [
-            ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
-            ["2025-06-02", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
-            ["2025-06-02", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
-            ["2025-06-02", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
-            ["2025-06-02", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
-            [
-                "2025-06-02",
-                "2552",
-                "上場Ｊリート(東証REIT指数)隔月分配(ミニ)",
-                0.999,
-                2,
-            ],
-        ]
-        columns = ["date", "code", "brand", "pred", "side"]
-        target_stocks = pd.DataFrame(target_symbols, columns=columns)
-
-        # 銘柄登録
-        lib.register(target_stocks["code"].tolist())
-
-        # 取引余力を取得
-        wallet_cash = f"{int(lib.wallet_cash()):,}"
-        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
-
-        # Stockクラスをインスタンス化して辞書に入れる
-        for _, row in target_stocks.iterrows():
-            symbol = row["code"]
-            stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
-            stock_instance.set_information()
-            self.stocks[symbol] = stock_instance
-
-        # 受信関数を登録
-        lib.register_receiver(self.receive)
-
-        # Ctrl+C ハンドラーを登録
-        signal.signal(signal.SIGINT, self.signal_handler)
-
-        # スレッドを準備
-        threads = [
-            threading.Thread(target=self.run_polling, args=(st,))
-            for st in self.stocks.values()
-        ]
-        push_receiver_thread = threading.Thread(
-            target=lib.run, args=(self.stop_event,), daemon=True
-        )
-
-        # スレッドを起動
         try:
+            # 株ライブラリを初期化
+            lib = Library()
+
+            # 登録銘柄リストからすべての銘柄を削除する
+            lib.unregister_all()
+
+            # 今回取引する銘柄リストを取得
+            dm = DataManager()
+            # target_stocks = dm.fetch_target(table_name="Target", target_date="2025-05-15")
+            target_symbols = [
+                ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+            ]
+            columns = ["date", "code", "brand", "pred", "side"]
+            target_stocks = pd.DataFrame(target_symbols, columns=columns)
+
+            # 銘柄登録
+            lib.register(target_stocks["code"].tolist())
+
+            # 取引余力を取得
+            wallet_cash = f"{int(lib.wallet_cash()):,}"
+            self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
+
+            # Stockクラスをインスタンス化して辞書に入れる
+            for _, row in target_stocks.iterrows():
+                symbol = row["code"]
+                stock_instance = Stock(symbol, lib, dm, row["side"], row["brand"])
+                stock_instance.set_information()
+                self.stocks[symbol] = stock_instance
+
+            # 受信関数を登録
+            lib.register_receiver(self.receive)
+
+            # Ctrl+C ハンドラーを登録
+            signal.signal(signal.SIGINT, self.signal_handler)
+
+            # スレッドを準備
+            threads = [
+                threading.Thread(target=self.run_polling, args=(st,))
+                for st in self.stocks.values()
+            ]
+            push_receiver_thread = threading.Thread(
+                target=lib.run, args=(self.stop_event,), daemon=True
+            )
+
+            # スレッドを起動
             self.logger.info(self.msg.get("info.thread_starting"))
             for thread in threads:
                 thread.start()
@@ -210,6 +200,9 @@ class StockTrading:
 
                 # 10秒ごとにチェック
                 time.sleep(10)
+
+        except (ConfigurationError, APIError):
+            sys.exit(1)
 
         except RuntimeError as e:
             self.logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))

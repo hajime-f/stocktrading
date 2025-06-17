@@ -21,32 +21,20 @@ class Library:
         load_dotenv()
 
         # APIパスワードの設定
-        try:
-            self.api_password = os.getenv("APIPassword_production")
-            if not self.api_password:
-                logger.critical(msg.get("errors.api_not_found"))
-                raise ConfigurationError
-        except KeyError:
+        self.api_password = os.getenv("APIPassword_production")
+        if not self.api_password:
             logger.critical(msg.get("errors.api_not_found"))
             raise ConfigurationError
 
         # IPアドレスの設定
-        try:
-            self.ip_address = os.getenv("IPAddress")
-            if not self.ip_address:
-                logger.critical(msg.get("errors.ip_address_not_found"))
-                raise ConfigurationError
-        except KeyError:
+        self.ip_address = os.getenv("IPAddress")
+        if not self.ip_address:
             logger.critical(msg.get("errors.ip_address_not_found"))
             raise ConfigurationError
 
         # ポート番号の設定
-        try:
-            self.port = os.getenv("Port")
-            if not self.port:
-                logger.critical(msg.get("errors.port_not_found"))
-                raise ConfigurationError
-        except KeyError:
+        self.port = os.getenv("Port")
+        if not self.port:
             logger.critical(msg.get("errors.port_not_found"))
             raise ConfigurationError
 
