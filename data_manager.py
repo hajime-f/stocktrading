@@ -278,11 +278,8 @@ class DataManager:
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         with conn:
-            df = pd.read_sql_query(
-                f"select distinct * from {table_name} where date = ?;",
-                conn,
-                params=[target_date],
-            )
+            sql_query = "select distinct * from ? where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(table_name, target_date))
 
         return df
 
@@ -317,20 +314,16 @@ class DataManager:
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         with conn:
-            df = pd.read_sql_query(
-                f"select distinct * from {table_name} where date = ?;",
-                conn,
-                params=[target_date],
-            )
+            sql_query = "select distinct * from ? where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(table_name, target_date))
 
         return df
 
     def update_price(self, order_id, price):
         conn = self._get_connection()
         with conn:
-            conn.execute(
-                f"UPDATE Orders SET price = {price} WHERE order_id = '{order_id}';",
-            )
+            sql_query = "update Orders set price = ? where order_id = ?;"
+            conn.execute(sql_query, params=(price, order_id))
 
     def save_profit_loss(self, df, table_name="ProfitLoss"):
         conn = self._get_connection()
@@ -342,53 +335,44 @@ class DataManager:
 
         # 以下のクエリを実行して、指定した条件に一致する注文データを取得
         with conn:
-            df = pd.read_sql_query(
-                f"""
-                SELECT *
-                FROM Orders
-                WHERE DATE(datetime) = date('now', 'localtime')
-                AND symbol = {symbol}
-                AND side = {side};
-                """,
-                conn,
-            )
+            sql_query = """
+            select *
+            from Orders
+            where DATE(datetime) = date('now', 'localtime')
+            and symbol = ?
+            and side = ?;
+            """
+            df = pd.read_sql_query(sql_query, conn, params=(symbol, side))
         return df
 
     def find_newest_close_price(self, symbol):
         conn = self._get_connection()
         with conn:
-            df = pd.read_sql_query(
-                f'select close from "{symbol}" order by date desc limit 1;',
-                conn,
-            )
+            sql_query = "select close from ? order by date desc limit 1;"
+            df = pd.read_sql_query(sql_query, conn, params=(symbol))
         return df["close"].item()
 
     def load_table_by_date(self, table_name, date):
         conn = self._get_connection()
         with conn:
-            df = pd.read_sql_query(
-                f"select * from {table_name} where date = ?;", conn, params=[date]
-            )
+            sql_query = "select * from ? where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(table_name, date))
 
         return df
 
     def load_open_close_prices(self, code, date):
         conn = self._get_connection()
         with conn:
-            df = pd.read_sql_query(
-                f'select open, close from "{code}" where date = ?;',
-                conn,
-                params=[date],
-            )
+            sql_query = "select open, close from ? where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(code, date))
 
         return df
 
     def check_stock_data(self, code, val_date):
         conn = self._get_connection()
         with conn:
-            df = pd.read_sql_query(
-                f'select * from "{code}" order by date desc limit 1;', conn
-            )
+            sql_query = "select * from ? order by date desc limit 1;"
+            df = pd.read_sql_query(sql_query, conn, params=(code))
 
         if df.empty:
             return False
@@ -408,9 +392,9 @@ class DataManager:
         conn = self._get_connection()
         with conn:
             df = pd.read_sql_query(
-                f"select * from Execution where order_id = ?;",
+                "select * from Execution where order_id = ?;",
                 conn,
-                params=[order_id],
+                params=(order_id),
             )
 
         return df
@@ -420,16 +404,15 @@ class DataManager:
 
         # 以下のクエリを実行して、指定した条件に一致する注文データを取得
         with conn:
-            df = pd.read_sql_query(
-                f"""
-                SELECT *
-                FROM Execution
-                WHERE DATE(exec_time) = date('now', 'localtime')
-                AND symbol = {symbol}
-                AND side = {side};
-                """,
-                conn,
-            )
+            sql_query = """
+                select *
+                from Execution
+                where DATE(exec_time) = date('now', 'localtime')
+                and symbol = ?
+                and side = ?;
+            """
+            df = pd.read_sql_query(sql_query, conn, params=(symbol, side))
+
         return df
 
     def save_result(self, df_result):
