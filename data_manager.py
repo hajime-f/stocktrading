@@ -278,8 +278,8 @@ class DataManager:
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         with conn:
-            sql_query = "select distinct * from ? where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(table_name, target_date))
+            sql_query = f"select distinct * from '{table_name}' where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(target_date))
 
         return df
 
@@ -314,8 +314,8 @@ class DataManager:
             target_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         with conn:
-            sql_query = "select distinct * from ? where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(table_name, target_date))
+            sql_query = f"select distinct * from '{table_name}' where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(target_date))
 
         return df
 
@@ -348,31 +348,31 @@ class DataManager:
     def find_newest_close_price(self, symbol):
         conn = self._get_connection()
         with conn:
-            sql_query = "select close from ? order by date desc limit 1;"
-            df = pd.read_sql_query(sql_query, conn, params=(symbol))
+            sql_query = f"select close from '{symbol}' order by date desc limit 1;"
+            df = pd.read_sql_query(sql_query, conn)
         return df["close"].item()
 
     def load_table_by_date(self, table_name, date):
         conn = self._get_connection()
         with conn:
-            sql_query = "select * from ? where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(table_name, date))
+            sql_query = f"select * from '{table_name}' where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(date))
 
         return df
 
     def load_open_close_prices(self, code, date):
         conn = self._get_connection()
         with conn:
-            sql_query = "select open, close from ? where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=(code, date))
+            sql_query = f"select open, close from '{code}' where date = ?;"
+            df = pd.read_sql_query(sql_query, conn, params=(date))
 
         return df
 
     def check_stock_data(self, code, val_date):
         conn = self._get_connection()
         with conn:
-            sql_query = "select * from ? order by date desc limit 1;"
-            df = pd.read_sql_query(sql_query, conn, params=(code))
+            sql_query = f"select * from '{code}' order by date desc limit 1;"
+            df = pd.read_sql_query(sql_query, conn)
 
         if df.empty:
             return False
