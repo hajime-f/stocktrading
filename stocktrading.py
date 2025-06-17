@@ -151,9 +151,7 @@ class StockTrading:
             # 10秒ごとにチェック
             time.sleep(10)
 
-        # すべてのスレッドが終了するのを待つ
-        for thread in threads:
-            thread.join()
+        return threads
 
     # PUSH配信を受信した時に呼ばれる関数
     def receive(self, data: Dict):
@@ -264,7 +262,6 @@ class StockTrading:
             ],
         )
         self.dm.save_profit_loss(df_profit_loss)
-        self.dm.close()
 
         wallet_cash = f"{int(self.lib.wallet_cash()):,}"
         result = pd.DataFrame(
@@ -274,34 +271,44 @@ class StockTrading:
         self.dm.save_result(result)
 
     def main(self):
+        threads = []
+        exit_code = 0
+
         try:
             if not self._setup_environment():
                 return
 
-            self._run_main_loop()
+            threads = self._run_main_loop()
             self.process_profitloss()
 
         except (ConfigurationError, APIError) as e:
             self.logger.critical(e)
-            self.stop_event.set()
+            exit_code = 1
 
         except DataProcessingError as e:
             self.logger.critical(e)
-            self.stop_event.set()
+            exit_code = 1
 
         except RuntimeError as e:
             self.logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))
-            self.stop_event.set()
+            exit_code = 1
 
         except Exception as e:
             self.logger.critical(
                 self.msg.get("errors.thread_unexpected_error", reason=e), exc_info=True
             )
-            self.stop_event.set()
+            exit_code = 1
 
         finally:
+            self.stop_event.set()
+            self.dm.close()
+
+            # すべてのスレッドが終了するのを待つ
+            for thread in threads:
+                thread.join()
+
             self.logger.info(self.msg.get("info.program_end"))
-            sys.exit(0)
+            sys.exit(exit_code)
 
 
 if __name__ == "__main__":
