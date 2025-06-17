@@ -46,10 +46,10 @@ errors:
   execution_info_invalid: "[red]約定情報が不正です。[/]"
 
   # 取引失敗
-  transaction_failed_1: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]売り注文は完結していますが、買い注文が完結していません。[/]"
-  transaction_failed_2: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]売り注文すら完結していません。[/]"
-  transaction_failed_3: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
-  transaction_failed_4: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[red]買い注文すら完結していません。[/]"
+  transaction_failed_1: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]売り注文は完結していますが、買い注文が完結していません。[/]"
+  transaction_failed_2: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]売り注文すら完結していません。[/]"
+  transaction_failed_3: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
+  transaction_failed_4: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い注文すら完結していません。[/]"
   
   # 土日祝日
   holiday: "[red]本日は土日祝日です。プログラムを終了します。[/]"
@@ -77,8 +77,8 @@ info:
   push_thread_end: "[green]プッシュ配信の受信を終了します。[/]"
   
   # 取引成功
-  sell_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で売って引けで買うことに成功しました。[/]"
-  buy_transaction_success: "[yellow]{self.disp_name}[/]（[cyan]{self.symbol}[/]）：[blue]寄付で買って引けで売ることに成功しました。[/]"
+  sell_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]寄付で売って引けで買うことに成功しました。[/]"
+  buy_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]寄付で買って引けで売ることに成功しました。[/]"
   
   # 約定
   sell_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の売りが約定しました。"
