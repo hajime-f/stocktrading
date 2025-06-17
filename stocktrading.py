@@ -33,6 +33,7 @@ class StockTrading:
 
         # 損益を保持する辞書
         self.profit_loss: Dict[str, list] = {}
+        self.profit_loss_lock = threading.Lock()
 
         # メッセージマネージャーのインスタンス化
         self.msg = MessageManager()
@@ -90,13 +91,14 @@ class StockTrading:
         # while文を抜けたときに実行する処理
         if st.check_transaction():
             sell_price, buy_price = st.fetch_prices()
-            self.profit_loss[st.symbol] = [
-                st.disp_name,
-                st.symbol,
-                sell_price,
-                buy_price,
-                st.side,
-            ]
+            with self.profit_loss_lock:
+                self.profit_loss[st.symbol] = [
+                    st.disp_name,
+                    st.symbol,
+                    sell_price,
+                    buy_price,
+                    st.side,
+                ]
 
     # Ctrl+C ハンドラー
     def signal_handler(self, sig, frame):
@@ -109,8 +111,13 @@ class StockTrading:
         list_result = []
         today = date.today().strftime("%Y-%m-%d")
 
+        with self.profit_loss_lock:
+            profit_loss_copy = self.profit_loss.copy()
+
+        breakpoint()
+
         self.logger.info("--- 損益計算結果 ---")
-        for pl in self.profit_loss.values():
+        for pl in profit_loss_copy.values():
             if pl[2] is not None and pl[3] is not None:
                 diff = pl[2] - pl[3]
                 self.logger.info(
@@ -211,7 +218,7 @@ class StockTrading:
 
         except Exception as e:
             self.logger.critical(
-                self.msg.get("errors.thread_unexpected_error", reason=e)
+                self.msg.get("errors.thread_unexpected_error", reason=e), exc_info=True
             )
             self.stop_event.set()
             sys.exit(1)
