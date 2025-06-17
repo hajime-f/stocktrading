@@ -64,6 +64,30 @@ class StockTrading:
             self.logger.critical(self.msg.get("errors.file_not_found", path=path_name))
             sys.exit(1)
 
+    def _setup_environment(self):
+        # 土日祝日は実行しない
+        if Misc().check_day_type(date.today()):
+            self.logger.info(self.msg.get("errors.holiday"))
+            return False
+
+        today = date.today().strftime("%Y年%m月%d日")
+        self.logger.info(self.msg.get("info.program_start", today=today))
+
+        # 銘柄を登録する
+        self.register_stocks()
+
+        # 取引余力を取得
+        wallet_cash = f"{int(self.lib.wallet_cash()):,}"
+        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
+
+        # 受信関数を登録
+        self.lib.register_receiver(self.receive)
+
+        # Ctrl+C ハンドラーを登録
+        signal.signal(signal.SIGINT, self.signal_handler)
+
+        return True
+
     def register_stocks(self):
         # 今回取引する銘柄リストを取得
         # target_stocks = dm.fetch_target()
@@ -109,6 +133,27 @@ class StockTrading:
         self.logger.info(self.msg.get("info.all_thread_started"))
 
         return threads
+
+    def _run_main_loop(self):
+        # スレッドを準備
+        threads = self.prepare_threads()
+
+        while True:
+            now = datetime.now()
+            if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
+                self.logger.info(self.msg.get("info.time_terminate"))
+                self.stop_event.set()
+
+            # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
+            if self.stop_event.is_set():
+                break
+
+            # 10秒ごとにチェック
+            time.sleep(10)
+
+        # すべてのスレッドが終了するのを待つ
+        for thread in threads:
+            thread.join()
 
     # PUSH配信を受信した時に呼ばれる関数
     def receive(self, data: Dict):
@@ -201,7 +246,7 @@ class StockTrading:
 
         return pl_sum, list_result
 
-    def process_profitloss(self, wallet_cash):
+    def process_profitloss(self):
         # 損益を表示する
         pl_sum, list_result = self.display_profitloss()
 
@@ -221,6 +266,7 @@ class StockTrading:
         self.dm.save_profit_loss(df_profit_loss)
         self.dm.close()
 
+        wallet_cash = f"{int(self.lib.wallet_cash()):,}"
         result = pd.DataFrame(
             [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
             columns=["date", "cash", "profit_loss"],
@@ -228,78 +274,36 @@ class StockTrading:
         self.dm.save_result(result)
 
     def main(self):
-        today = date.today().strftime("%Y年%m月%d日")
-        self.logger.info(self.msg.get("info.program_start", today=today))
-
         try:
-            # 銘柄を登録する
-            self.register_stocks()
+            if not self._setup_environment():
+                return
 
-            # 取引余力を取得
-            wallet_cash = f"{int(self.lib.wallet_cash()):,}"
-            self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
+            self._run_main_loop()
+            self.process_profitloss()
 
-            # 受信関数を登録
-            self.lib.register_receiver(self.receive)
-
-            # Ctrl+C ハンドラーを登録
-            signal.signal(signal.SIGINT, self.signal_handler)
-
-            # スレッドを準備
-            threads = self.prepare_threads()
-
-            while True:
-                now = datetime.now()
-                if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
-                    self.logger.info(self.msg.get("info.time_terminate"))
-                    self.stop_event.set()
-
-                # 停止イベントがセットされたら、監視ループを抜ける（Ctrl+Cまたは時間経過）
-                if self.stop_event.is_set():
-                    break
-
-                # 10秒ごとにチェック
-                time.sleep(10)
+        except (ConfigurationError, APIError) as e:
+            self.logger.critical(e)
+            self.stop_event.set()
 
         except DataProcessingError as e:
             self.logger.critical(e)
             self.stop_event.set()
-            sys.exit(1)
 
         except RuntimeError as e:
             self.logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))
             self.stop_event.set()
-            sys.exit(1)
 
         except Exception as e:
             self.logger.critical(
                 self.msg.get("errors.thread_unexpected_error", reason=e), exc_info=True
             )
             self.stop_event.set()
-            sys.exit(1)
 
         finally:
-            # すべてのスレッドが終了するのを待つ
-            for thread in threads:
-                thread.join()
-
-            # 損益の表示と記録
-            self.process_profitloss(wallet_cash)
-
             self.logger.info(self.msg.get("info.program_end"))
             sys.exit(0)
 
 
 if __name__ == "__main__":
-    # 土日祝日は実行しない
-    if Misc().check_day_type(date.today()):
-        print("本日は土日祝日です。プログラムを終了します。")
-        sys.exit(0)
-
-    try:
-        stocktrading = StockTrading()
-    except (ConfigurationError, APIError) as e:
-        print(e)
-        sys.exit(1)
-
+    stocktrading = StockTrading()
     stocktrading.main()

@@ -52,6 +52,9 @@ errors:
   transaction_failed_3: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い注文は完結していますが、売り注文が完結していません。[/]"
   transaction_failed_4: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[red]買い注文すら完結していません。[/]"
   
+  # 土日祝日
+  holiday: "[red]本日は土日祝日です。プログラムを終了します。[/]"
+
   
 # --- 情報メッセージ ---
 info:
