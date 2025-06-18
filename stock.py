@@ -11,6 +11,9 @@ from misc import MessageManager
 logger = getLogger(__name__)
 msg = MessageManager()
 
+SELL_SIDE = 1
+BUY_SIDE = 2
+
 
 class Stock:
     def __init__(self, symbol, lib, dm, side, brand_name, exchange=1):
@@ -68,9 +71,9 @@ class Stock:
         約５分間隔で呼ばれる関数
         """
 
-        if self.side == 1:
+        if self.side == SELL_SIDE:
             self.sell_side()  # 売り注文
-        elif self.side == 2:
+        elif self.side == BUY_SIDE:
             self.buy_side()  # 買い注文
         else:
             logger.critical(msg.get("errors.unexpected_side_value"))
@@ -84,7 +87,7 @@ class Stock:
         # 売り注文が完結していない場合、まずは売り注文（寄成）を約定させる
         if not self.sell_executed:
             # 売り注文の有無を確認する
-            sell_position = self.dm.seek_position(symbol=self.symbol, side=1)
+            sell_position = self.dm.seek_position(symbol=self.symbol, side=SELL_SIDE)
 
             if sell_position.empty:
                 # まだ売り注文を入れていない場合、寄付での売り建てを試みる
@@ -114,7 +117,7 @@ class Stock:
         # 売り注文は完結しているが、買い注文が完結していない場合、次に買い注文（引成）を約定させる
         if self.sell_executed and not self.buy_executed:
             # 買い注文の有無を確認する
-            buy_position = self.dm.seek_position(symbol=self.symbol, side=2)
+            buy_position = self.dm.seek_position(symbol=self.symbol, side=BUY_SIDE)
 
             if buy_position.empty:
                 # まだ買い注文を入れていない場合、引けでの返済を試みる
@@ -145,7 +148,7 @@ class Stock:
         # 買い注文が完結していない場合、まずは買い注文（寄成）を約定させる
         if not self.buy_executed:
             # 買い注文の有無を確認する
-            buy_position = self.dm.seek_position(symbol=self.symbol, side=2)
+            buy_position = self.dm.seek_position(symbol=self.symbol, side=BUY_SIDE)
 
             if buy_position.empty:
                 # まだ買い注文を入れていない場合、寄付での買い建てを試みる
@@ -175,7 +178,7 @@ class Stock:
         # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文（引成）を約定させる
         if self.buy_executed and not self.sell_executed:
             # 売り注文の有無を確認する
-            sell_position = self.dm.seek_position(symbol=self.symbol, side=1)
+            sell_position = self.dm.seek_position(symbol=self.symbol, side=SELL_SIDE)
 
             if sell_position.empty:
                 # まだ売り注文を入れていない場合、引けでの返済を試みる
@@ -232,7 +235,7 @@ class Stock:
                 )
             )
             self.save_order(
-                side=2,
+                side=BUY_SIDE,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
@@ -277,7 +280,7 @@ class Stock:
                 )
             )
             self.save_order(
-                side=1,
+                side=SELL_SIDE,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
@@ -337,7 +340,7 @@ class Stock:
         if float(qty).is_integer():
             qty = f"{int(qty):,}"
 
-        if side == 1:
+        if side == SELL_SIDE:
             logger.info(
                 msg.get(
                     "info.sell_executed",
@@ -347,7 +350,7 @@ class Stock:
                     qty=qty,
                 )
             )
-        elif side == 2:
+        elif side == BUY_SIDE:
             logger.info(
                 msg.get(
                     "info.buy_executed",
@@ -422,7 +425,7 @@ class Stock:
                 )
             )
             self.save_order(
-                side=1,
+                side=SELL_SIDE,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
@@ -467,7 +470,7 @@ class Stock:
                 )
             )
             self.save_order(
-                side=2,
+                side=BUY_SIDE,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
@@ -483,7 +486,7 @@ class Stock:
             logger.error(content)
 
     def check_transaction(self):
-        if self.side == 1:
+        if self.side == SELL_SIDE:
             if self.buy_executed and self.sell_executed:
                 logger.info(
                     msg.get(
@@ -512,7 +515,7 @@ class Stock:
                 )
                 return False
 
-        elif self.side == 2:
+        elif self.side == BUY_SIDE:
             if self.buy_executed and self.sell_executed:
                 logger.info(
                     msg.get(
@@ -545,14 +548,14 @@ class Stock:
             logger.warning(msg.get("errors.unexpected_side_value"))
 
     def fetch_prices(self):
-        sell_position = self.dm.seek_execution(self.symbol, side=1)
+        sell_position = self.dm.seek_execution(self.symbol, side=SELL_SIDE)
         sell_price = (
             sell_position["price"].values[0] if not sell_position.empty else None
         )
         if sell_price is not None:
             sell_price = sell_price * sell_position["qty"].values[0]
 
-        buy_position = self.dm.seek_execution(self.symbol, side=2)
+        buy_position = self.dm.seek_execution(self.symbol, side=BUY_SIDE)
         buy_price = buy_position["price"].values[0] if not buy_position.empty else None
         if buy_price is not None:
             buy_price = buy_price * buy_position["qty"].values[0]
