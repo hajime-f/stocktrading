@@ -64,12 +64,7 @@ class StockTrading:
             self.logger.critical(self.msg.get("errors.file_not_found", path=path_name))
             sys.exit(1)
 
-    def _setup_environment(self):
-        # 土日祝日は実行しない
-        if Misc().check_day_type(date.today()):
-            self.logger.info(self.msg.get("errors.holiday"))
-            return False
-
+    def setup_environment(self):
         today = date.today().strftime("%Y年%m月%d日")
         self.logger.info(self.msg.get("info.program_start", today=today))
 
@@ -85,8 +80,6 @@ class StockTrading:
 
         # Ctrl+C ハンドラーを登録
         signal.signal(signal.SIGINT, self.signal_handler)
-
-        return True
 
     def register_stocks(self):
         # 今回取引する銘柄リストを取得
@@ -134,7 +127,7 @@ class StockTrading:
 
         return threads
 
-    def _run_main_loop(self):
+    def run_main_loop(self):
         # スレッドを準備
         threads = self.prepare_threads()
 
@@ -275,10 +268,12 @@ class StockTrading:
         exit_code = 0
 
         try:
-            if not self._setup_environment():
-                return
+            self.setup_environment()
 
-            threads = self._run_main_loop()
+            # メインループ
+            threads = self.run_main_loop()
+
+            # 結果表示
             self.process_profitloss()
 
         except (ConfigurationError, APIError) as e:
@@ -312,5 +307,10 @@ class StockTrading:
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    if Misc().check_day_type(date.today()):
+        print("本日は土日祝日です。プログラムを終了します。")
+        sys.exit(0)
+
     stocktrading = StockTrading()
     stocktrading.main()
