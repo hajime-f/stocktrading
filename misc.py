@@ -45,7 +45,9 @@ class Misc:
         else:
             return 0
 
-    def count_business_days(start_date: datetime.date, end_date: datetime.date) -> int:
+    def count_business_days(
+        self, start_date: datetime.date, end_date: datetime.date
+    ) -> int:
         """
         指定された期間内の日本の営業日を数える。
         （入力はdate型、休日判定はMisc.check_day_typeを前提とする）
