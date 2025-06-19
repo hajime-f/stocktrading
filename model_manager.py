@@ -122,10 +122,10 @@ class ModelManager:
     def fit(self, scaler, per, opt_model="lstm", window=30):
         # データ期間の定義
         today = datetime.date.today()
-        train_start_date = (today - relativedelta(months=3)).strftime("%Y-%m-%d")
+        train_start_date = (today - relativedelta(months=4)).strftime("%Y-%m-%d")
         train_end_date = today.strftime("%Y-%m-%d")
         val_start_date = (today - relativedelta(months=7)).strftime("%Y-%m-%d")
-        val_end_date = (today - relativedelta(months=3, days=1)).strftime("%Y-%m-%d")
+        val_end_date = (today - relativedelta(months=4, days=1)).strftime("%Y-%m-%d")
 
         list_stocks = self.dm.load_stock_list()
 
@@ -170,18 +170,18 @@ class ModelManager:
         elif opt_model == "rnn":
             layer = SimpleRNN(200)
         else:
-            raise ValueError(
-                "不正なモデル名です。「lstm」または「rnn」を指定してください。"
-            )
+            pass
+
         model = self.compile_model(X_train.shape[1], X_train.shape[2], layer)
         model.fit(
             X_train,
             y_train,
+            # validation_split=0.2,
             # validation_data=(X_val, y_val),
             batch_size=128,
-            epochs=30,
+            epochs=15,
             # callbacks=[EarlyStopping(monitor="val_loss", patience=3, mode="min")],
-            # verbose=0,
+            verbose=0,
         )
 
         return model
@@ -209,8 +209,8 @@ class ModelManager:
             list_result.append([code, brand, y_pred[0][0]])
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
-        df_extract = df_result[df_result["pred"] >= 0.5].copy()
-        # df_extract = df_result[df_result["pred"] >= 0.7].copy()
+        # df_extract = df_result[df_result["pred"] >= 0.5].copy()
+        df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
         nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
@@ -264,5 +264,5 @@ if __name__ == "__main__":
 
     conn = sqlite3.connect(dm.db)
     with conn:
-        # df.to_sql("Target2", conn, if_exists="append", index=False)
-        df.to_sql("Target3", conn, if_exists="append", index=False)
+        df.to_sql("Target2", conn, if_exists="append", index=False)
+        # df.to_sql("Target3", conn, if_exists="append", index=False)
