@@ -45,6 +45,39 @@ class Misc:
         else:
             return 0
 
+
+def count_business_days(start_date: datetime.date, end_date: datetime.date) -> int:
+    """
+    指定された期間内の日本の営業日を数える。
+    （入力はdate型、休日判定はMisc.check_day_typeを前提とする）
+
+    Args:
+        start_date (datetime.date): 開始日。
+        end_date (datetime.date): 終了日。
+
+    Returns:
+        int: 期間内の営業日の日数。開始日が終了日より後の場合は0を返す。
+    """
+    # 1. 開始日と終了日の順序をチェック
+    if start_date > end_date:
+        return 0
+
+    # 2. 営業日をカウント
+    business_days_count = 0
+    current_date = start_date
+    one_day = datetime.timedelta(days=1)
+    misc_checker = Misc()  # 判定用のインスタンスを作成
+
+    while current_date <= end_date:
+        # 与えられた関数を使って、平日(0)かどうかを判定
+        if misc_checker.check_day_type(current_date) == 0:
+            business_days_count += 1
+
+        # 次の日に進める
+        current_date += one_day
+
+    return business_days_count
+
     def get_next_business_day(self, date_input):
         """
         指定された日付の次の営業日（土日祝日を除く平日）を返す。
