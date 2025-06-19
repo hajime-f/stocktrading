@@ -425,6 +425,15 @@ class DataManager:
         with conn:
             df_result.to_sql("Result", conn, if_exists="append", index=False)
 
+    def get_brand(self, symbol):
+        conn = self._get_connection()
+
+        with conn:
+            sql_query = f"SELECT brand FROM Codes WHERE code = '{symbol}';"
+            df = pd.read_sql_query(sql_query, conn).head(1)
+
+        return df["brand"].item() if not df.empty else None
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
