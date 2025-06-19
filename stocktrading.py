@@ -85,7 +85,11 @@ class StockTrading:
         # 今回取引する銘柄リストを取得
         # target_stocks = dm.fetch_target()
         target_symbols = [
-            ["2025-06-02", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+            ["2025-06-19", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+            ["2025-06-19", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
+            ["2025-06-19", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
+            ["2025-06-19", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
+            ["2025-06-19", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
         ]
         columns = ["date", "code", "brand", "pred", "side"]
         target_stocks = pd.DataFrame(target_symbols, columns=columns)
@@ -214,13 +218,8 @@ class StockTrading:
         list_result = []
         today = date.today().strftime("%Y-%m-%d")
 
-        with self.profit_loss_lock:
-            profit_loss_copy = self.profit_loss.copy()
-
-        breakpoint()
-
         self.logger.info("--- 損益計算結果 ---")
-        for pl in profit_loss_copy.values():
+        for pl in self.profit_loss.values():
             if pl[2] is not None and pl[3] is not None:
                 diff = pl[2] - pl[3]
                 self.logger.info(
@@ -258,7 +257,7 @@ class StockTrading:
 
         wallet_cash = f"{int(self.lib.wallet_cash()):,}"
         result = pd.DataFrame(
-            [date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum],
+            [[date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum]],
             columns=["date", "cash", "profit_loss"],
         )
         self.dm.save_result(result)

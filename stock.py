@@ -27,9 +27,7 @@ class Stock:
         load_dotenv()
         self.base_transaction = os.getenv("BaseTransaction")
 
-        self.time = []
-        self.price = []
-        self.volume = []
+        self.time, self.price, self.volume = [], [], []
 
         self.buy_executed = False
         self.sell_executed = False
