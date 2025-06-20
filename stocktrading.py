@@ -182,6 +182,7 @@ class StockTrading:
                 time.sleep(1)
 
             # while文を抜けたときに実行する処理
+            st.polling()  # 念のため最後に一度実行しておく
             if st.check_transaction():
                 sell_price, buy_price = st.fetch_prices()
                 with self.profit_loss_lock:
@@ -272,9 +273,6 @@ class StockTrading:
             # メインループ
             threads = self.run_main_loop()
 
-            # 結果表示
-            self.process_profitloss()
-
         except (ConfigurationError, APIError) as e:
             self.logger.critical(e)
             exit_code = 1
@@ -300,6 +298,10 @@ class StockTrading:
             # すべてのスレッドが終了するのを待つ
             for thread in threads:
                 thread.join()
+
+            # 結果表示
+            if exit_code == 0:
+                self.process_profitloss()
 
             self.logger.info(self.msg.get("info.program_end"))
             sys.exit(exit_code)
