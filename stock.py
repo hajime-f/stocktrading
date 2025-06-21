@@ -1,9 +1,7 @@
-import os
 from datetime import datetime
 from logging import getLogger
 
 import pandas as pd
-from dotenv import load_dotenv
 
 from exception import DataProcessingError
 from misc import MessageManager
