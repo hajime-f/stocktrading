@@ -148,7 +148,7 @@ class StockTrading:
 
         while True:
             now = datetime.now()
-            if now.hour > 15 or (now.hour == 15 and now.minute >= 35):
+            if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
                 self.logger.info(self.msg.get("info.time_terminate"))
                 self.stop_event.set()
 

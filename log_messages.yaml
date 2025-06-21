@@ -58,9 +58,9 @@ info:
   program_start: "[green]=== プログラムを開始します（{today}）===[/]"
   program_end: "[green]=== プログラムを終了します ===[/]"
   thread_starting: "[green]スレッドを起動しています。[/]"
-  all_thread_started: "[green]すべてのスレッドを正常に起動しました。プログラムは 15:35 に自動終了します。[/]"
+  all_thread_started: "[green]すべてのスレッドを正常に起動しました。プログラムは 15:30 に自動終了します。[/]"
   terminate: "[bold red]Ctrl+C が押されました。終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
-  time_terminate: "[green]15:35 を過ぎたので終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
+  time_terminate: "[green]15:30 を過ぎたので終了処理を開始します。プログラム終了までしばらくお待ちください。[/]"
   
   # 取引余力
   wallet_cash: "[yellow]取引余力（現金残高）：{wallet_cash} 円[/]"
