@@ -48,6 +48,10 @@ class StockTrading:
         # データマネージャーを初期化
         self.dm = DataManager()
 
+        # 取引量を読み込み
+        load_dotenv()
+        self.base_transaction = os.getenv("BaseTransaction")
+
     def _init_logger(self):
         # ロガーを初期化
         load_dotenv()
@@ -108,7 +112,14 @@ class StockTrading:
         # Stockクラスをインスタンス化して辞書に入れる
         for _, row in target_stocks.iterrows():
             symbol = row["code"]
-            stock_instance = Stock(symbol, self.lib, self.dm, row["side"], row["brand"])
+            stock_instance = Stock(
+                symbol,
+                self.lib,
+                self.dm,
+                row["side"],
+                row["brand"],
+                self.base_transaction,
+            )
             stock_instance.set_information()
             self.stocks[symbol] = stock_instance
 
