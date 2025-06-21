@@ -67,11 +67,10 @@ class Misc:
         business_days_count = 0
         current_date = start_date
         one_day = datetime.timedelta(days=1)
-        misc_checker = Misc()  # 判定用のインスタンスを作成
 
         while current_date <= end_date:
             # 与えられた関数を使って、平日(0)かどうかを判定
-            if misc_checker.check_day_type(current_date) == 0:
+            if Misc.check_day_type(current_date) == 0:
                 business_days_count += 1
 
             # 次の日に進める
