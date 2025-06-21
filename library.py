@@ -3,7 +3,7 @@ import json
 import os
 import traceback
 import urllib.request
-from logging import getLogger
+from logging import getSelf.Logger
 
 import websockets
 from dotenv import load_dotenv
@@ -11,31 +11,31 @@ from dotenv import load_dotenv
 from exception import ConfigurationError, APIError
 from misc import MessageManager
 
-logger = getLogger(__name__)
-msg = MessageManager()
-
 
 class Library:
     def __init__(self):
         # .envファイルから環境変数を読み込む
         load_dotenv()
 
+        self.logger = getLogger(f"{__name__}.library")
+        self.msg = MessageManager()
+        
         # APIパスワードの設定
         self.api_password = os.getenv("APIPassword_production")
         if not self.api_password:
-            logger.critical(msg.get("errors.api_not_found"))
+            self.logger.critical(self.msg.get("errors.api_not_found"))
             raise ConfigurationError
 
         # IPアドレスの設定
         self.ip_address = os.getenv("IPAddress")
         if not self.ip_address:
-            logger.critical(msg.get("errors.ip_address_not_found"))
+            self.logger.critical(self.msg.get("errors.ip_address_not_found"))
             raise ConfigurationError
 
         # ポート番号の設定
         self.port = os.getenv("Port")
         if not self.port:
-            logger.critical(msg.get("errors.port_not_found"))
+            self.logger.critical(self.msg.get("errors.port_not_found"))
             raise ConfigurationError
 
         # エンドポイントの設定
@@ -53,7 +53,7 @@ class Library:
         try:
             self.token = content["Token"]
         except KeyError:
-            logger.critical(msg.get("errors.api_token_key_error"))
+            self.logger.critical(self.msg.get("errors.api_token_key_error"))
             raise APIError
 
         # Websocketの設定
@@ -82,20 +82,20 @@ class Library:
                             websockets.exceptions.ConnectionClosedError,
                             websockets.exceptions.ConnectionClosedOK,
                         ) as e:
-                            logger.error(msg.get("errors.connection_closed", reason=e))
+                            self.logger.error(self.msg.get("errors.connection_closed", reason=e))
                             self.closed.set()
                             break
                         except asyncio.TimeoutError:
-                            logger.error(msg.get("errors.connection_timeout"))
+                            self.logger.error(self.msg.get("errors.connection_timeout"))
                             self.closed.set()
                             break
                         except Exception as e:
-                            logger.error(msg.get("errors.connection_error", reason=e))
+                            self.logger.error(self.msg.get("errors.connection_error", reason=e))
                             traceback.print_exc()
                             self.closed.set()
                             break
             except Exception as e:
-                logger.error(msg.get("errors.connection_error", reason=e))
+                self.logger.error(self.msg.get("errors.connection_error", reason=e))
                 traceback.print_exc()
                 self.closed.set()
 
@@ -112,17 +112,17 @@ class Library:
         self.loop = loop
 
         try:
-            logger.info(msg.get("info.push_thread_start"))
+            self.logger.info(self.msg.get("info.push_thread_start"))
             self.loop.run_until_complete(self._run(stop_event))
 
         except Exception as e:
-            logger.critical(
-                msg.get("errors.push_thread_error", reason=e), exc_info=True
+            self.logger.critical(
+                self.msg.get("errors.push_thread_error", reason=e), exc_info=True
             )
             stop_event.set()
 
         finally:
-            logger.info(msg.get("info.push_thread_end"))
+            self.logger.info(self.msg.get("info.push_thread_end"))
             self.loop.close()
 
         return True
@@ -141,10 +141,10 @@ class Library:
             if result:
                 return
             else:
-                logger.critical(msg.get("errors.register_failed"))
+                self.logger.critical(self.msg.get("errors.register_failed"))
                 raise APIError
         except KeyError:
-            logger.critical(msg.get("errors.register_failed"))
+            self.logger.critical(self.msg.get("errors.register_failed"))
             raise APIError
 
         return content
@@ -162,10 +162,10 @@ class Library:
             if not result:
                 return
             else:
-                logger.critical(msg.get("errors.unregister_failed"))
+                self.logger.critical(self.msg.get("errors.unregister_failed"))
                 raise APIError
         except KeyError:
-            logger.critical(msg.get("errors.unregister_failed"))
+            self.logger.critical(self.msg.get("errors.unregister_failed"))
             raise APIError
 
     def wallet_cash(self):
@@ -178,10 +178,10 @@ class Library:
             if result:
                 return result
             else:
-                logger.critical(msg.get("errors.wallet_cash_not_found"))
+                self.logger.critical(self.msg.get("errors.wallet_cash_not_found"))
                 raise APIError
         except KeyError:
-            logger.critical(msg.get("errors.wallet_cash_not_found"))
+            self.logger.critical(self.msg.get("errors.wallet_cash_not_found"))
             raise APIError
 
     def wallet_margin(self):
@@ -194,10 +194,10 @@ class Library:
             if result:
                 return result
             else:
-                logger.critical(msg.get("errors.wallet_cash_not_found"))
+                self.logger.critical(self.msg.get("errors.wallet_cash_not_found"))
                 raise APIError
         except KeyError:
-            logger.critical(msg.get("errors.wallet_cash_not_found"))
+            self.logger.critical(self.msg.get("errors.wallet_cash_not_found"))
             raise APIError
 
     def fetch_price(self, symbol, exchange=1):
@@ -257,10 +257,10 @@ class Library:
             with urllib.request.urlopen(req) as res:
                 content = json.loads(res.read())
         except urllib.error.HTTPError as e:
-            logger.critical(msg.get("errors.http_error", reason=e))
+            self.logger.critical(self.msg.get("errors.http_error", reason=e))
             content = json.loads(e.read())
         except Exception as e:
-            logger.critical(msg.get("errors.http_other_error", reason=e))
+            self.logger.critical(self.msg.get("errors.http_other_error", reason=e))
 
         return content
 
