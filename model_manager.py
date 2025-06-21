@@ -20,10 +20,13 @@ from tensorflow.keras.optimizers import Adam
 from data_manager import DataManager
 from misc import Misc
 
+pd.set_option("display.max_rows", None)
+
 
 class ModelManager:
     def __init__(self):
         self.dm = DataManager()
+        self.window = 30
 
     def add_technical_indicators(self, df):
         df = df.copy()
@@ -150,7 +153,7 @@ class ModelManager:
             pass
 
         model = self.compile_model(array_X.shape[1], array_X.shape[2], layer)
-        model.fit(array_X, array_y, batch_size=128, epochs=epochs, verbose=False)
+        model.fit(array_X, array_y, batch_size=128, epochs=epochs, verbose=True)
 
         return model
 
@@ -164,7 +167,6 @@ class ModelManager:
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
         df_extract = df_result[df_result["pred"] >= 0.5].copy()
-        # df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
         nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
@@ -222,4 +224,3 @@ if __name__ == "__main__":
     conn = sqlite3.connect(dm.db)
     with conn:
         df.to_sql("Target2", conn, if_exists="append", index=False)
-        # df.to_sql("Target3", conn, if_exists="append", index=False)
