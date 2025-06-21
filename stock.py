@@ -8,11 +8,8 @@ from dotenv import load_dotenv
 from exception import DataProcessingError
 from misc import MessageManager
 
-logger = getLogger(__name__)
-msg = MessageManager()
-
-SELL_SIDE = 1
-BUY_SIDE = 2
+SIDE_SELL = 1
+SIDE_BUY = 2
 
 
 class Stock:
@@ -30,6 +27,11 @@ class Stock:
 
         self.data = pd.DataFrame()
 
+        self.logger = getLogger(f"{__name__}.{self.symbol}")
+        self.msg = MessageManager()
+
+        self.state = EntryOrderPendingState(self)
+
     def set_information(self):
         try:
             content = self.lib.fetch_information(self.symbol, self.exchange)
@@ -38,7 +40,7 @@ class Stock:
             self.transaction_unit = self.unit * int(self.base_transaction)
         except (KeyError, TypeError, ValueError, Exception) as e:
             raise DataProcessingError(
-                msg.get("errors.info_failed", symbol=self.symbol)
+                self.msg.get("errors.info_failed", symbol=self.symbol)
             ) from e
 
     def append_data(self, new_data):
@@ -60,144 +62,85 @@ class Stock:
 
             self.data = pd.concat([self.data, price_df])
 
+    def set_state(self, new_state):
+        # 状態を切り替えるメソッド
+        self.state = new_state
+
     def polling(self):
         """
         約５分間隔で呼ばれる関数
         """
 
-        if self.side == SELL_SIDE:
-            self.sell_side()  # 売り注文
-        elif self.side == BUY_SIDE:
-            self.buy_side()  # 買い注文
-        else:
-            logger.critical(msg.get("errors.unexpected_side_value"))
-            raise DataProcessingError
+        # 実際の処理は状態オブジェクトに委譲する
+        self.state.handle_polling()
 
         # データを更新する
         self.update_data()
         self.time, self.price, self.volume = [], [], []
 
-    def sell_side(self):
-        # 売り注文が完結していない場合、まずは売り注文（寄成）を約定させる
-        if not self.sell_executed:
-            # 売り注文の有無を確認する
-            sell_position = self.dm.seek_position(symbol=self.symbol, side=SELL_SIDE)
+    def handle_entry_order(self):
+        # 新規建て注文の処理（発注または約定確認）を行う
+        entry_side = SIDE_SELL if self.side == SIDE_SELL else SIDE_BUY
 
-            if sell_position.empty:
-                # まだ売り注文を入れていない場合、寄付での売り建てを試みる
+        df_position = self.dm.seek_position(symbol=self.symbol, side=entry_side)
+        if df_position.empty:
+            # まだ注文を入れていない場合、寄付での取引を試みる
+            if entry_side == SIDE_SELL:
                 self.execute_margin_sell_market_order_at_opening()
-
             else:
-                if len(sell_position) != 1:
-                    logger.critical(
-                        msg.get(
-                            "errors.unexpected_orders_sell",
-                            disp_name=self.disp_name,
-                            symbol=self.symbol,
-                        )
-                    )
-                    raise DataProcessingError
-
-                # 注文IDを取得する
-                order_id = sell_position["order_id"].values[0]
-
-                # すでに売り注文を入れている場合、約定状況を確認する
-                execution_data = self.check_order_status(order_id)
-                if execution_data is not None:
-                    # 売り注文が約定している（売り建てできている）場合、その情報を記録してフラグを立てる
-                    self.record_execution(execution_data, order_id)
-                    self.sell_executed = True
-
-        # 売り注文は完結しているが、買い注文が完結していない場合、次に買い注文（引成）を約定させる
-        if self.sell_executed and not self.buy_executed:
-            # 買い注文の有無を確認する
-            buy_position = self.dm.seek_position(symbol=self.symbol, side=BUY_SIDE)
-
-            if buy_position.empty:
-                # まだ買い注文を入れていない場合、引けでの返済を試みる
-                self.execute_margin_buy_market_order_at_closing()
-
-            else:
-                if len(buy_position) != 1:
-                    logger.critical(
-                        msg.get(
-                            "errors.unexpected_orders_buy",
-                            disp_name=self.disp_name,
-                            symbol=self.symbol,
-                        )
-                    )
-                    raise DataProcessingError
-
-                # 注文IDを取得する
-                order_id = buy_position["order_id"].values[0]
-
-                # すでに買い注文を入れている場合、約定状況を確認する
-                execution_data = self.check_order_status(order_id)
-                if execution_data is not None:
-                    # 買い注文が約定している（返済できている）場合、その情報を記録してフラグを立てる
-                    self.record_execution(execution_data, order_id)
-                    self.buy_executed = True
-
-    def buy_side(self):
-        # 買い注文が完結していない場合、まずは買い注文（寄成）を約定させる
-        if not self.buy_executed:
-            # 買い注文の有無を確認する
-            buy_position = self.dm.seek_position(symbol=self.symbol, side=BUY_SIDE)
-
-            if buy_position.empty:
-                # まだ買い注文を入れていない場合、寄付での買い建てを試みる
                 self.execute_margin_buy_market_order_at_opening()
 
+        else:
+            # すでに注文を入れている場合、約定状況を確認する
+            self.check_execution(df_position, side=entry_side)
+
+    def check_execution(self, df_position, side):
+        # 注文の約定状況を確認し、状態フラグを更新する共通ロジック
+        if len(df_position) != 1:
+            error_key = (
+                "errors.unexpected_orders_sell"
+                if side == SIDE_SELL
+                else "errors.unexpected_orders_buy"
+            )
+            self.logger.critical(
+                self.msg.get(error_key, disp_name=self.disp_name, symbol=self.symbol)
+            )
+            raise DataProcessingError
+
+        order_id = df_position["order_id"].values[0]
+        execution_data = self.check_order_status(order_id)
+
+        if execution_data:
+            self.record_execution(execution_data, order_id)
+            if side == SIDE_SELL:
+                self.sell_executed = True
             else:
-                if len(buy_position) != 1:
-                    logger.critical(
-                        msg.get(
-                            "errors.unexpected_orders_buy",
-                            disp_name=self.disp_name,
-                            symbol=self.symbol,
-                        )
-                    )
-                    raise DataProcessingError
+                self.buy_executed = True
+        else:
+            pass  # None が返ってきた場合の処理が未実装
 
-                # 注文IDを取得する
-                order_id = buy_position["order_id"].values[0]
+    def check_entry_execution(self):
+        # 新規建て注文が約定したかを確認する
+        return self.sell_executed if self.side == SIDE_SELL else self.buy_executed
 
-                # すでに買い注文を入れている場合、約定状況を確認する
-                execution_data = self.check_order_status(order_id)
-                if execution_data is not None:
-                    # 買い注文が約定している（買い建てできている）場合、その情報を記録してフラグを立てる
-                    self.record_execution(execution_data, order_id)
-                    self.buy_executed = True
+    def handle_exit_order(self):
+        # 返済注文の処理（発注または約定確認）を行う
+        exit_side = SIDE_BUY if self.side == SIDE_SELL else SIDE_SELL
 
-        # 買い注文は完結しているが、売り注文が完結していない場合、次に売り注文（引成）を約定させる
-        if self.buy_executed and not self.sell_executed:
-            # 売り注文の有無を確認する
-            sell_position = self.dm.seek_position(symbol=self.symbol, side=SELL_SIDE)
-
-            if sell_position.empty:
-                # まだ売り注文を入れていない場合、引けでの返済を試みる
+        df_position = self.dm.seek_position(symbol=self.symbol, side=exit_side)
+        if df_position.empty:
+            # まだ注文を入れていない場合、引けでの取引を試みる
+            if exit_side == SIDE_SELL:
                 self.execute_margin_sell_market_order_at_closing()
-
             else:
-                if len(sell_position) != 1:
-                    logger.critical(
-                        msg.get(
-                            "errors.unexpected_orders_sell",
-                            disp_name=self.disp_name,
-                            symbol=self.symbol,
-                        )
-                    )
-                    raise DataProcessingError
+                self.execute_margin_buy_market_order_at_closing()
+        else:
+            # すでに注文を入れている場合、約定状況を確認する
+            self.check_execution(df_position, side=exit_side)
 
-                # 注文IDを取得する
-                order_id = sell_position["order_id"].values[0]
-
-                # すでに売り注文を入れている場合、約定状況を確認する
-                execution_data = self.check_order_status(order_id)
-                if execution_data is not None:
-                    # 売り注文が約定している（返済できている）場合、その情報を記録してフラグを立てる
-                    self.record_execution(execution_data, order_id)
-                    self.sell_executed = True
+    def check_exit_execution(self):
+        # 返済注文が約定したかを確認する
+        return self.buy_executed if self.side == SIDE_SELL else self.sell_executed
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
@@ -208,20 +151,20 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.buy_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
             result = -1
 
         if result == 0:
             order_id = content["OrderId"]
-            logger.info(
-                msg.get(
+            self.logger.info(
+                self.msg.get(
                     "info.buy_order_success",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
@@ -229,20 +172,20 @@ class Stock:
                 )
             )
             self.save_order(
-                side=BUY_SIDE,
+                side=SIDE_BUY,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
             )
         else:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.buy_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
 
     def execute_margin_sell_market_order_at_opening(self):
         # 寄付に信用で成行の売り注文を入れる（寄付売り建て）
@@ -253,20 +196,20 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.sell_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
             result = -1
 
         if result == 0:
             order_id = content["OrderId"]
-            logger.info(
-                msg.get(
+            self.logger.info(
+                self.msg.get(
                     "info.sell_order_success",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
@@ -274,27 +217,29 @@ class Stock:
                 )
             )
             self.save_order(
-                side=SELL_SIDE,
+                side=SIDE_SELL,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
             )
         else:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.sell_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
 
     def check_order_status(self, order_id):
         # 注文の約定状況を確認する
         result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
 
         if not result:
-            logger.error(msg.get("errors.execution_info_failed", order_id=order_id))
+            self.logger.error(
+                self.msg.get("errors.execution_info_failed", order_id=order_id)
+            )
             return None
 
         if result[0]["State"] == 5:
@@ -327,24 +272,24 @@ class Stock:
                 "%Y-%m-%d %H:%M:%S"
             )
         else:
-            logger.error(msg.get("errors.execution_info_invalid"))
-            logger.error(data)
+            self.logger.error(self.msg.get("errors.execution_info_invalid"))
+            self.logger.error(data)
             return
 
         if price is None:
-            logger.error(msg.get("errors.execution_info_invalid"))
-            logger.error(data)
+            self.logger.error(self.msg.get("errors.execution_info_invalid"))
+            self.logger.error(data)
             return
 
         msg_key = ""
-        if side == SELL_SIDE:
+        if side == SIDE_SELL:
             msg_key = "info.sell_executed"
-        elif side == BUY_SIDE:
+        elif side == SIDE_BUY:
             msg_key = "info.buy_executed"
 
         if msg_key:
-            logger.info(
-                msg.get(
+            self.logger.info(
+                self.msg.get(
                     msg_key,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
@@ -353,7 +298,7 @@ class Stock:
                 )
             )
         else:
-            logger.warning(msg.get("errors.unexpected_side_value"))
+            self.logger.warning(self.msg.get("errors.unexpected_side_value"))
 
         # 約定情報をデータベースに保存
         df_data = pd.DataFrame(
@@ -396,20 +341,20 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.sell_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
             result = -1
 
         if result == 0:
             order_id = content["OrderId"]
-            logger.info(
-                msg.get(
+            self.logger.info(
+                self.msg.get(
                     "info.sell_order_success",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
@@ -417,20 +362,20 @@ class Stock:
                 )
             )
             self.save_order(
-                side=SELL_SIDE,
+                side=SIDE_SELL,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
             )
         else:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.sell_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
 
     def execute_margin_buy_market_order_at_closing(self):
         # 引けに信用で成行の買い注文を入れる（引け返済）
@@ -441,20 +386,20 @@ class Stock:
         try:
             result = content["Result"]
         except KeyError:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.buy_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
             result = -1
 
         if result == 0:
             order_id = content["OrderId"]
-            logger.info(
-                msg.get(
+            self.logger.info(
+                self.msg.get(
                     "info.buy_order_success",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
@@ -462,26 +407,26 @@ class Stock:
                 )
             )
             self.save_order(
-                side=BUY_SIDE,
+                side=SIDE_BUY,
                 price=None,
                 qty=self.transaction_unit,
                 order_id=order_id,
             )
         else:
-            logger.error(
-                msg.get(
+            self.logger.error(
+                self.msg.get(
                     "errors.buy_order_failed",
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
             )
-            logger.error(content)
+            self.logger.error(content)
 
     def check_transaction(self):
-        if self.side == SELL_SIDE:
+        if self.side == SIDE_SELL:
             if self.buy_executed and self.sell_executed:
-                logger.info(
-                    msg.get(
+                self.logger.info(
+                    self.msg.get(
                         "info.sell_transaction_success",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -489,8 +434,8 @@ class Stock:
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
-                logger.warning(
-                    msg.get(
+                self.logger.warning(
+                    self.msg.get(
                         "errors.transaction_failed_1",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -498,8 +443,8 @@ class Stock:
                 )
                 return False
             else:
-                logger.error(
-                    msg.get(
+                self.logger.error(
+                    self.msg.get(
                         "errors.transaction_failed_2",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -507,10 +452,10 @@ class Stock:
                 )
                 return False
 
-        elif self.side == BUY_SIDE:
+        elif self.side == SIDE_BUY:
             if self.buy_executed and self.sell_executed:
-                logger.info(
-                    msg.get(
+                self.logger.info(
+                    self.msg.get(
                         "info.buy_transaction_success",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -518,8 +463,8 @@ class Stock:
                 )
                 return True
             elif self.buy_executed and not self.sell_executed:
-                logger.warning(
-                    msg.get(
+                self.logger.warning(
+                    self.msg.get(
                         "errors.transaction_failed_3",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -527,8 +472,8 @@ class Stock:
                 )
                 return False
             else:
-                logger.error(
-                    msg.get(
+                self.logger.error(
+                    self.msg.get(
                         "errors.transaction_failed_4",
                         symbol=self.symbol,
                         disp_name=self.disp_name,
@@ -537,17 +482,17 @@ class Stock:
                 return False
 
         else:
-            logger.warning(msg.get("errors.unexpected_side_value"))
+            self.logger.warning(self.msg.get("errors.unexpected_side_value"))
 
     def fetch_prices(self):
-        sell_position = self.dm.seek_execution(self.symbol, side=SELL_SIDE)
+        sell_position = self.dm.seek_execution(self.symbol, side=SIDE_SELL)
         sell_price = None
         if not sell_position.empty:
             price = sell_position["price"].item()
             qty = sell_position["qty"].item()
             sell_price = price * qty
 
-        buy_position = self.dm.seek_execution(self.symbol, side=BUY_SIDE)
+        buy_position = self.dm.seek_execution(self.symbol, side=SIDE_BUY)
         buy_price = None
         if not buy_position.empty:
             price = buy_position["price"].item()
@@ -555,3 +500,58 @@ class Stock:
             buy_price = price * qty
 
         return sell_price, buy_price
+
+
+class TradingState:
+    def __init__(self, stock: "Stock"):
+        self.stock = stock
+        self.logger = stock.logger
+        self.msg = stock.msg
+
+    def handle_polling(self):
+        raise NotImplementedError
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+
+class EntryOrderPendingState(TradingState):
+    # 状態1: 新規建て注文を出す前の状態
+
+    def handle_polling(self):
+        self.stock.handle_entry_order()
+        self.stock.set_state(EntryOrderExecutingState(self.stock))
+
+
+class EntryOrderExecutingState(TradingState):
+    # 状態2: 新規建て注文の約定を待っている状態
+
+    def handle_polling(self):
+        is_executed = self.stock.check_entry_execution()
+        if is_executed:
+            self.stock.set_state(ExitOrderPendingState(self.stock))
+
+
+class ExitOrderPendingState(TradingState):
+    # 状態3: 返済注文を出す前の状態
+
+    def handle_polling(self):
+        self.stock.handle_exit_order()
+        self.stock.set_state(ExitOrderExecutingState(self.stock))
+
+
+class ExitOrderExecutingState(TradingState):
+    # 状態4: 返済注文の約定を待っている状態
+
+    def handle_polling(self):
+        is_executed = self.stock.check_exit_execution()
+        if is_executed:
+            self.stock.set_state(TradeCompleteState(self.stock))
+
+
+class TradeCompleteState(TradingState):
+    # 状態5: 全ての取引が完了した状態
+
+    def handle_polling(self):
+        pass
