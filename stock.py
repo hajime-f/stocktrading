@@ -16,21 +16,17 @@ BUY_SIDE = 2
 
 
 class Stock:
-    def __init__(self, symbol, lib, dm, side, brand_name, exchange=1):
+    def __init__(self, symbol, lib, dm, side, brand_name, base_transaction, exchange=1):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
         self.side = side
         self.brand_name = brand_name
+        self.base_transaction = base_transaction
         self.exchange = exchange
 
-        load_dotenv()
-        self.base_transaction = os.getenv("BaseTransaction")
-
         self.time, self.price, self.volume = [], [], []
-
-        self.buy_executed = False
-        self.sell_executed = False
+        self.buy_executed, self.sell_executed = False, False
 
         self.data = pd.DataFrame()
 
@@ -318,6 +314,7 @@ class Stock:
         )
 
         # DetailsのRecTypeが8であるようなPriceとQtyを取得
+        price, qty, ex_id, ex_daytime = None, None, None, None
         if "Details" in data and isinstance(data["Details"], list):
             for detail in data["Details"]:
                 if detail.get("RecType") == 8:
@@ -332,30 +329,27 @@ class Stock:
         else:
             logger.error(msg.get("errors.execution_info_invalid"))
             logger.error(data)
+            return
 
-        if float(price).is_integer():
-            price = f"{int(price):,}"
-        if float(qty).is_integer():
-            qty = f"{int(qty):,}"
+        if price is None:
+            logger.error(msg.get("errors.execution_info_invalid"))
+            logger.error(data)
+            return
 
+        msg_key = ""
         if side == SELL_SIDE:
-            logger.info(
-                msg.get(
-                    "info.sell_executed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    price=price,
-                    qty=qty,
-                )
-            )
+            msg_key = "info.sell_executed"
         elif side == BUY_SIDE:
+            msg_key = "info.buy_executed"
+
+        if msg_key:
             logger.info(
                 msg.get(
-                    "info.buy_executed",
+                    msg_key,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
-                    price=price,
-                    qty=qty,
+                    price=f"{int(price):,}" if float(price).is_integer() else price,
+                    qty=f"{int(qty):,}" if float(qty).is_integer() else qty,
                 )
             )
         else:
@@ -547,15 +541,17 @@ class Stock:
 
     def fetch_prices(self):
         sell_position = self.dm.seek_execution(self.symbol, side=SELL_SIDE)
-        sell_price = (
-            sell_position["price"].values[0] if not sell_position.empty else None
-        )
-        if sell_price is not None:
-            sell_price = sell_price * sell_position["qty"].values[0]
+        sell_price = None
+        if not sell_position.empty:
+            price = sell_position["price"].item()
+            qty = sell_position["qty"].item()
+            sell_price = price * qty
 
         buy_position = self.dm.seek_execution(self.symbol, side=BUY_SIDE)
-        buy_price = buy_position["price"].values[0] if not buy_position.empty else None
-        if buy_price is not None:
-            buy_price = buy_price * buy_position["qty"].values[0]
+        buy_price = None
+        if not buy_position.empty:
+            price = buy_position["price"].item()
+            qty = buy_position["qty"].item()
+            buy_price = price * qty
 
         return sell_price, buy_price
