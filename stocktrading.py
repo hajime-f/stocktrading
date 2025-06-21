@@ -38,6 +38,10 @@ class StockTrading:
         # メッセージマネージャーのインスタンス化
         self.msg = MessageManager()
 
+        # 取引量を読み込み
+        load_dotenv()
+        self.base_transaction = os.getenv("BaseTransaction")
+
         # ロガーの初期化
         self.logger = getLogger(__name__)
         self._init_logger()
@@ -48,13 +52,8 @@ class StockTrading:
         # データマネージャーを初期化
         self.dm = DataManager()
 
-        # 取引量を読み込み
-        load_dotenv()
-        self.base_transaction = os.getenv("BaseTransaction")
-
     def _init_logger(self):
         # ロガーを初期化
-        load_dotenv()
         path_name = os.getenv("BaseDir")
         file_name = os.getenv("LogConfigFile")
         if file_name is None:
@@ -320,7 +319,7 @@ class StockTrading:
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
-    if Misc().check_day_type(date.today()):
+    if Misc.check_day_type(date.today()):
         print("本日は土日祝日です。プログラムを終了します。")
         sys.exit(0)
 
