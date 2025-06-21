@@ -437,8 +437,7 @@ class DataManager:
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
-    misc = Misc()
-    if misc.check_day_type(datetime.date.today()):
+    if Misc.check_day_type(datetime.date.today()):
         exit()
 
     dm = DataManager()
