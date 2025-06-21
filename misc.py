@@ -11,7 +11,7 @@ class Misc:
         pass
 
     @staticmethod
-    def check_day_type(self, date_input):
+    def check_day_type(date_input):
         """
         与えられた日付が平日、土日、祝日のいずれかを判定する。
 
@@ -47,9 +47,7 @@ class Misc:
             return 0
 
     @staticmethod
-    def count_business_days(
-        self, start_date: datetime.date, end_date: datetime.date
-    ) -> int:
+    def count_business_days(start_date: datetime.date, end_date: datetime.date) -> int:
         """
         指定された期間内の日本の営業日を数える。
         （入力はdate型、休日判定はMisc.check_day_typeを前提とする）
@@ -82,7 +80,7 @@ class Misc:
         return business_days_count
 
     @staticmethod
-    def get_next_business_day(self, date_input):
+    def get_next_business_day(date_input):
         """
         指定された日付の次の営業日（土日祝日を除く平日）を返す。
 
