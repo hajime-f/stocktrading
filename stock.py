@@ -503,17 +503,11 @@ class Stock:
 
 
 class TradingState:
-    def __init__(self, stock: "Stock"):
+    def __init__(self, stock):
         self.stock = stock
-        self.logger = stock.logger
-        self.msg = stock.msg
 
     def handle_polling(self):
         raise NotImplementedError
-
-    @property
-    def name(self):
-        return self.__class__.__name__
 
 
 class EntryOrderPendingState(TradingState):
@@ -548,6 +542,8 @@ class ExitOrderExecutingState(TradingState):
         is_executed = self.stock.check_exit_execution()
         if is_executed:
             self.stock.set_state(TradeCompleteState(self.stock))
+        else:
+            pass  # 将来的にリアルタイム処理を入れる予定（未実装）
 
 
 class TradeCompleteState(TradingState):
