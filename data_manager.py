@@ -279,11 +279,7 @@ class DataManager:
         sql_query = f"select distinct * from '{table_name}' where date = ?;"
 
         with conn:
-            try:
-                df = pd.read_sql_query(sql_query, conn, params=[target_date])
-            except pd.errors.DatabaseError as e:
-                self.logger.error(f"データベースエラー: {e}")
-                df = pd.DataFrame()
+            df = pd.read_sql_query(sql_query, conn, params=[target_date])
 
         return df
 
