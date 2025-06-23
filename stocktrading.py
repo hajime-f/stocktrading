@@ -239,12 +239,14 @@ class StockTrading:
         self.logger.info("--- 損益計算結果 ---")
         for pl in self.profit_loss.values():
             if pl[2] is not None and pl[3] is not None:
-                diff = pl[2] - pl[3]
+                diff = f"{(pl[2] - pl[3]):,.0f}"
+                sp = f"{pl[2]:,.0f}"
+                bp = f"{pl[3]:,.0f}"
                 self.logger.info(
-                    f"[yellow]{pl[0]}[/] ({pl[1]}): 売値 = {pl[2]:,.0f} 円, 買値 = {pl[3]:,.0f} 円: 損益 = {diff:,.0f} 円"
+                    f"[yellow]{pl[0]}[/] ({pl[1]}): 売値 = {sp} 円, 買値 = {bp} 円: 損益 = {diff} 円"
                 )
                 pl_sum += diff
-                list_result.append([today, pl[0], pl[1], pl[2], pl[3], diff, pl[4]])
+                list_result.append([today, pl[0], pl[1], sp, bp, diff, pl[4]])
             else:
                 self.logger.warning(
                     f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。"
