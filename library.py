@@ -3,7 +3,7 @@ import json
 import os
 import traceback
 import urllib.request
-from logging import getSelf.Logger
+from logging import getLogger
 
 import websockets
 from dotenv import load_dotenv
@@ -19,7 +19,7 @@ class Library:
 
         self.logger = getLogger(f"{__name__}.library")
         self.msg = MessageManager()
-        
+
         # APIパスワードの設定
         self.api_password = os.getenv("APIPassword_production")
         if not self.api_password:
@@ -82,7 +82,9 @@ class Library:
                             websockets.exceptions.ConnectionClosedError,
                             websockets.exceptions.ConnectionClosedOK,
                         ) as e:
-                            self.logger.error(self.msg.get("errors.connection_closed", reason=e))
+                            self.logger.error(
+                                self.msg.get("errors.connection_closed", reason=e)
+                            )
                             self.closed.set()
                             break
                         except asyncio.TimeoutError:
@@ -90,7 +92,9 @@ class Library:
                             self.closed.set()
                             break
                         except Exception as e:
-                            self.logger.error(self.msg.get("errors.connection_error", reason=e))
+                            self.logger.error(
+                                self.msg.get("errors.connection_error", reason=e)
+                            )
                             traceback.print_exc()
                             self.closed.set()
                             break
