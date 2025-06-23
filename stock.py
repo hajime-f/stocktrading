@@ -504,9 +504,6 @@ class EntryOrderState(TradingState):
     # 状態1: 新規建て注文を出す前の状態
 
     def handle_polling(self):
-        self.stock.logger.info(
-            f"{self.stock.disp_name}（{self.stock.symbol}）EntryOrderStateに遷移しました。"
-        )
         if self.stock.handle_entry_order():
             self.stock.set_state(ExitOrderState(self.stock))
 
@@ -515,20 +512,14 @@ class ExitOrderState(TradingState):
     # 状態2: 返済注文を出す前の状態
 
     def handle_polling(self):
-        self.stock.logger.info(
-            f"{self.stock.disp_name}（{self.stock.symbol}）ExitOrderStateに遷移しました。"
-        )
         if self.stock.handle_exit_order():
             self.stock.set_state(TradeCompleteState(self.stock))
-        else:
-            pass  # 将来的にリアルタイム処理を入れる予定
+
+        # 将来的にリアルタイム処理を入れる予定
 
 
 class TradeCompleteState(TradingState):
     # 状態3: 全ての取引が完了した状態
 
     def handle_polling(self):
-        self.stock.logger.info(
-            f"{self.stock.disp_name}（{self.stock.symbol}）TradeCompleteStateに遷移しました。"
-        )
         pass
