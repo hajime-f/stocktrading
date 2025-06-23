@@ -28,7 +28,7 @@ class Stock:
         self.logger = getLogger(f"{__name__}.{self.symbol}")
         self.msg = MessageManager()
 
-        self.state = EntryOrderPendingState(self)
+        self.state = EntryOrderState(self)
 
     def set_information(self):
         try:
@@ -88,9 +88,8 @@ class Stock:
             else:
                 self.execute_margin_buy_market_order_at_opening()
 
-        else:
-            # すでに注文を入れている場合、約定状況を確認する
-            self.check_execution(df_position, side=entry_side)
+        # すでに注文を入れている場合、約定状況を確認する
+        return self.check_execution(df_position, side=entry_side)
 
     def check_execution(self, df_position, side):
         # 注文の約定状況を確認し、状態フラグを更新する共通ロジック
@@ -114,12 +113,9 @@ class Stock:
                 self.sell_executed = True
             else:
                 self.buy_executed = True
+            return True
         else:
-            pass  # None が返ってきた場合の処理が未実装
-
-    def check_entry_execution(self):
-        # 新規建て注文が約定したかを確認する
-        return self.sell_executed if self.side == SIDE_SELL else self.buy_executed
+            return False
 
     def handle_exit_order(self):
         # 返済注文の処理（発注または約定確認）を行う
@@ -132,13 +128,9 @@ class Stock:
                 self.execute_margin_sell_market_order_at_closing()
             else:
                 self.execute_margin_buy_market_order_at_closing()
-        else:
-            # すでに注文を入れている場合、約定状況を確認する
-            self.check_execution(df_position, side=exit_side)
 
-    def check_exit_execution(self):
-        # 返済注文が約定したかを確認する
-        return self.buy_executed if self.side == SIDE_SELL else self.sell_executed
+        # すでに注文を入れている場合、約定状況を確認する
+        return self.check_execution(df_position, side=exit_side)
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
@@ -508,44 +500,35 @@ class TradingState:
         raise NotImplementedError
 
 
-class EntryOrderPendingState(TradingState):
+class EntryOrderState(TradingState):
     # 状態1: 新規建て注文を出す前の状態
 
     def handle_polling(self):
-        self.stock.handle_entry_order()
-        self.stock.set_state(EntryOrderExecutingState(self.stock))
+        self.stock.logger.info(
+            f"{self.stock.disp_name}（{self.stock.symbol}）EntryOrderStateに遷移しました。"
+        )
+        if self.stock.handle_entry_order():
+            self.stock.set_state(ExitOrderState(self.stock))
 
 
-class EntryOrderExecutingState(TradingState):
-    # 状態2: 新規建て注文の約定を待っている状態
-
-    def handle_polling(self):
-        is_executed = self.stock.check_entry_execution()
-        if is_executed:
-            self.stock.set_state(ExitOrderPendingState(self.stock))
-
-
-class ExitOrderPendingState(TradingState):
-    # 状態3: 返済注文を出す前の状態
+class ExitOrderState(TradingState):
+    # 状態2: 返済注文を出す前の状態
 
     def handle_polling(self):
-        self.stock.handle_exit_order()
-        self.stock.set_state(ExitOrderExecutingState(self.stock))
-
-
-class ExitOrderExecutingState(TradingState):
-    # 状態4: 返済注文の約定を待っている状態
-
-    def handle_polling(self):
-        is_executed = self.stock.check_exit_execution()
-        if is_executed:
+        self.stock.logger.info(
+            f"{self.stock.disp_name}（{self.stock.symbol}）ExitOrderStateに遷移しました。"
+        )
+        if self.stock.handle_exit_order():
             self.stock.set_state(TradeCompleteState(self.stock))
         else:
-            pass  # 将来的にリアルタイム処理を入れる予定（未実装）
+            pass  # 将来的にリアルタイム処理を入れる予定
 
 
 class TradeCompleteState(TradingState):
-    # 状態5: 全ての取引が完了した状態
+    # 状態3: 全ての取引が完了した状態
 
     def handle_polling(self):
+        self.stock.logger.info(
+            f"{self.stock.disp_name}（{self.stock.symbol}）TradeCompleteStateに遷移しました。"
+        )
         pass
