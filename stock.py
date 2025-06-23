@@ -423,7 +423,7 @@ class Stock:
                     )
                 )
                 return True
-            elif self.buy_executed and not self.sell_executed:
+            elif not self.buy_executed and self.sell_executed:
                 self.logger.warning(
                     self.msg.get(
                         "errors.transaction_failed_1",
