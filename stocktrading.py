@@ -251,8 +251,9 @@ class StockTrading:
                 self.logger.warning(
                     f"{pl[0]} ({pl[1]}): 売値・買値を特定できませんでした。"
                 )
+        pl_sum = f"{pl_sum:,.0f}"
         self.logger.info("--------------------")
-        self.logger.info(f"[red]合計損益[/]: {pl_sum:,.0f} 円")
+        self.logger.info(f"[red]合計損益[/]: {pl_sum} 円")
 
         return pl_sum, list_result
 
