@@ -169,7 +169,7 @@ class ModelManager:
         df_extract = df_result[df_result["pred"] >= 0.5].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
-        nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
