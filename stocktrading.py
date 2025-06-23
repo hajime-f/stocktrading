@@ -52,6 +52,12 @@ class StockTrading:
         # データマネージャーを初期化
         self.dm = DataManager()
 
+        # 終了コード
+        self.exit_code = 0
+
+        # 取引余力
+        self.wallet_cash = ""
+
     def _init_logger(self):
         # ロガーを初期化
         path_name = os.getenv("BaseDir")
@@ -74,15 +80,15 @@ class StockTrading:
         # 銘柄を登録する
         self.register_stocks()
 
-        # 取引余力を取得
-        wallet_cash = f"{int(self.lib.wallet_cash()):,}"
-        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=wallet_cash))
-
         # 受信関数を登録
         self.lib.register_receiver(self.receive)
 
         # Ctrl+C ハンドラーを登録
         signal.signal(signal.SIGINT, self.signal_handler)
+
+        # 取引余力を取得
+        self.wallet_cash = f"{int(self.lib.wallet_cash()):,}"
+        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=self.wallet_cash))
 
     def register_stocks(self):
         # 今回取引する銘柄リストを取得
@@ -222,6 +228,7 @@ class StockTrading:
     def signal_handler(self, sig, frame):
         self.logger.warning(self.msg.get("info.terminate"))
         self.stop_event.set()  # スレッド停止イベントを設定
+        self.exit_code = 1
 
     def display_profitloss(self):
         # 損益を表示する
@@ -266,16 +273,14 @@ class StockTrading:
         )
         self.dm.save_profit_loss(df_profit_loss)
 
-        wallet_cash = f"{int(self.lib.wallet_cash()):,}"
         result = pd.DataFrame(
-            [[date.today().strftime("%Y-%m-%d"), wallet_cash, pl_sum]],
+            [[date.today().strftime("%Y-%m-%d"), self.wallet_cash, pl_sum]],
             columns=["date", "cash", "profit_loss"],
         )
         self.dm.save_result(result)
 
     def main(self):
         threads = []
-        exit_code = 0
 
         try:
             self.setup_environment()
@@ -285,21 +290,21 @@ class StockTrading:
 
         except (ConfigurationError, APIError) as e:
             self.logger.critical(e)
-            exit_code = 1
+            self.exit_code = 1
 
         except DataProcessingError as e:
             self.logger.critical(e)
-            exit_code = 1
+            self.exit_code = 1
 
         except RuntimeError as e:
             self.logger.critical(self.msg.get("errors.thread_launch_failed", reason=e))
-            exit_code = 1
+            self.exit_code = 1
 
         except Exception as e:
             self.logger.critical(
                 self.msg.get("errors.thread_unexpected_error", reason=e), exc_info=True
             )
-            exit_code = 1
+            self.exit_code = 1
 
         finally:
             self.stop_event.set()
@@ -310,11 +315,11 @@ class StockTrading:
                 thread.join()
 
             # 結果表示
-            if exit_code == 0:
+            if self.exit_code == 0:
                 self.process_profitloss()
 
             self.logger.info(self.msg.get("info.program_end"))
-            sys.exit(exit_code)
+            sys.exit(self.exit_code)
 
 
 if __name__ == "__main__":
