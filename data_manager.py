@@ -430,25 +430,12 @@ class DataManager:
 
         return df["brand"].item() if not df.empty else None
 
-    def table_exists(self, table_name):
+    def create_table(self, create_sql):
         conn = self._get_connection()
 
         with conn:
             cursor = conn.cursor()
-            query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
-
-            cursor.execute(query, (table_name,))
-            result = cursor.fetchone()
-
-            return result is not None
-
-    def create_table(self, table_name, columns):
-        if not self.table_exists(table_name):
-            conn = self._get_connection()
-
-            with conn:
-                df_execution = pd.DataFrame(columns=columns)
-                df_execution.to_sql(table_name, conn, index=False)
+            cursor.execute(create_sql)
 
 
 if __name__ == "__main__":
@@ -459,30 +446,36 @@ if __name__ == "__main__":
     dm = DataManager()
 
     # Executionテーブルがない場合は作る
-    columns = [
-        "exec_time",
-        "recv_time",
-        "symbol",
-        "displayname",
-        "price",
-        "qty",
-        "order_id",
-        "execution_id",
-        "side",
-    ]
-    dm.create_table("Execution", columns=columns)
+    create_sql = """
+    CREATE TABLE IF NOT EXISTS Execution (
+        exec_time TEXT NOT NULL,
+        recv_time TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        displayname TEXT NOT NULL,
+        price REAL NOT NULL,
+        qty INTEGER NOT NULL,
+        order_id TEXT NOT NULL,
+        execution_id TEXT PRIMARY KEY,
+        side INTEGER NOT NULL
+    );
+    
+    """
+    dm.create_table(create_sql)
 
     # Ordersテーブルがない場合は作る
-    columns = [
-        "datetime",
-        "symbol",
-        "displayname",
-        "price",
-        "qty",
-        "order_id",
-        "side",
-    ]
-    dm.create_table("Orders", columns=columns)
+    create_sql = """
+    CREATE TABLE IF NOT EXISTS Orders (
+        datetime TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        displayname TEXT NOT NULL,
+        price REAL,
+        qty INTEGER NOT NULL,
+        order_id TEXT PRIMARY KEY,
+        side INTEGER NOT NULL
+    );
+    
+    """
+    dm.create_table(create_sql)
 
     dm.set_token()
     dm.init_stock_data()
