@@ -430,6 +430,26 @@ class DataManager:
 
         return df["brand"].item() if not df.empty else None
 
+    def table_exists(self, table_name):
+        conn = self._get_connection()
+
+        with conn:
+            cursor = conn.cursor()
+            query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
+
+            cursor.execute(query, (table_name,))
+            result = cursor.fetchone()
+
+            return result is not None
+
+    def create_table(self, table_name, columns):
+        if not self.table_exists(table_name):
+            conn = self._get_connection()
+
+            with conn:
+                df_execution = pd.DataFrame(columns=columns)
+                df_execution.to_sql(table_name, conn, index=False)
+
 
 if __name__ == "__main__":
     # 土日祝日は実行しない
@@ -437,5 +457,32 @@ if __name__ == "__main__":
         exit()
 
     dm = DataManager()
+
+    # Executionテーブルがない場合は作る
+    columns = [
+        "exec_time",
+        "recv_time",
+        "symbol",
+        "displayname",
+        "price",
+        "qty",
+        "order_id",
+        "execution_id",
+        "side",
+    ]
+    dm.create_table("Execution", columns=columns)
+
+    # Ordersテーブルがない場合は作る
+    columns = [
+        "datetime",
+        "symbol",
+        "displayname",
+        "price",
+        "qty",
+        "order_id",
+        "side",
+    ]
+    dm.create_table("Orders", columns=columns)
+
     dm.set_token()
     dm.init_stock_data()
