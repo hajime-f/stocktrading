@@ -430,12 +430,12 @@ class DataManager:
 
         return df["brand"].item() if not df.empty else None
 
-    def create_table(self, create_sql):
+    def execute_query(self, query):
         conn = self._get_connection()
 
         with conn:
             cursor = conn.cursor()
-            cursor.execute(create_sql)
+            cursor.execute(query)
 
 
 if __name__ == "__main__":
@@ -460,7 +460,7 @@ if __name__ == "__main__":
     );
     
     """
-    dm.create_table(create_sql)
+    dm.execute_query(create_sql)
 
     # Ordersテーブルがない場合は作る
     create_sql = """
@@ -475,7 +475,7 @@ if __name__ == "__main__":
     );
     
     """
-    dm.create_table(create_sql)
+    dm.execute_query(create_sql)
 
     dm.set_token()
     dm.init_stock_data()
