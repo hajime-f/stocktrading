@@ -87,9 +87,10 @@ class Stock:
                 self.execute_margin_sell_market_order_at_opening()
             else:
                 self.execute_margin_buy_market_order_at_opening()
-
-        # すでに注文を入れている場合、約定状況を確認する
-        return self.check_execution(df_position, side=entry_side)
+            return False
+        else:
+            # すでに注文を入れている場合、約定状況を確認する
+            return self.check_execution(df_position, side=entry_side)
 
     def check_execution(self, df_position, side):
         # 注文の約定状況を確認し、状態フラグを更新する共通ロジック
@@ -128,9 +129,10 @@ class Stock:
                 self.execute_margin_sell_market_order_at_closing()
             else:
                 self.execute_margin_buy_market_order_at_closing()
-
-        # すでに注文を入れている場合、約定状況を確認する
-        return self.check_execution(df_position, side=exit_side)
+            return False
+        else:
+            # すでに注文を入れている場合、約定状況を確認する
+            return self.check_execution(df_position, side=exit_side)
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
