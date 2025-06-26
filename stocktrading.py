@@ -35,12 +35,12 @@ class StockTrading:
         self.profit_loss: Dict[str, list] = {}
         self.profit_loss_lock = threading.Lock()
 
-        # メッセージマネージャーのインスタンス化
-        self.msg = MessageManager()
-
         # 取引量を読み込み
         load_dotenv()
         self.base_transaction = os.getenv("BaseTransaction")
+
+        # メッセージマネージャーのインスタンス化
+        self.msg = MessageManager()
 
         # ロガーの初期化
         self.logger = getLogger(__name__)
