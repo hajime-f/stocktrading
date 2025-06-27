@@ -8,7 +8,7 @@ from misc import MessageManager
 
 SIDE_SELL = 1
 SIDE_BUY = 2
-STOP_LOSS_RATE = 0.005
+STOP_LOSS_RATE = 0.05
 
 
 class Stock:
@@ -72,12 +72,12 @@ class Stock:
         約５分間隔で呼ばれる関数
         """
 
-        # 実際の処理は状態オブジェクトに委譲する
-        self.state.handle_polling()
-
         # データを更新する
         self.update_data()
         self.time, self.price, self.volume = [], [], []
+
+        # 実際の処理は状態オブジェクトに委譲する
+        self.state.handle_polling()
 
     def handle_entry_order(self):
         # 新規建て注文の処理（発注または約定確認）を行う
@@ -322,9 +322,7 @@ class Stock:
         content = self.lib.execute_margin_buy_market_order_at_closing(
             self.symbol, self.transaction_unit, self.exchange
         )
-        self.push_message_and_save_order(
-            content, SIDE_SELL, None, self.transaction_unit
-        )
+        self.push_message_and_save_order(content, SIDE_BUY, None, self.transaction_unit)
 
     def push_message_and_save_order(self, content, side, price, qty):
         msg_key_success = ""
@@ -332,7 +330,7 @@ class Stock:
 
         if side == SIDE_SELL:
             msg_key_success = "info.sell_order_success"
-            msg_key_failed = "errors.sell-order_failed"
+            msg_key_failed = "errors.sell_order_failed"
         elif side == SIDE_BUY:
             msg_key_success = "info.buy_order_success"
             msg_key_failed = "errors.buy_order_failed"
