@@ -173,186 +173,6 @@ class Stock:
         else:
             return False
 
-    def execute_margin_sell_market_order_at_market(self):
-        # 損切り（ロスカット）のために信用で成行の売り注文を入れる
-        content = self.lib.execute_margin_sell_market_order_at_market(
-            self.symbol, self.transaction_unit, self.exchange
-        )
-
-        try:
-            result = content["Result"]
-        except KeyError:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-            result = -1
-
-        if result == 0:
-            order_id = content["OrderId"]
-            self.logger.info(
-                self.msg.get(
-                    "info.sell_order_success",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    order_id=order_id,
-                )
-            )
-            self.save_order(
-                side=SIDE_SELL,
-                price=None,
-                qty=self.transaction_unit,
-                order_id=order_id,
-            )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-
-    def execute_margin_buy_market_order_at_market(self):
-        # 損切り（ロスカット）のために信用で成行の買い注文を入れる
-        content = self.lib.execute_margin_buy_market_order_at_market(
-            self.symbol, self.transaction_unit, self.exchange
-        )
-
-        try:
-            result = content["Result"]
-        except KeyError:
-            self.logger.error(
-                self.msg.get(
-                    "errors.buy_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-            result = -1
-
-        if result == 0:
-            order_id = content["OrderId"]
-            self.logger.info(
-                self.msg.get(
-                    "info.buy_order_success",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    order_id=order_id,
-                )
-            )
-            self.save_order(
-                side=SIDE_BUY,
-                price=None,
-                qty=self.transaction_unit,
-                order_id=order_id,
-            )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    "errors.buy_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-
-    def execute_margin_buy_market_order_at_opening(self):
-        # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
-        content = self.lib.execute_margin_buy_market_order_at_opening(
-            self.symbol, self.transaction_unit, self.exchange
-        )
-
-        try:
-            result = content["Result"]
-        except KeyError:
-            self.logger.error(
-                self.msg.get(
-                    "errors.buy_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-            result = -1
-
-        if result == 0:
-            order_id = content["OrderId"]
-            self.logger.info(
-                self.msg.get(
-                    "info.buy_order_success",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    order_id=order_id,
-                )
-            )
-            self.save_order(
-                side=SIDE_BUY,
-                price=None,
-                qty=self.transaction_unit,
-                order_id=order_id,
-            )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    "errors.buy_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-
-    def execute_margin_sell_market_order_at_opening(self):
-        # 寄付に信用で成行の売り注文を入れる（寄付売り建て）
-        content = self.lib.execute_margin_sell_market_order_at_opening(
-            self.symbol, self.transaction_unit, self.exchange
-        )
-
-        try:
-            result = content["Result"]
-        except KeyError:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-            result = -1
-
-        if result == 0:
-            order_id = content["OrderId"]
-            self.logger.info(
-                self.msg.get(
-                    "info.sell_order_success",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    order_id=order_id,
-                )
-            )
-            self.save_order(
-                side=SIDE_SELL,
-                price=None,
-                qty=self.transaction_unit,
-                order_id=order_id,
-            )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-
     def check_order_status(self, order_id):
         # 注文の約定状況を確認する
         result = self.lib.check_orders(symbol=None, side=None, order_id=order_id)
@@ -456,63 +276,73 @@ class Stock:
         )
         self.dm.save_order(df_data)
 
+    def execute_margin_sell_market_order_at_market(self):
+        # 損切り（ロスカット）のために信用で成行の売り注文を入れる
+        content = self.lib.execute_margin_sell_market_order_at_market(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+        self.push_message_and_save_order(
+            content, SIDE_SELL, None, self.transaction_unit
+        )
+
+    def execute_margin_buy_market_order_at_market(self):
+        # 損切り（ロスカット）のために信用で成行の買い注文を入れる
+        content = self.lib.execute_margin_buy_market_order_at_market(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+        self.push_message_and_save_order(content, SIDE_BUY, None, self.transaction_unit)
+
+    def execute_margin_sell_market_order_at_opening(self):
+        # 寄付に信用で成行の売り注文を入れる（寄付売り建て）
+        content = self.lib.execute_margin_sell_market_order_at_opening(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+        self.push_message_and_save_order(
+            content, SIDE_SELL, None, self.transaction_unit
+        )
+
+    def execute_margin_buy_market_order_at_opening(self):
+        # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
+        content = self.lib.execute_margin_buy_market_order_at_opening(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+        self.push_message_and_save_order(content, SIDE_BUY, None, self.transaction_unit)
+
     def execute_margin_sell_market_order_at_closing(self):
         # 引けに信用で成行の売り注文を入れる（引け返済）
         content = self.lib.execute_margin_sell_market_order_at_closing(
             self.symbol, self.transaction_unit, self.exchange
         )
-
-        try:
-            result = content["Result"]
-        except KeyError:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
-            result = -1
-
-        if result == 0:
-            order_id = content["OrderId"]
-            self.logger.info(
-                self.msg.get(
-                    "info.sell_order_success",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    order_id=order_id,
-                )
-            )
-            self.save_order(
-                side=SIDE_SELL,
-                price=None,
-                qty=self.transaction_unit,
-                order_id=order_id,
-            )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    "errors.sell_order_failed",
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
+        self.push_message_and_save_order(
+            content, SIDE_SELL, None, self.transaction_unit
+        )
 
     def execute_margin_buy_market_order_at_closing(self):
         # 引けに信用で成行の買い注文を入れる（引け返済）
         content = self.lib.execute_margin_buy_market_order_at_closing(
             self.symbol, self.transaction_unit, self.exchange
         )
+        self.push_message_and_save_order(
+            content, SIDE_SELL, None, self.transaction_unit
+        )
+
+    def push_message_and_save_order(self, content, side, price, qty):
+        msg_key_success = ""
+        msg_key_failed = ""
+
+        if side == SIDE_SELL:
+            msg_key_success = "info.sell_order_success"
+            msg_key_failed = "errors.sell-order_failed"
+        elif side == SIDE_BUY:
+            msg_key_success = "info.buy_order_success"
+            msg_key_failed = "errors.buy_order_failed"
 
         try:
             result = content["Result"]
         except KeyError:
             self.logger.error(
                 self.msg.get(
-                    "errors.buy_order_failed",
+                    msg_key_failed,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
@@ -524,22 +354,22 @@ class Stock:
             order_id = content["OrderId"]
             self.logger.info(
                 self.msg.get(
-                    "info.buy_order_success",
+                    msg_key_success,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                     order_id=order_id,
                 )
             )
             self.save_order(
-                side=SIDE_BUY,
-                price=None,
-                qty=self.transaction_unit,
+                side=side,
+                price=price,
+                qty=qty,
                 order_id=order_id,
             )
         else:
             self.logger.error(
                 self.msg.get(
-                    "errors.buy_order_failed",
+                    msg_key_failed,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
                 )
