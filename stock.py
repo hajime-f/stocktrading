@@ -8,6 +8,7 @@ from misc import MessageManager
 
 SIDE_SELL = 1
 SIDE_BUY = 2
+STOP_LOSS_RATE = 0.005
 
 
 class Stock:
@@ -24,6 +25,8 @@ class Stock:
         self.buy_executed, self.sell_executed = False, False
 
         self.data = pd.DataFrame()
+
+        self.entry_price = 0.0
 
         self.logger = getLogger(f"{__name__}.{self.symbol}")
         self.msg = MessageManager()
@@ -144,6 +147,121 @@ class Stock:
         else:
             # すでに注文を入れている場合、約定状況を確認する
             return self.check_execution(df_position, side=exit_side)
+
+    def check_stop_loss(self):
+        current_price = self.data.tail(1)["close"].item()
+        flag = False
+
+        if self.side == SIDE_SELL:
+            if current_price >= self.entry_price * (1 + STOP_LOSS_RATE):
+                flag = True
+        elif self.side == SIDE_BUY:
+            if current_price <= self.entry_price * (1 - STOP_LOSS_RATE):
+                flag = True
+
+        if flag:
+            self.logger.info(
+                self.msg.get(
+                    "info.stop_loss_triggered",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    entry_price=f"{self.entry_price:,.0f}",
+                    current_price=f"{current_price:,.0f}",
+                )
+            )
+            return True
+        else:
+            return False
+
+    def execute_margin_sell_market_order_at_market(self):
+        # 損切り（ロスカット）のために信用で成行の売り注文を入れる
+        content = self.lib.execute_margin_sell_market_order_at_market(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+
+        try:
+            result = content["Result"]
+        except KeyError:
+            self.logger.error(
+                self.msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
+            )
+            self.logger.error(content)
+            result = -1
+
+        if result == 0:
+            order_id = content["OrderId"]
+            self.logger.info(
+                self.msg.get(
+                    "info.sell_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
+            )
+            self.save_order(
+                side=SIDE_SELL,
+                price=None,
+                qty=self.transaction_unit,
+                order_id=order_id,
+            )
+        else:
+            self.logger.error(
+                self.msg.get(
+                    "errors.sell_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
+            )
+            self.logger.error(content)
+
+    def execute_margin_buy_market_order_at_market(self):
+        # 損切り（ロスカット）のために信用で成行の買い注文を入れる
+        content = self.lib.execute_margin_buy_market_order_at_market(
+            self.symbol, self.transaction_unit, self.exchange
+        )
+
+        try:
+            result = content["Result"]
+        except KeyError:
+            self.logger.error(
+                self.msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
+            )
+            self.logger.error(content)
+            result = -1
+
+        if result == 0:
+            order_id = content["OrderId"]
+            self.logger.info(
+                self.msg.get(
+                    "info.buy_order_success",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                    order_id=order_id,
+                )
+            )
+            self.save_order(
+                side=SIDE_BUY,
+                price=None,
+                qty=self.transaction_unit,
+                order_id=order_id,
+            )
+        else:
+            self.logger.error(
+                self.msg.get(
+                    "errors.buy_order_failed",
+                    disp_name=self.disp_name,
+                    symbol=self.symbol,
+                )
+            )
+            self.logger.error(content)
 
     def execute_margin_buy_market_order_at_opening(self):
         # 寄付に信用で成行の買い注文を入れる（寄付買い建て）
@@ -283,6 +401,9 @@ class Stock:
             self.logger.error(self.msg.get("errors.execution_info_invalid"))
             self.logger.error(data)
             return
+
+        # 約定価格を保持しておく
+        self.entry_price = float(price)
 
         msg_key = ""
         if side == SIDE_SELL:

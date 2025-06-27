@@ -80,6 +80,9 @@ info:
   # 約定
   sell_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の売りが約定しました。"
   buy_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の買いが約定しました。"
+
+  # ロスカット
+  stop_loss_triggered: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[red]ロスカット条件を満たしました。[/]建玉価格：[cyan]{entry_price}[/]，現在価格：[cyan]{current_price}[/]"
   
   # 注文関連
   buy_order_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]買い発注に成功しました。[/] (ID: {order_id})"
