@@ -477,5 +477,8 @@ if __name__ == "__main__":
     """
     dm.execute_query(create_sql)
 
+    # logsディレクトリがない場合は作る
+    os.makedirs("logs", exist_ok=True)
+
     dm.set_token()
     dm.init_stock_data()
