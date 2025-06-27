@@ -124,11 +124,22 @@ class Stock:
 
         df_position = self.dm.seek_position(symbol=self.symbol, side=exit_side)
         if df_position.empty:
-            # まだ注文を入れていない場合、引けでの取引を試みる
-            if exit_side == SIDE_SELL:
-                self.execute_margin_sell_market_order_at_closing()
-            else:
-                self.execute_margin_buy_market_order_at_closing()
+            # まだ注文を入れていない場合：
+            # 15:25分を過ぎている場合は引け取引の注文を入れる
+            now = datetime.now()
+            if now.hour > 15 or (now.hour == 15 and now.minute >= 25):
+                if exit_side == SIDE_SELL:
+                    self.execute_margin_sell_market_order_at_closing()
+                else:
+                    self.execute_margin_buy_market_order_at_closing()
+
+            # 損切りの要否を確認し、必要であれば損切り注文を入れる
+            elif self.check_stop_loss():
+                if exit_side == SIDE_SELL:
+                    self.execute_margin_sell_market_order_at_market()
+                else:
+                    self.execute_margin_buy_market_order_at_market()
+
             return False
         else:
             # すでに注文を入れている場合、約定状況を確認する
