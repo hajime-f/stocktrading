@@ -167,7 +167,7 @@ class ModelManager:
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
-            # verbose=0,
+            verbose=False,
         )
 
         return model
@@ -180,7 +180,7 @@ class ModelManager:
             scaler = dict_scalers[code]
 
             array_X = scaler.transform(df)
-            y_pred = model.predict(np.array([array_X]), verbose=0)
+            y_pred = model.predict(np.array([array_X]), verbose=False)
 
             list_result.append([code, brand, y_pred[0][0]])
 
@@ -189,7 +189,7 @@ class ModelManager:
         df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
-        nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
