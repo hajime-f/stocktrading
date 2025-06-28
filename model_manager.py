@@ -167,7 +167,7 @@ class ModelManager:
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
-            verbose=False,
+            # verbose=False,
         )
 
         return model
@@ -225,9 +225,17 @@ if __name__ == "__main__":
 
     for index, row in df.iterrows():
         close_price = dm.find_newest_close_price(row["code"])
-        if close_price < 10000:
+        if close_price < 8000:
             selected_indices.append(index)
     df = df.loc[selected_indices, :]
+
+    # 実験用
+    conn = sqlite3.connect(dm.db)
+    with conn:
+        df.head(50).reset_index().to_sql(
+            "Target3", conn, if_exists="append", index=False
+        )
+    # 実験用ここまで
 
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
