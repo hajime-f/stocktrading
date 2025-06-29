@@ -22,7 +22,7 @@ from stock import Stock
 class StockTrading:
     def __init__(self):
         # 定数の定義
-        self.POLLING_INTERVAL = 300  # ポーリング間隔 (秒)
+        self.POLLING_INTERVAL = 180  # ポーリング間隔 (秒)
         self.POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
 
         # スレッドを停止させるためのイベント
