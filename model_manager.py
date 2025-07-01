@@ -181,14 +181,17 @@ if __name__ == "__main__":
     # データを準備する
     dict_df, dict_close = mm.prepare_data()
 
+    # ショートモデルを学習する
     model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
     df_short = mm.predict(model, dict_df)
     df_short.loc[:, "side"] = 1
 
+    # ロングモデルを学習する
     model = mm.fit(dict_df, dict_close, per=1.005, opt_model="lstm")
     df_long = mm.predict(model, dict_df)
     df_long.loc[:, "side"] = 2
 
+    # 予測結果を統合する
     df = pd.concat([df_long, df_short])
     df = df.sort_values("pred", ascending=False).drop_duplicates(
         subset=["code"], keep="first"
@@ -199,13 +202,14 @@ if __name__ == "__main__":
 
     for index, row in df.iterrows():
         close_price = dm.find_newest_close_price(row["code"])
-        if close_price < 10000:
+        if close_price < 8000:
             selected_indices.append(index)
     df = df.loc[selected_indices, :]
 
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
 
+    # 予測値に応じて確率的に銘柄を50個サンプリング
     sampled_indices = np.random.choice(
         a=df.index,
         size=50,
