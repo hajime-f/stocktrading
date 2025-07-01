@@ -21,23 +21,12 @@ from tensorflow.keras.optimizers import Adam
 from data_manager import DataManager
 from misc import Misc
 
-pd.set_option("display.max_rows", None)
-
 
 class ModelManager:
     def __init__(self):
-        self.dm = DataManager()
-        self.window = 30
-
-        self.dict_data_for_scalers = {}
-        self.dict_data_for_learning = {}
-        self.dict_data_for_prediction = {}
-
-        self.list_stocks = self.dm.load_stock_list()
+        self.scaler = StandardScaler()
 
     def add_technical_indicators(self, df):
-        df = df.copy()
-
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
 
@@ -91,10 +80,10 @@ class ModelManager:
 
         return df
 
-    def compile_model(self, shape1, shape2, rnn_layer):
+    def compile_lstm(self, shape1, shape2):
         model = Sequential()
         model.add(InputLayer(shape=(shape1, shape2)))
-        model.add(Bidirectional(rnn_layer))
+        model.add(Bidirectional(LSTM(200)))
         model.add(Dropout(0.3))
         model.add(Dense(256, activation="relu"))
         model.add(Dropout(0.3))
@@ -108,58 +97,71 @@ class ModelManager:
 
         return model
 
-    def prepare_data(self, ratio=0.5):
-        today = datetime.date.today()
-        start_date = (today - relativedelta(months=8)).strftime("%Y-%m-%d")
+    def compile_rnn(self, shape1, shape2):
+        model = Sequential()
 
-        for code in self.list_stocks["code"]:
-            df = self.dm.load_stock_data(code, start=start_date)
+        model.add(InputLayer(shape=(shape1, shape2)))
+        model.add(Bidirectional(SimpleRNN(200)))
+        model.add(Dropout(0.3))
+        model.add(Dense(256, activation="relu"))
+        model.add(Dropout(0.3))
+        model.add(Dense(1, activation="sigmoid"))
+
+        model.compile(
+            optimizer=Adam(learning_rate=0.001),
+            loss="binary_crossentropy",
+            metrics=["accuracy", metrics.Precision(), metrics.Recall()],
+        )
+
+        return model
+
+    def fit(self, per, opt_model):
+        dm = DataManager()
+        list_stocks = dm.load_stock_list()
+
+        dict_df = {}
+        ago = datetime.date.today() - relativedelta(months=4)
+
+        # データを準備する
+        for code in list_stocks["code"]:
+            df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
             df = self.add_technical_indicators(df)
-            n_data = int(len(df) * ratio)
-            self.dict_data_for_scalers[code] = df.iloc[:n_data, :]
-            self.dict_data_for_learning[code] = df.iloc[n_data:, :]
-            self.dict_data_for_prediction[code] = df.tail(self.window)
-
-    def fit_scalers(self):
-        dict_scalers = {}
-
-        for key, df in self.dict_data_for_scalers.items():
-            scaler = StandardScaler()
-            scaler.fit(df)
-            dict_scalers[key] = scaler
-
-        return dict_scalers
-
-    def fit(self, dict_scalers, per, opt_model, window):
-        list_X, list_y = [], []
-
-        for code in self.list_stocks["code"]:
-            df = self.dict_data_for_learning[code]
-            scaler = dict_scalers[code]
-
-            array_scaled_values = scaler.transform(df)
-            df_scaled = pd.DataFrame(
-                array_scaled_values, index=df.index, columns=df.columns
+            array_std = self.scaler.fit_transform(np.array(df))
+            dict_df[f"{code}"] = pd.DataFrame(array_std)
+            dict_df[f"{code}"] = pd.concat(
+                [dict_df[f"{code}"], df["close"].reset_index(drop=True)], axis=1
             )
 
-            for i in range(len(df_scaled) - window):
-                list_X.append(df_scaled.iloc[i : i + window])
+        window = 30
+        list_X, list_y = [], []
 
-                current_close = df.iloc[i : i + window].tail(1)["close"].item()
-                future_close = df.iloc[i + window : i + window + 1]["close"].item()
+        for code in list_stocks["code"]:
+            df = dict_df[f"{code}"]
 
+            for i in range(len(df) - window):
+                df_input = df.iloc[i : i + window]
+                df_output = df.iloc[i + window : i + window + 1]
+                list_X.append(df_input.drop(columns="close"))
+
+                standard_value = df_input.tail(1)["close"].item()
                 if per > 1:
-                    flag = future_close >= current_close * per
+                    flag = df_output["close"].item() >= standard_value * per
                 elif per <= 1:
-                    flag = future_close <= current_close * per
+                    flag = df_output["close"].item() <= standard_value * per
                 list_y.append(1 if flag else 0)
 
         array_X = np.array(list_X)
         array_y = np.array(list_y)
 
         # モデルの学習
-        layer = LSTM(200) if opt_model == "lstm" else SimpleRNN(200)
-        model = self.compile_model(array_X.shape[1], array_X.shape[2], layer)
+        if opt_model == "lstm":
+            model = self.compile_lstm(array_X.shape[1], array_X.shape[2])
+        elif opt_model == "rnn":
+            model = self.compile_rnn(array_X.shape[1], array_X.shape[2])
+        else:
+            raise ValueError(
+                "不正なモデル名です。「lstm」または「rnn」を指定してください。"
+            )
         model.fit(
             array_X,
             array_y,
@@ -167,29 +169,38 @@ class ModelManager:
             epochs=30,
             validation_split=0.2,
             callbacks=[EarlyStopping(patience=3)],
-            # verbose=False,
+            verbose=0,
         )
 
         return model
 
-    def predict(self, model, dict_scalers):
+    def predict(self, model):
+        dm = DataManager()
+        list_stocks = dm.load_stock_list()
+
+        dict_df = {}
+        ago = datetime.date.today() - relativedelta(months=4)
+
+        for code in list_stocks["code"]:
+            df = dm.load_stock_data(code, start=ago.strftime("%Y-%m-%d"), end="end")
+            df = self.add_technical_indicators(df)
+            array_std = self.scaler.fit_transform(np.array(df))
+            dict_df[f"{code}"] = pd.DataFrame(array_std)
+
         list_result = []
+        window = 30
 
-        for code, brand in zip(self.list_stocks["code"], self.list_stocks["brand"]):
-            df = self.dict_data_for_prediction[code]
-            scaler = dict_scalers[code]
-
-            array_X = scaler.transform(df)
-            y_pred = model.predict(np.array([array_X]), verbose=False)
-
+        for code, brand in zip(list_stocks["code"], list_stocks["brand"]):
+            array_X = np.array(dict_df[f"{code}"].tail(window))
+            y_pred = model.predict(np.array([array_X]), verbose=0)
             list_result.append([code, brand, y_pred[0][0]])
 
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
-        # df_extract = df_result[df_result["pred"] >= 0.5].copy()
-        df_extract = df_result[df_result["pred"] >= 0.7].copy()
+        df_extract = df_result[df_result["pred"] >= 0.5].copy()
+        # df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
-        nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
@@ -199,66 +210,42 @@ class ModelManager:
 if __name__ == "__main__":
     mm = ModelManager()
 
-    # データを準備する
-    mm.prepare_data()
+    model = mm.fit(per=1.005, opt_model="lstm")
+    df_long = mm.predict(model)
+    df_long.loc[:, "side"] = 2
 
-    while True:
-        try:
-            # スケーラーを学習する
-            dict_scalers = mm.fit_scalers()
+    model = mm.fit(per=0.995, opt_model="lstm")
+    df_short = mm.predict(model)
+    df_short.loc[:, "side"] = 1
 
-            # ショートモデルを学習する
-            model = mm.fit(dict_scalers, per=0.995, opt_model="lstm", window=mm.window)
-            df_short = mm.predict(model, dict_scalers)
-            df_short.loc[:, "side"] = 1
+    df = pd.concat([df_long, df_short])
+    df = df.sort_values("pred", ascending=False).drop_duplicates(
+        subset=["code"], keep="first"
+    )
 
-            # ロングモデルを学習する
-            model = mm.fit(dict_scalers, per=1.005, opt_model="lstm", window=mm.window)
-            df_long = mm.predict(model, dict_scalers)
-            df_long.loc[:, "side"] = 2
+    dm = DataManager()
+    selected_indices = []
 
-            df = pd.concat([df_long, df_short])
-            df = df.sort_values("pred", ascending=False).drop_duplicates(
-                subset=["code"], keep="first"
-            )
+    for index, row in df.iterrows():
+        close_price = dm.find_newest_close_price(row["code"])
+        if close_price < 10000:
+            selected_indices.append(index)
+    df = df.loc[selected_indices, :]
 
-            dm = DataManager()
-            selected_indices = []
+    weights = df["pred"].to_numpy()
+    probabilities = weights / np.sum(weights)
 
-            for index, row in df.iterrows():
-                close_price = dm.find_newest_close_price(row["code"])
-                if close_price < 8000:
-                    selected_indices.append(index)
-            df = df.loc[selected_indices, :]
+    sampled_indices = np.random.choice(
+        a=df.index,
+        size=50,
+        replace=False,
+        p=probabilities,
+    )
 
-            # 実験用
-            conn = sqlite3.connect(dm.db)
-            with conn:
-                df.head(50).reset_index().to_sql(
-                    "Target3", conn, if_exists="append", index=False
-                )
-            # 実験用ここまで
-
-            weights = df["pred"].to_numpy()
-            probabilities = weights / np.sum(weights)
-
-            sampled_indices = np.random.choice(
-                a=df.index,
-                size=50,
-                replace=False,
-                p=probabilities,
-            )
-
-            df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
-            df = df.sort_values("pred", ascending=False).reset_index()
-
-            break
-
-        except ValueError as e:
-            print(f"Error occurred: {e}")
-            continue
+    df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
+    df = df.sort_values("pred", ascending=False).reset_index()
 
     conn = sqlite3.connect(dm.db)
     with conn:
-        df.to_sql("Target2", conn, if_exists="append", index=False)
-        # df.to_sql("Target3", conn, if_exists="append", index=False)
+        # df.to_sql("Target2", conn, if_exists="append", index=False)
+        df.to_sql("Target3", conn, if_exists="append", index=False)
