@@ -200,23 +200,22 @@ if __name__ == "__main__":
     dm = DataManager()
     selected_indices = []
 
+    # 高すぎる銘柄は除外する
     for index, row in df.iterrows():
         close_price = dm.find_newest_close_price(row["code"])
         if close_price < 8000:
             selected_indices.append(index)
     df = df.loc[selected_indices, :]
 
+    # 予測値に応じて確率的に銘柄を50個サンプリング
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
-
-    # 予測値に応じて確率的に銘柄を50個サンプリング
     sampled_indices = np.random.choice(
         a=df.index,
         size=50,
         replace=False,
         p=probabilities,
     )
-
     df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
     df = df.sort_values("pred", ascending=False).reset_index()
 
