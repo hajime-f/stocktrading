@@ -8,6 +8,7 @@ from datetime import date, datetime
 from logging import config, getLogger
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 import yaml
 from dotenv import load_dotenv
@@ -37,7 +38,7 @@ class StockTrading:
 
         # 取引量を読み込み
         load_dotenv()
-        self.base_transaction = os.getenv("BaseTransaction")
+        self.base_transaction = int(os.getenv("BaseTransaction"))
 
         # メッセージマネージャーのインスタンス化
         self.msg = MessageManager()
@@ -77,8 +78,13 @@ class StockTrading:
         today = date.today().strftime("%Y年%m月%d日")
         self.logger.info(self.msg.get("info.program_start", today=today))
 
+        # 取引余力を取得
+        cash = int(self.lib.wallet_cash())
+        self.wallet_cash = f"{cash:,}"
+        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=self.wallet_cash))
+        
         # 銘柄を登録する
-        self.register_stocks()
+        self.register_stocks(cash)
 
         # 受信関数を登録
         self.lib.register_receiver(self.receive)
@@ -86,22 +92,18 @@ class StockTrading:
         # Ctrl+C ハンドラーを登録
         signal.signal(signal.SIGINT, self.signal_handler)
 
-        # 取引余力を取得
-        self.wallet_cash = f"{int(self.lib.wallet_cash()):,}"
-        self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=self.wallet_cash))
-
-    def register_stocks(self):
+    def register_stocks(self, cash):
         # 今回取引する銘柄リストを取得
-        # target_stocks = dm.fetch_target()
-        target_symbols = [
-            ["2025-06-19", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
-            ["2025-06-19", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
-            ["2025-06-19", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 1],
-            ["2025-06-19", "1481", "上場インデックスファンド日本経済貢献株", 0.999, 2],
-            ["2025-06-19", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 1],
-        ]
-        columns = ["date", "code", "brand", "pred", "side"]
-        target_stocks = pd.DataFrame(target_symbols, columns=columns)
+        target_stocks = self.dm.fetch_target()
+        # target_symbols = [
+        #     ["2025-07-07", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
+        #     ["2025-07-07", "1346", "MAXIS トピックス上場投信", 0.999, 2],
+        #     ["2025-07-07", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
+        #     ["2025-07-07", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 2],
+        #     ["2025-07-07", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 2],
+        # ]
+        # columns = ["date", "code", "brand", "pred", "side"]
+        # target_stocks = pd.DataFrame(target_symbols, columns=columns)
 
         try:
             # 登録銘柄リストからすべての銘柄をいったん削除する
@@ -114,6 +116,9 @@ class StockTrading:
             self.logger.critical(e)
             sys.exit(1)
 
+        total_risk_amount = int(cash * float(os.getenv("RiskPercentage")))
+        target_stocks = self.calc_risk_amount(target_stocks, total_risk_amount)
+        
         # Stockクラスをインスタンス化して辞書に入れる
         for _, row in target_stocks.iterrows():
             symbol = row["code"]
@@ -128,6 +133,13 @@ class StockTrading:
             stock_instance.set_information()
             self.stocks[symbol] = stock_instance
 
+    def calc_risk_amount(self, target_stocks, total_risk_amount):
+        weights = target_stocks["pred"].to_numpy()
+        risk_ratio = weights / np.sum(weights)
+        
+        target_stocks["risk_amount"] = total_risk_amount * risk_ratio
+        return target_stocks
+            
     def prepare_threads(self):
         # スレッドを準備
         threads = [
