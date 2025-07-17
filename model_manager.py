@@ -167,7 +167,7 @@ class ModelManager:
         df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
         # nbd = datetime.date.today().strftime("%Y-%m-%d")
-        nbd = Misc().get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
@@ -175,6 +175,10 @@ class ModelManager:
 
 
 if __name__ == "__main__":
+    # 土日祝日は実行しない
+    if Misc.check_day_type(datetime.date.today()):
+        exit()
+
     mm = ModelManager()
 
     # データを準備する
