@@ -8,16 +8,16 @@ from misc import MessageManager
 
 SIDE_SELL = 1
 SIDE_BUY = 2
-STOP_LOSS_RATE = 0.05
 
 
 class Stock:
-    def __init__(self, symbol, lib, dm, side, brand_name, base_transaction, exchange=1):
+    def __init__(self, symbol, lib, dm, side, brand_name, risk_amount, base_transaction, exchange=1):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
         self.side = side
         self.brand_name = brand_name
+        self.risk_amount = risk_amount
         self.base_transaction = base_transaction
         self.exchange = exchange
 
@@ -38,7 +38,8 @@ class Stock:
             content = self.lib.fetch_information(self.symbol, self.exchange)
             self.disp_name = content["DisplayName"]
             self.unit = int(content["TradingUnit"])
-            self.transaction_unit = self.unit * int(self.base_transaction)
+            self.transaction_unit = self.unit * self.base_transaction
+            self.loss_margin = float(self.risk_amount / self.transaction_unit)
         except (KeyError, TypeError, ValueError, Exception) as e:
             raise DataProcessingError(
                 self.msg.get("errors.info_failed", symbol=self.symbol)
@@ -153,10 +154,10 @@ class Stock:
         flag = False
 
         if self.side == SIDE_SELL:
-            if current_price >= self.entry_price * (1 + STOP_LOSS_RATE):
+            if current_price >= (self.entry_price + self.loss_margin):
                 flag = True
         elif self.side == SIDE_BUY:
-            if current_price <= self.entry_price * (1 - STOP_LOSS_RATE):
+            if current_price <= (self.entry_price - self.loss_margin):
                 flag = True
 
         if flag:

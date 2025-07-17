@@ -95,15 +95,6 @@ class StockTrading:
     def register_stocks(self, cash):
         # 今回取引する銘柄リストを取得
         target_stocks = self.dm.fetch_target()
-        # target_symbols = [
-        #     ["2025-07-07", "1475", "iシェアーズ・コア TOPIX ETF", 0.999, 1],
-        #     ["2025-07-07", "1346", "MAXIS トピックス上場投信", 0.999, 2],
-        #     ["2025-07-07", "1592", "上場インデックス JPX日経インデックス400", 0.999, 2],
-        #     ["2025-07-07", "1586", "上場インデックス TOPIX Ex-Financials", 0.999, 2],
-        #     ["2025-07-07", "1578", "上場インデックスファンド日経225(ミニ)", 0.999, 2],
-        # ]
-        # columns = ["date", "code", "brand", "pred", "side"]
-        # target_stocks = pd.DataFrame(target_symbols, columns=columns)
 
         try:
             # 登録銘柄リストからすべての銘柄をいったん削除する
@@ -128,6 +119,7 @@ class StockTrading:
                 self.dm,
                 row["side"],
                 row["brand"],
+                row["risk_amount"],
                 self.base_transaction,
             )
             stock_instance.set_information()
