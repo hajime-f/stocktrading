@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import time
 import traceback
 import urllib.request
 from logging import getLogger
@@ -8,6 +9,7 @@ from logging import getLogger
 import websockets
 from dotenv import load_dotenv
 
+from data_manager import DataManager
 from exception import ConfigurationError, APIError
 from misc import MessageManager
 
@@ -532,3 +534,18 @@ class Library:
         url = self.base_url + "/regulations/" + str(symbol) + "@" + str(exchange)
         content = self.get_request(url)
         return True if content["RegulationsInfo"] else False
+
+
+if __name__ == "__main__":
+    dm = DataManager()
+    lib = Library()
+
+    orders = dm.load_order()
+
+    for _, row in orders.iterrows():
+        order_id = row["order_id"]
+        content = lib.cancel_order(order_id)
+        dm.delete_order(order_id)
+        time.sleep(0.3)
+    
+

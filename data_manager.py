@@ -307,18 +307,21 @@ class DataManager:
         with conn:
             data_df.to_sql("Orders", conn, if_exists="append", index=False)
 
-    def load_order(self, table_name="Orders", target_date="today"):
+    def load_order(self):
         conn = self._get_connection()
 
-        if target_date == "today":
-            target_date = datetime.datetime.now().strftime("%Y-%m-%d")
-
         with conn:
-            sql_query = f"select distinct * from '{table_name}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=[target_date])
+            sql_query = f"select distinct * from Orders where DATE(datetime) = date('now', 'localtime');"
+            df = pd.read_sql_query(sql_query, conn)
 
         return df
 
+    def delete_order(self, order_id):
+        conn = self._get_connection()
+        with conn:
+            sql_query = "delete from Orders where order_id = ?;"
+            conn.execute(sql_query, params=[order_id])        
+    
     def update_price(self, order_id, price):
         conn = self._get_connection()
         with conn:
