@@ -204,8 +204,9 @@ class StockTrading:
             # while文を抜けたときに実行する処理
 
             # 念のため最後に一度 polling しておく
-            time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
-            st.polling()
+            if not self.exit_code:
+                time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
+                st.polling()
 
             if st.check_transaction():
                 sell_price, buy_price = st.fetch_prices()

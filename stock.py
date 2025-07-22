@@ -129,9 +129,9 @@ class Stock:
         df_position = self.dm.seek_position(symbol=self.symbol, side=exit_side)
         if df_position.empty:
             # まだ注文を入れていない場合：
-            # 15:25分を過ぎている場合は引け取引の注文を入れる
+            # 15:20分を過ぎている場合は引け取引の注文を入れる
             now = datetime.now()
-            if now.hour > 15 or (now.hour == 15 and now.minute >= 25):
+            if now.hour > 15 or (now.hour == 15 and now.minute >= 20):
                 if exit_side == SIDE_SELL:
                     self.execute_margin_sell_market_order_at_closing()
                 else:
