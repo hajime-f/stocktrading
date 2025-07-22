@@ -19,6 +19,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
 from data_manager import DataManager
+from library import Library
 from misc import Misc
 
 
@@ -201,12 +202,14 @@ if __name__ == "__main__":
     )
 
     dm = DataManager()
+    lib = Library()
+    
     selected_indices = []
 
-    # 高すぎる or 安すぎる銘柄は除外する
+    # 不適切な銘柄は除外する
     for index, row in df.iterrows():
         close_price = dm.find_newest_close_price(row["code"])
-        if 700 < close_price < 6000:
+        if (700 < close_price < 6000) and not lib.examine_regulation(row["code"]):
             selected_indices.append(index)
     df = df.loc[selected_indices, :]
 

@@ -348,7 +348,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "2",  # 買い
             "CashMargin": 2,  # 新規
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 0,  # 指定なし
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -372,7 +372,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "1",  # 売り
             "CashMargin": 2,  # 新規
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 0,  # 指定なし
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -396,7 +396,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "1",  # 売り
             "CashMargin": 3,  # 返済
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 2,  # 預かり金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -421,7 +421,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "2",  # 買い
             "CashMargin": 3,  # 返済
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 2,  # 預かり金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -446,7 +446,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "1",  # 売り
             "CashMargin": 3,  # 返済
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 2,  # 預かり金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -471,7 +471,7 @@ class Library:
             "SecurityType": 1,  # 株式
             "Side": "2",  # 買い
             "CashMargin": 3,  # 返済
-            "MarginTradeType": 1,  # 制度信用
+            "MarginTradeType": 3,  # 一般信用（デイトレ）
             "DelivType": 2,  # 預かり金
             "FundType": "11",  # 信用取引
             "AccountType": 4,  # 特定口座
@@ -526,3 +526,9 @@ class Library:
         content = self.get_request(url, obj)
 
         return content
+    
+    def examine_regulation(self, symbol, exchange=1):
+
+        url = self.base_url + "/regulations/" + str(symbol) + "@" + str(exchange)
+        content = self.get_request(url)
+        return True if content["RegulationsInfo"] else False
