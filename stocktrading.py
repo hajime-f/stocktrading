@@ -1,4 +1,5 @@
 import os
+import queue
 import random
 import signal
 import sys
@@ -39,6 +40,9 @@ class StockTrading:
         # 取引量を読み込み
         load_dotenv()
         self.base_transaction = int(os.getenv("BaseTransaction"))
+
+        # スレッド間のエラー通知用キュー
+        self.error_queue = queue.Queue()
 
         # メッセージマネージャーのインスタンス化
         self.msg = MessageManager()
@@ -135,7 +139,7 @@ class StockTrading:
     def prepare_threads(self):
         # スレッドを準備
         threads = [
-            threading.Thread(target=self.run_polling, args=(st,))
+            threading.Thread(target=self.run_polling, args=(st, self.error_queue))
             for st in self.stocks.values()
         ]
         push_receiver_thread = threading.Thread(
@@ -156,6 +160,9 @@ class StockTrading:
         threads = self.prepare_threads()
 
         while True:
+            # スレッドからのエラーがないかチェックする
+            self.check_thread_errors()
+            
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
                 self.logger.info(self.msg.get("info.time_terminate"))
@@ -170,6 +177,28 @@ class StockTrading:
 
         return threads
 
+    def check_thread_errors(self):
+        # スレッドからのエラー報告キューをチェックし、エラーがあれば処理する
+        try:
+            # キューからノンブロッキングでエラー情報を取得
+            error_info = self.error_queue.get_nowait()
+            symbol = error_info["symbol"]
+            exception = error_info["exception"]
+
+            self.logger.error(
+                self.msg.get(
+                    "error.thread_critical_error", symbol=symbol, exception=exception
+                )
+            )
+
+            # エラーが発生した銘柄をアクティブなリストから除くなどの後処理
+            if symbol in self.stocks:
+                del self.stocks[symbol]
+
+        except queue.Empty:
+            # キューが空の場合は何もしない
+            pass
+
     # PUSH配信を受信した時に呼ばれる関数
     def receive(self, data: Dict):
         # 受信したデータに対応する銘柄を取得する
@@ -180,7 +209,7 @@ class StockTrading:
             self.stocks[symbol].append_data(data)
 
     # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
-    def run_polling(self, st):
+    def run_polling(self, st, error_queue):
         try:
             self.logger.info(
                 self.msg.get(
@@ -228,7 +257,8 @@ class StockTrading:
                 ),
                 exc_info=True,
             )
-            self.stop_event.set()
+            error_info = {"symbol": st.symbol, "exception": e}
+            error_queue.put(error_info)
 
         finally:
             st.dm.close()

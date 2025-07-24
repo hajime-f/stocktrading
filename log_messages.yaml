@@ -29,6 +29,7 @@ errors:
   thread_unexpected_error: "[bold red]メインスレッドで予期せぬエラーが発生しました。理由: {reason}[/]"
   push_thread_error: "[bold red]プッシュ配信スレッドでエラーが発生しました。理由: {reason}[/]"
   polling_thread_error: "[bold red]スレッド内でエラーが発生しました。理由: {reason}[/]"
+  thread_critical_error: "[bold red]銘柄コード: {symbol} のスレッドで致命的なエラーを検知しました。このスレッドを停止します。理由: {exception}[/]"
 
   # 情報が取得できない
   info_failed: "[bold red] {symbol} の情報を取得できませんでした。[/]"
