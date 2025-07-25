@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from logging import getLogger
 
 import pandas as pd
@@ -150,6 +150,10 @@ class Stock:
             return self.check_execution(df_position, side=exit_side)
 
     def check_stop_loss(self):
+        # ロスカットを判断する
+        if time(9, 0) <= datetime.now().time() <= time(9, 30):
+            return False
+        
         current_price = self.data.tail(1)["close"].item()
         flag = False
 
@@ -365,15 +369,6 @@ class Stock:
                 qty=qty,
                 order_id=order_id,
             )
-        else:
-            self.logger.error(
-                self.msg.get(
-                    msg_key_failed,
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                )
-            )
-            self.logger.error(content)
 
     def check_transaction(self):
         if self.side == SIDE_SELL:
