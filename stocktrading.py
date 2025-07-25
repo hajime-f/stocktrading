@@ -191,7 +191,7 @@ class StockTrading:
                 )
             )
 
-            # エラーが発生した銘柄をアクティブなリストから除くなどの後処理
+            # エラーが発生した銘柄をアクティブなリストから除く
             if symbol in self.stocks:
                 del self.stocks[symbol]
 
