@@ -1,19 +1,21 @@
 # 機械学習を応用した日本株の自動売買プログラム
 
 > [!CAUTION]
-> 本プログラムを使用することによって被った損害等について、制作者は一切の責任を負いません。
-> 投資はご自身の判断と責任のもとで行ってください。
+> - 本プログラムを使用することによって被った損害等について、制作者（藤田）は一切の責任を負いません。投資はご自身の判断と責任のもとで行ってください。
+> - 本プログラムから得られた投資判断は、特定銘柄の取引を推奨するものではありません。
+> - 本プログラムの使用にあたっては、コードを慎重にレビューした上で、その動作原理を熟知しておくことを推奨します。
+> - 本プログラムを使用した時点で、[ライセンス](https://github.com/hajime-f/stocktrading?tab=License-1-ov-file#readme)に同意したものとみなします。
 
 # 動作環境
 
 - Python 3.12\
 2025年3月現在において、TensorFlow が Python 3.13 に対応していないため、Python 3.12 を使用します。3.13 では動作しませんので、ご注意ください。
 - kabuステーションAPI\
-三菱UFJ eスマート証券が提供する[株取引専用のAPI](https://kabucom.github.io/kabusapi/ptal/)を使用します。証券口座の開設が別途必要です。
+三菱UFJ eスマート証券が提供する[株取引専用のAPI](https://kabucom.github.io/kabusapi/ptal/)を使用します。証券口座の開設と API の使用環境が別途必要です。
 - J-Quants API\
 日本取引所グループが提供する[株情報取得のためのAPI](https://jpx-jquants.com/)を使用します。無料プランで十分です。
 
-# 動作方法
+# 基本的な使い方
 
 ## 1. 仮想環境の作成
 
@@ -45,6 +47,7 @@ LogConfigFile=log_conf.yaml
 Email=your@mailaddress.com
 JPXPassword=YYYY
 BaseTransaction=1
+AllowableRisk=250000
 ```
 
 - APIPassword_production：三菱UFJ eスマート証券から発行される API パスワード（本番用）
@@ -55,6 +58,7 @@ BaseTransaction=1
 - Email：J-Quants API に登録したメールアドレス
 - JPXPassword：J-Quants API に登録したパスワード
 - BaseTransaction：取引単位。この値を N にすると、単元株（通常100株）x N の取引を行う。
+- AllowableRisk：許容リスク（後述）
 
 ## 4. データベースの初期化
 
