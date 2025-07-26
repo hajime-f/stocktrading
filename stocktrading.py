@@ -44,7 +44,7 @@ class StockTrading:
         # スレッド間のエラー通知用キュー
         self.error_queue = queue.Queue()
 
-        # スレッド間の最終損益報告用キューを追加
+        # 最終損益報告用キュー
         self.result_queue = queue.Queue()
 
         # ザラ場中のリアルタイム損益を監視するためのキュー
