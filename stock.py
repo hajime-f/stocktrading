@@ -20,6 +20,7 @@ class Stock:
         brand_name,
         risk_amount,
         base_transaction,
+        realtime_queue,
         exchange=1,
     ):
         self.symbol = symbol
@@ -29,6 +30,7 @@ class Stock:
         self.brand_name = brand_name
         self.risk_amount = risk_amount
         self.base_transaction = base_transaction
+        self.realtime_queue = realtime_queue
         self.exchange = exchange
 
         self.time, self.price, self.volume = [], [], []
@@ -480,10 +482,38 @@ class ExitOrderState(TradingState):
     # 状態2: 返済注文を出す前の状態
 
     def handle_polling(self):
+        # ザラ場中の未実現損益を計算し、キューに送信する
+        if self.stock.entry_price > 0 and not self.stock.data.empty:
+            try:
+                current_price = self.stock.data.tail(1)["close"].item()
+                if self.stock.side == SIDE_SELL:
+                    diff_per_share = self.stock.entry_price - current_price
+                elif self.stock.side == SIDE_BUY:
+                    diff_per_share = current_price - self.stock.entry_price
+
+                # ポジション全体の未実現損益
+                unrealized_pl = diff_per_share * self.stock.transaction_unit
+
+                # データをキューに入れる
+                update_data = {
+                    "symbol": self.stock.symbol,
+                    "unrealized_pl": unrealized_pl,
+                }
+                if self.stock.realtime_queue:
+                    self.stock.realtime_queue.put(update_data)
+
+            except Exception as e:
+                self.stock.logger.warning(
+                    self.stock.msg.get(
+                        "errors.realtime_pl_failed",
+                        symbol=self.stock.symbol,
+                        disp_name=self.stock.disp_name,
+                        exception=e,
+                    )
+                )
+
         if self.stock.handle_exit_order():
             self.stock.set_state(TradeCompleteState(self.stock))
-
-        # 将来的にリアルタイム処理を入れる予定
 
 
 class TradeCompleteState(TradingState):

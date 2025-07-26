@@ -26,6 +26,7 @@ class StockTrading:
         # 定数の定義
         self.POLLING_INTERVAL = 180  # ポーリング間隔 (秒)
         self.POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
+        self.MONITOR_INTERVAL = 3600  # リアルタイム損益の監視間隔（秒）
 
         # スレッドを停止させるためのイベント
         self.stop_event = threading.Event()
@@ -43,6 +44,12 @@ class StockTrading:
 
         # スレッド間のエラー通知用キュー
         self.error_queue = queue.Queue()
+
+        # ザラ場中のリアルタイム損益を監視するためのキュー
+        self.realtime_queue = queue.Queue()
+
+        # 各銘柄の最新の未実現損益を保持する辞書
+        self.current_pl: Dict[str, float] = {}
 
         # メッセージマネージャーのインスタンス化
         self.msg = MessageManager()
@@ -124,6 +131,7 @@ class StockTrading:
                 row["brand"],
                 row["risk_amount"],
                 self.base_transaction,
+                realtime_queue=self.realtime_queue,
             )
             stock_instance.set_information()
             self.stocks[symbol] = stock_instance
@@ -158,9 +166,17 @@ class StockTrading:
         # スレッドを準備
         threads = self.prepare_threads()
 
+        # 監視時間を初期化
+        last_monitor_time = time.time()
+
         while True:
             # スレッドからのエラーがないかチェックする
             self.check_thread_errors()
+
+            # ザラ場中の損益をモニタリング
+            if time.time() - last_monitor_time >= self.MONITOR_INTERVAL:
+                self.monitor_realtime_pl()
+                last_monitor_time = time.time()
 
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
@@ -197,6 +213,21 @@ class StockTrading:
         except queue.Empty:
             # キューが空の場合は何もしない
             pass
+
+    def monitor_realtime_pl(self):
+        # リアルタイム損益キューを処理し、途中経過を表示する
+        while not self.realtime_queue.empty():
+            try:
+                update = self.realtime_queue.get_nowait()
+                self.current_pl[update["symbol"]] = update["unrealized_pl"]
+            except queue.Empty:
+                break
+
+        if not self.current_pl:
+            return
+
+        total_pl = sum(self.current_pl.values())
+        self.logger.info(self.msg.get("info.realtime_pl", total_pl=f"{total_pl:,.0f}"))
 
     # PUSH配信を受信した時に呼ばれる関数
     def receive(self, data: Dict):

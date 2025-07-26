@@ -33,6 +33,7 @@ errors:
 
   # 情報が取得できない
   info_failed: "[bold red] {symbol} の情報を取得できませんでした。[/]"
+  realtime_pl_failed: "[red]{disp_name}（{symbol}）：リアルタイム損益の計算中にエラーが発生しました。理由: {exception}[/]"
 
   # 不正な値
   unexpected_side_value: "[red]side が 1（sell）/ 2（buy）以外の値をとっています。[/]"
@@ -89,3 +90,6 @@ info:
   buy_order_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]買い発注に成功しました。[/] (ID: {order_id})"
   sell_order_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]売り発注に成功しました。[/] (ID: {order_id})"
   order_status_check: "[cyan]{disp_name} ({symbol}) の注文状態を確認します...[/]"
+
+  # 情報
+  realtime_pl: "未実現損益: [bold cyan]{total_pl}[/bold cyan] 円"
