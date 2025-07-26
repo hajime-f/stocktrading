@@ -23,57 +23,32 @@ from stock import Stock
 
 class StockTrading:
     def __init__(self):
-        # 定数の定義
-        self.POLLING_INTERVAL = 180  # ポーリング間隔 (秒)
-        self.POLLING_INTERVAL_VARIATION = 30  # ポーリング間隔の変動幅 (秒)
-        self.MONITOR_INTERVAL = 3600  # リアルタイム損益の監視間隔（秒）
+        # 定数や環境変数を読み込む
+        self._load_config()
 
-        # スレッドを停止させるためのイベント
-        self.stop_event = threading.Event()
+        # ロガーの初期化
+        self._init_logger()
 
-        # 銘柄データを保持する辞書
-        self.stocks: Dict[str, Stock] = {}
+        # # スレッド関連のイベントやキューを初期化する
+        self._init_threading_components()
 
-        # 損益を保持する辞書
-        self.profit_loss: Dict[str, list] = {}
+        # 外部ライブラリを初期化する
+        self._init_services()
 
-        # 取引量を読み込み
+        # クラスの状態を保持する変数を初期化する
+        self._init_state()
+
+    def _load_config(self):
+        # 定数や環境変数を読み込む
+        self.POLLING_INTERVAL = 180
+        self.POLLING_INTERVAL_VARIATION = 30
+        self.MONITOR_INTERVAL = 3600
         load_dotenv()
         self.base_transaction = int(os.getenv("BaseTransaction"))
 
-        # スレッド間のエラー通知用キュー
-        self.error_queue = queue.Queue()
-
-        # 最終損益報告用キュー
-        self.result_queue = queue.Queue()
-
-        # ザラ場中のリアルタイム損益を監視するためのキュー
-        self.realtime_queue = queue.Queue()
-
-        # 各銘柄の最新の未実現損益を保持する辞書
-        self.current_pl: Dict[str, float] = {}
-
-        # メッセージマネージャーのインスタンス化
-        self.msg = MessageManager()
-
-        # ロガーの初期化
-        self.logger = getLogger(__name__)
-        self._init_logger()
-
-        # 株ライブラリを初期化
-        self.lib = Library()
-
-        # データマネージャーを初期化
-        self.dm = DataManager()
-
-        # 終了コード
-        self.exit_code = 0
-
-        # 取引余力
-        self.wallet_cash = ""
-
     def _init_logger(self):
         # ロガーを初期化
+        self.logger = getLogger(__name__)
         path_name = os.getenv("BaseDir")
         file_name = os.getenv("LogConfigFile")
         if file_name is None:
@@ -86,6 +61,27 @@ class StockTrading:
         except FileNotFoundError:
             self.logger.critical(self.msg.get("errors.file_not_found", path=path_name))
             sys.exit(1)
+
+    def _init_threading_components(self):
+        # スレッド関連のイベントやキューを初期化する
+        self.stop_event = threading.Event()
+        self.error_queue = queue.Queue()
+        self.result_queue = queue.Queue()
+        self.realtime_queue = queue.Queue()
+
+    def _init_services(self):
+        # 外部ライブラリを初期化する
+        self.msg = MessageManager()
+        self.lib = Library()
+        self.dm = DataManager()
+
+    def _init_state(self):
+        # クラスの状態を保持する変数を初期化する
+        self.stocks: Dict[str, Stock] = {}
+        self.profit_loss: Dict[str, list] = {}
+        self.current_pl: Dict[str, float] = {}
+        self.exit_code = 0
+        self.wallet_cash = ""
 
     def setup_environment(self):
         today = date.today().strftime("%Y年%m月%d日")
