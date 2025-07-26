@@ -11,7 +11,17 @@ SIDE_BUY = 2
 
 
 class Stock:
-    def __init__(self, symbol, lib, dm, side, brand_name, risk_amount, base_transaction, exchange=1):
+    def __init__(
+        self,
+        symbol,
+        lib,
+        dm,
+        side,
+        brand_name,
+        risk_amount,
+        base_transaction,
+        exchange=1,
+    ):
         self.symbol = symbol
         self.lib = lib
         self.dm = dm
@@ -153,7 +163,7 @@ class Stock:
         # ロスカットを判断する
         if time(9, 0) <= datetime.now().time() <= time(9, 30):
             return False
-        
+
         current_price = self.data.tail(1)["close"].item()
         flag = False
 

@@ -75,8 +75,8 @@ info:
   push_thread_end: "[green]プッシュ配信の受信を終了します。[/]"
   
   # 取引成功
-  sell_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]寄付で売って引けで買うことに成功しました。[/]"
-  buy_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]寄付で買って引けで売ることに成功しました。[/]"
+  sell_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]売買が完結しました。[/]"
+  buy_transaction_success: "[yellow]{disp_name}[/]（[cyan]{symbol}[/]）：[blue]売買が完結しました。[/]"
   
   # 約定
   sell_executed: "[yellow]{disp_name}[/]（[cyan]{symbol}）[/]：[cyan]{price}[/] 円で [cyan]{qty}[/] 株の売りが約定しました。"

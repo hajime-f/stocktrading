@@ -83,12 +83,11 @@ class StockTrading:
         self.logger.info(self.msg.get("info.program_start", today=today))
 
         # 取引余力を取得
-        cash = int(self.lib.wallet_cash())
-        self.wallet_cash = f"{cash:,}"
+        self.wallet_cash = f"{int(self.lib.wallet_cash()):,}"
         self.logger.info(self.msg.get("info.wallet_cash", wallet_cash=self.wallet_cash))
-        
+
         # 銘柄を登録する
-        self.register_stocks(cash)
+        self.register_stocks()
 
         # 受信関数を登録
         self.lib.register_receiver(self.receive)
@@ -96,7 +95,7 @@ class StockTrading:
         # Ctrl+C ハンドラーを登録
         signal.signal(signal.SIGINT, self.signal_handler)
 
-    def register_stocks(self, cash):
+    def register_stocks(self):
         # 今回取引する銘柄リストを取得
         target_stocks = self.dm.fetch_target()
 
@@ -111,9 +110,9 @@ class StockTrading:
             self.logger.critical(e)
             sys.exit(1)
 
-        total_risk_amount = int(cash * float(os.getenv("RiskPercentage")))
+        total_risk_amount = self.base_transaction * int(os.getenv("AllowableRisk"))
         target_stocks = self.calc_risk_amount(target_stocks, total_risk_amount)
-        
+
         # Stockクラスをインスタンス化して辞書に入れる
         for _, row in target_stocks.iterrows():
             symbol = row["code"]
@@ -132,10 +131,10 @@ class StockTrading:
     def calc_risk_amount(self, target_stocks, total_risk_amount):
         weights = target_stocks["pred"].to_numpy()
         risk_ratio = weights / np.sum(weights)
-        
+
         target_stocks["risk_amount"] = total_risk_amount * risk_ratio
         return target_stocks
-            
+
     def prepare_threads(self):
         # スレッドを準備
         threads = [
@@ -162,7 +161,7 @@ class StockTrading:
         while True:
             # スレッドからのエラーがないかチェックする
             self.check_thread_errors()
-            
+
             now = datetime.now()
             if now.hour > 15 or (now.hour == 15 and now.minute >= 30):
                 self.logger.info(self.msg.get("info.time_terminate"))
