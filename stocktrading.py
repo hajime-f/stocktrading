@@ -36,7 +36,6 @@ class StockTrading:
 
         # 損益を保持する辞書
         self.profit_loss: Dict[str, list] = {}
-        self.profit_loss_lock = threading.Lock()
 
         # 取引量を読み込み
         load_dotenv()
@@ -44,6 +43,9 @@ class StockTrading:
 
         # スレッド間のエラー通知用キュー
         self.error_queue = queue.Queue()
+
+        # スレッド間の最終損益報告用キューを追加
+        self.result_queue = queue.Queue()
 
         # ザラ場中のリアルタイム損益を監視するためのキュー
         self.realtime_queue = queue.Queue()
@@ -146,7 +148,9 @@ class StockTrading:
     def prepare_threads(self):
         # スレッドを準備
         threads = [
-            threading.Thread(target=self.run_polling, args=(st, self.error_queue))
+            threading.Thread(
+                target=self.run_polling, args=(st, self.error_queue, self.result_queue)
+            )
             for st in self.stocks.values()
         ]
         push_receiver_thread = threading.Thread(
@@ -195,7 +199,7 @@ class StockTrading:
     def check_thread_errors(self):
         # スレッドからのエラー報告キューをチェックし、エラーがあれば処理する
         try:
-            # キューからノンブロッキングでエラー情報を取得
+            # キューからエラー情報を取得
             error_info = self.error_queue.get_nowait()
             symbol = error_info["symbol"]
             exception = error_info["exception"]
@@ -209,6 +213,8 @@ class StockTrading:
             # エラーが発生した銘柄をアクティブなリストから除く
             if symbol in self.stocks:
                 del self.stocks[symbol]
+            if symbol in self.current_pl:
+                del self.current_pl[symbol]
 
         except queue.Empty:
             # キューが空の場合は何もしない
@@ -238,8 +244,24 @@ class StockTrading:
         if symbol in self.stocks:
             self.stocks[symbol].append_data(data)
 
+    def process_final_pl_queue(self):
+        # 最終損益キューを処理して、結果をself.profit_lossに格納
+        while not self.result_queue.empty():
+            try:
+                pl_data = self.result_queue.get_nowait()
+                symbol = pl_data["symbol"]
+                self.profit_loss[symbol] = [
+                    pl_data["disp_name"],
+                    pl_data["symbol"],
+                    pl_data["sell_price"],
+                    pl_data["buy_price"],
+                    pl_data["side"],
+                ]
+            except queue.Empty:
+                break
+
     # 約５分間隔でstockクラスのpolling関数を呼ぶ関数
-    def run_polling(self, st, error_queue):
+    def run_polling(self, st, error_queue, result_queue):
         try:
             self.logger.info(
                 self.msg.get(
@@ -269,14 +291,14 @@ class StockTrading:
 
             if st.check_transaction():
                 sell_price, buy_price = st.fetch_prices()
-                with self.profit_loss_lock:
-                    self.profit_loss[st.symbol] = [
-                        st.disp_name,
-                        st.symbol,
-                        sell_price,
-                        buy_price,
-                        st.side,
-                    ]
+                pl_data = {
+                    "disp_name": st.disp_name,
+                    "symbol": st.symbol,
+                    "sell_price": sell_price,
+                    "buy_price": buy_price,
+                    "side": st.side,
+                }
+                result_queue.put(pl_data)
 
         except Exception as e:
             self.logger.critical(
@@ -386,6 +408,9 @@ class StockTrading:
             # すべてのスレッドが終了するのを待つ
             for thread in threads:
                 thread.join()
+
+            # スレッドからの最終損益報告をチェック
+            self.process_final_pl_queue()
 
             # 結果表示
             if self.exit_code == 0:
