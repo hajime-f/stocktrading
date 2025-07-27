@@ -267,13 +267,13 @@ class StockTrading:
             last_polling_time = time.time()
 
             while not self.stop_event.is_set():
-                if time.time() - last_polling_time >= self.POLLING_INTERVAL:
-                    time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
+                elapsed_time = time.time() - last_polling_time
 
+                if elapsed_time >= self.POLLING_INTERVAL:
+                    time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
                     if self.stop_event.is_set():
                         break
-
-                    st.polling()
+                    st.polling(elapsed_time)
                     last_polling_time = time.time()
 
                 time.sleep(1)
@@ -283,7 +283,7 @@ class StockTrading:
             # 念のため最後に一度 polling しておく
             if not self.exit_code:
                 time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
-                st.polling()
+                st.polling(time.time() - last_polling_time)
 
             if st.check_transaction():
                 sell_price, buy_price = st.fetch_prices()
@@ -345,10 +345,7 @@ class StockTrading:
 
         return pl_sum, list_result
 
-    def process_profitloss(self):
-        # 損益を表示する
-        pl_sum, list_result = self.display_profitloss()
-
+    def process_profitloss(self, pl_sum, list_result):
         # 損益を記録
         df_profit_loss = pd.DataFrame(
             list_result,
@@ -410,7 +407,8 @@ class StockTrading:
 
             # 結果表示
             if self.exit_code == 0:
-                self.process_profitloss()
+                pl_sum, list_result = self.display_profitloss()
+                self.process_profitloss(pl_sum, list_result)
 
             self.logger.info(self.msg.get("info.program_end"))
             sys.exit(self.exit_code)

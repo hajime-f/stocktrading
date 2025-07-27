@@ -3,7 +3,7 @@ from logging import getLogger
 
 import pandas as pd
 
-from exception import DataProcessingError
+from exception import DataProcessingError, UnexpectedOrderCountError
 from misc import MessageManager
 
 SIDE_SELL = 1
@@ -80,9 +80,9 @@ class Stock:
         # 状態を切り替えるメソッド
         self.state = new_state
 
-    def polling(self):
+    def polling(self, dt: float):
         """
-        約５分間隔で呼ばれる関数
+        一定時間間隔で呼ばれる関数
         """
 
         # データを更新する
@@ -90,7 +90,7 @@ class Stock:
         self.time, self.price, self.volume = [], [], []
 
         # 実際の処理は状態オブジェクトに委譲する
-        self.state.handle_polling()
+        self.state.handle_polling(dt)
 
     def handle_entry_order(self):
         # 新規建て注文の処理（発注または約定確認）を行う
@@ -119,7 +119,7 @@ class Stock:
             self.logger.critical(
                 self.msg.get(error_key, disp_name=self.disp_name, symbol=self.symbol)
             )
-            raise DataProcessingError
+            raise UnexpectedOrderCountError
 
         order_id = df_position["order_id"].values[0]
         execution_data = self.check_order_status(order_id)
@@ -232,12 +232,12 @@ class Stock:
         else:
             self.logger.error(self.msg.get("errors.execution_info_invalid"))
             self.logger.error(data)
-            return
+            raise DataProcessingError
 
         if price is None:
             self.logger.error(self.msg.get("errors.execution_info_invalid"))
             self.logger.error(data)
-            return
+            raise DataProcessingError
 
         # 約定価格を保持しておく
         self.entry_price = float(price)
@@ -466,14 +466,14 @@ class TradingState:
     def __init__(self, stock):
         self.stock = stock
 
-    def handle_polling(self):
+    def handle_polling(self, dt: float):
         raise NotImplementedError
 
 
 class EntryOrderState(TradingState):
     # 状態1: 新規建て注文を出す前の状態
 
-    def handle_polling(self):
+    def handle_polling(self, dt: float):
         if self.stock.handle_entry_order():
             self.stock.set_state(ExitOrderState(self.stock))
 
@@ -481,7 +481,7 @@ class EntryOrderState(TradingState):
 class ExitOrderState(TradingState):
     # 状態2: 返済注文を出す前の状態
 
-    def handle_polling(self):
+    def handle_polling(self, dt: float):
         # ザラ場中の未実現損益を計算し、キューに送信する
         if self.stock.entry_price > 0 and not self.stock.data.empty:
             try:
@@ -519,5 +519,5 @@ class ExitOrderState(TradingState):
 class TradeCompleteState(TradingState):
     # 状態3: 全ての取引が完了した状態
 
-    def handle_polling(self):
+    def handle_polling(self, dt: float):
         pass
