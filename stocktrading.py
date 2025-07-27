@@ -198,11 +198,15 @@ class StockTrading:
             # キューからエラー情報を取得
             error_info = self.error_queue.get_nowait()
             symbol = error_info["symbol"]
+            disp_name = error_info["disp_name"]
             exception = error_info["exception"]
 
             self.logger.error(
                 self.msg.get(
-                    "error.thread_critical_error", symbol=symbol, exception=exception
+                    "error.thread_critical_error",
+                    symbol=symbol,
+                    disp_name=disp_name,
+                    exception=exception,
                 )
             )
 
@@ -305,7 +309,11 @@ class StockTrading:
                 ),
                 exc_info=True,
             )
-            error_info = {"symbol": st.symbol, "exception": e}
+            error_info = {
+                "symbol": st.symbol,
+                "disp_name": st.disp_name,
+                "exception": e,
+            }
             error_queue.put(error_info)
 
         finally:
