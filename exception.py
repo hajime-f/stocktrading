@@ -12,3 +12,7 @@ class APIError(StockTradingError):
 
 class DataProcessingError(StockTradingError):
     pass
+
+
+class UnexpectedOrderCountError(StockTradingError):
+    pass
