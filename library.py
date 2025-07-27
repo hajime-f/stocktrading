@@ -528,12 +528,16 @@ class Library:
         content = self.get_request(url, obj)
 
         return content
-    
-    def examine_regulation(self, symbol, exchange=1):
 
+    def examine_regulation(self, symbol, exchange=1):
         url = self.base_url + "/regulations/" + str(symbol) + "@" + str(exchange)
         content = self.get_request(url)
-        return True if content["RegulationsInfo"] else False
+
+        try:
+            return True if content["RegulationsInfo"] else False
+        except KeyError:
+            print(symbol)
+            return True
 
 
 if __name__ == "__main__":
@@ -547,5 +551,3 @@ if __name__ == "__main__":
         content = lib.cancel_order(order_id)
         dm.delete_order(order_id)
         time.sleep(0.3)
-    
-

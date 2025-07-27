@@ -180,6 +180,9 @@ if __name__ == "__main__":
     if Misc.check_day_type(datetime.date.today()):
         exit()
 
+    dm = DataManager()
+    lib = Library()
+
     mm = ModelManager()
 
     # データを準備する
@@ -201,9 +204,6 @@ if __name__ == "__main__":
         subset=["code"], keep="first"
     )
 
-    dm = DataManager()
-    lib = Library()
-    
     selected_indices = []
 
     # 不適切な銘柄は除外する
