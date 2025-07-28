@@ -3,10 +3,9 @@ import datetime
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-
 from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import (
@@ -28,7 +27,7 @@ class Validation:
         self.df_stock_list = self.dm.load_stock_list()
 
         self.train_split_ratio = 0.8
-        self.threshold = 0.5
+        self.threshold = 0.8
         self.window = 30
 
     def add_technical_indicators(self, df):
@@ -92,12 +91,12 @@ class Validation:
         model.add(Dropout(0.3))
         model.add(Dense(256, activation="relu"))
         model.add(Dropout(0.3))
-        model.add(Dense(1, activation="sigmoid"))
+        model.add(Dense(3, activation="softmax"))
 
         model.compile(
             optimizer=Adam(learning_rate=0.001),
-            loss="binary_crossentropy",
-            metrics=["accuracy", metrics.Precision(), metrics.Recall()],
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"],
         )
 
         return model
@@ -110,7 +109,7 @@ class Validation:
         dict_df_close = {}
 
         today = datetime.date.today()
-        start = (today - relativedelta(months=4)).strftime("%Y-%m-%d")
+        start = (today - relativedelta(months=8)).strftime("%Y-%m-%d")
 
         for code in self.df_stock_list["code"]:
             df = self.dm.load_stock_data(code, start=start)
@@ -132,35 +131,20 @@ class Validation:
 
         return dict_df_learn, dict_df_test, dict_df_close
 
-    def compose_sequences(self, dict_df, dict_df_close, per):
-        list_X, list_y = [], []
-        window = self.window
-
-        for code in self.df_stock_list["code"]:
-            df = dict_df[code]
-            cl = dict_df_close[code]
-
-            for i in range(len(df) - window + 1):
-                window_X = df.iloc[i : i + window]
-                list_X.append(window_X)
-
-                last_date_of_window = window_X.index[-1]
-                loc = cl.index.get_loc(last_date_of_window)
-
-                current_close = cl.iloc[loc]
-                future_close = cl.iloc[loc + 1]
-
-                label = self.create_label(current_close, future_close, per)
-                list_y.append(label)
-
-        X, y = np.array(list_X), np.array(list_y)
-        return X, y
-
     def create_label(self, current_price, future_price, per):
-        if per > 1:
-            return 1 if future_price >= current_price * per else 0
-        elif per <= 1:
-            return 1 if future_price <= current_price * per else 0
+        price_change_ratio = (future_price - current_price) / current_price
+
+        if price_change_ratio >= per:
+            return 2  # 上昇
+        elif price_change_ratio <= -per:
+            return 0  # 下落
+        else:
+            return 1  # 横ばい
+
+        # if per > 1:
+        #     return 1 if future_price >= current_price * per else 0
+        # elif per <= 1:
+        #     return 1 if future_price <= current_price * per else 0
 
     def fit(self, dict_df_learn, dict_df_close, per):
         list_X_train, list_y_train = [], []
@@ -171,10 +155,9 @@ class Validation:
             df_scaled = dict_df_learn[code]
             df_close = dict_df_close[code]
 
-            stock_X, stock_y = [], []
-            for i in range(len(df_scaled) - window):
+            X, y = [], []
+            for i in range(len(df_scaled) - window + 1):
                 window_X = df_scaled.iloc[i : i + window]
-                stock_X.append(window_X)
 
                 last_date_of_window = window_X.index[-1]
                 loc = df_close.index.get_loc(last_date_of_window)
@@ -182,13 +165,15 @@ class Validation:
                 current_close = df_close.iloc[loc]
                 future_close = df_close.iloc[loc + 1]
                 label = self.create_label(current_close, future_close, per)
-                stock_y.append(label)
 
-            split_index = int(len(stock_X) * self.train_split_ratio)
-            list_X_train.extend(stock_X[:split_index])
-            list_y_train.extend(stock_y[:split_index])
-            list_X_val.extend(stock_X[split_index:])
-            list_y_val.extend(stock_y[split_index:])
+                X.append(window_X)
+                y.append(label)
+
+            split_index = int(len(X) * self.train_split_ratio)
+            list_X_train.extend(X[:split_index])
+            list_y_train.extend(y[:split_index])
+            list_X_val.extend(X[split_index:])
+            list_y_val.extend(y[split_index:])
 
         X_train, y_train = np.array(list_X_train), np.array(list_y_train)
         X_val, y_val = np.array(list_X_val), np.array(list_y_val)
@@ -210,7 +195,7 @@ class Validation:
     def predict(self, model, dict_df_test, dict_df_close, per):
         list_result = []
 
-        for code in self.df_stock_list["code"]:
+        for code in dict_df_test.keys():
             df = dict_df_test[code]
             cl = dict_df_close[code]
 
@@ -218,7 +203,7 @@ class Validation:
             array_X = np.array(window_X)
 
             y_pred = model.predict(np.array([array_X]), verbose=0)
-            pred = 1 if y_pred >= self.threshold else 0
+            pred = np.argmax(y_pred, axis=1).item()
 
             last_date_of_window = window_X.index[-1]
             loc = cl.index.get_loc(last_date_of_window)
@@ -234,7 +219,7 @@ class Validation:
 
 if __name__ == "__main__":
     val = Validation()
-    per = 1.005
+    per = 0.01
 
     # データの準備
     dict_df_learn, dict_df_test, dict_df_close = val.prepare_data()
@@ -249,7 +234,10 @@ if __name__ == "__main__":
     answer = df_result["answer"]
 
     report = classification_report(
-        answer, pred, target_names=["Negative(0)", "Positive(1)"]
+        answer,
+        pred,
+        target_names=["Negative(0)", "Neutral(1)", "Positive(2)"],
+        labels=[0, 1, 2],
     )
 
     print(report)
