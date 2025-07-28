@@ -5,6 +5,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
+from sklearn.utils import shuffle
 
 from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
@@ -26,6 +27,8 @@ class Validation:
         self.dm = DataManager()
         self.df_stock_list = self.dm.load_stock_list()
 
+        self.train_split_ratio = 0.8
+        self.threshold = 0.5
         self.window = 30
 
     def add_technical_indicators(self, df):
@@ -102,47 +105,32 @@ class Validation:
     def prepare_data(self):
         scaler = StandardScaler()
 
-        dict_df_train = {}
-        dict_df_val = {}
+        dict_df_learn = {}
         dict_df_test = {}
         dict_df_close = {}
 
         today = datetime.date.today()
-        start = (today - relativedelta(months=8)).strftime("%Y-%m-%d")
+        start = (today - relativedelta(months=4)).strftime("%Y-%m-%d")
 
         for code in self.df_stock_list["code"]:
             df = self.dm.load_stock_data(code, start=start)
             df = self.add_technical_indicators(df)
 
-            df_tmp = df.iloc[:-2]
-            split_index = int(len(df_tmp) * 0.7)
-
-            # 学習データ
-            df_train = df_tmp.iloc[:split_index]
-            scaler.fit(df_train)
-            dict_df_train[code] = pd.DataFrame(
-                scaler.transform(df_train),
-                index=df_train.index,
-            )
-
-            # 検証データ
-            df_val = df_tmp.iloc[split_index:]
-            dict_df_val[code] = pd.DataFrame(
-                scaler.transform(df_val),
-                index=df_val.index,
-            )
-
-            # テストデータ
+            df_learn = df.iloc[:-2]
             df_test = df.iloc[:-1].tail(self.window)
-            dict_df_test[code] = pd.DataFrame(
-                scaler.transform(df_test),
-                index=df_test.index,
-            )
-
-            # 答え
             dict_df_close[code] = df["close"]
 
-        return dict_df_train, dict_df_val, dict_df_test, dict_df_close
+            train_split_index = int(len(df_learn) * self.train_split_ratio)
+            scaler.fit(df_learn.iloc[:train_split_index])
+
+            dict_df_learn[code] = pd.DataFrame(
+                scaler.transform(df_learn), index=df_learn.index
+            )
+            dict_df_test[code] = pd.DataFrame(
+                scaler.transform(df_test), index=df_test.index
+            )
+
+        return dict_df_learn, dict_df_test, dict_df_close
 
     def compose_sequences(self, dict_df, dict_df_close, per):
         list_X, list_y = [], []
@@ -174,9 +162,38 @@ class Validation:
         elif per <= 1:
             return 1 if future_price <= current_price * per else 0
 
-    def fit(self, dict_df_train, dict_df_val, dict_df_close, per):
-        X_train, y_train = self.compose_sequences(dict_df_train, dict_df_close, per)
-        X_val, y_val = self.compose_sequences(dict_df_val, dict_df_close, per)
+    def fit(self, dict_df_learn, dict_df_close, per):
+        list_X_train, list_y_train = [], []
+        list_X_val, list_y_val = [], []
+        window = self.window
+
+        for code in dict_df_learn.keys():
+            df_scaled = dict_df_learn[code]
+            df_close = dict_df_close[code]
+
+            stock_X, stock_y = [], []
+            for i in range(len(df_scaled) - window):
+                window_X = df_scaled.iloc[i : i + window]
+                stock_X.append(window_X)
+
+                last_date_of_window = window_X.index[-1]
+                loc = df_close.index.get_loc(last_date_of_window)
+
+                current_close = df_close.iloc[loc]
+                future_close = df_close.iloc[loc + 1]
+                label = self.create_label(current_close, future_close, per)
+                stock_y.append(label)
+
+            split_index = int(len(stock_X) * self.train_split_ratio)
+            list_X_train.extend(stock_X[:split_index])
+            list_y_train.extend(stock_y[:split_index])
+            list_X_val.extend(stock_X[split_index:])
+            list_y_val.extend(stock_y[split_index:])
+
+        X_train, y_train = np.array(list_X_train), np.array(list_y_train)
+        X_val, y_val = np.array(list_X_val), np.array(list_y_val)
+
+        X_train, y_train = shuffle(X_train, y_train, random_state=42)
 
         model = self.compile_model(X_train.shape[1], X_train.shape[2])
         model.fit(
@@ -201,7 +218,7 @@ class Validation:
             array_X = np.array(window_X)
 
             y_pred = model.predict(np.array([array_X]), verbose=0)
-            pred = 1 if y_pred >= 0.5 else 0
+            pred = 1 if y_pred >= self.threshold else 0
 
             last_date_of_window = window_X.index[-1]
             loc = cl.index.get_loc(last_date_of_window)
@@ -220,10 +237,10 @@ if __name__ == "__main__":
     per = 1.005
 
     # データの準備
-    dict_df_train, dict_df_val, dict_df_test, dict_df_close = val.prepare_data()
+    dict_df_learn, dict_df_test, dict_df_close = val.prepare_data()
 
     # モデルの学習
-    model = val.fit(dict_df_train, dict_df_val, dict_df_close, per)
+    model = val.fit(dict_df_learn, dict_df_close, per)
 
     # モデルの予測
     df_result = val.predict(model, dict_df_test, dict_df_close, per)
