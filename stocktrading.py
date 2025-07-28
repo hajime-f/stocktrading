@@ -42,7 +42,7 @@ class StockTrading:
         # 定数や環境変数を読み込む
         self.POLLING_INTERVAL = 180
         self.POLLING_INTERVAL_VARIATION = 30
-        self.MONITOR_INTERVAL = 3600
+        self.MONITOR_INTERVAL = 1800
         load_dotenv()
         self.base_transaction = int(os.getenv("BaseTransaction"))
 
@@ -286,7 +286,7 @@ class StockTrading:
 
             # 念のため最後に一度 polling しておく
             if not self.exit_code:
-                time.sleep(random.uniform(0, self.POLLING_INTERVAL_VARIATION))
+                time.sleep(random.uniform(10, self.POLLING_INTERVAL_VARIATION))
                 st.polling(time.time() - last_polling_time)
 
             if st.check_transaction():
