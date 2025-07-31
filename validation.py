@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import (
     LSTM,
@@ -37,6 +36,7 @@ class Validation:
         # 移動平均線を追加する
         df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
+        df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
         # MACDを追加する
         df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
@@ -104,9 +104,9 @@ class Validation:
     def prepare_data(self):
         scaler = StandardScaler()
 
-        dict_df_learn = {}
-        dict_df_test = {}
-        dict_df_close = {}
+        dict_df_learn = {}  # 学習用
+        dict_df_test = {}  # テスト用
+        dict_df_close = {}  # 答え
 
         today = datetime.date.today()
         start = (today - relativedelta(months=8)).strftime("%Y-%m-%d")
@@ -140,11 +140,6 @@ class Validation:
             return 0  # 下落
         else:
             return 1  # 横ばい
-
-        # if per > 1:
-        #     return 1 if future_price >= current_price * per else 0
-        # elif per <= 1:
-        #     return 1 if future_price <= current_price * per else 0
 
     def fit(self, dict_df_learn, dict_df_close, per):
         list_X_train, list_y_train = [], []
@@ -219,7 +214,7 @@ class Validation:
 
 if __name__ == "__main__":
     val = Validation()
-    per = 0.01
+    per = 0.005
 
     # データの準備
     dict_df_learn, dict_df_test, dict_df_close = val.prepare_data()
@@ -233,6 +228,7 @@ if __name__ == "__main__":
     pred = df_result["pred"]
     answer = df_result["answer"]
 
+    # 結果の評価
     report = classification_report(
         answer,
         pred,
