@@ -3,7 +3,7 @@ from logging import getLogger
 
 import pandas as pd
 
-from exception import DataProcessingError, UnexpectedOrderCountError
+from exception import DataProcessingError, UnexpectedOrderCountError, APIError
 from misc import MessageManager
 
 SIDE_SELL = 1
@@ -363,7 +363,7 @@ class Stock:
                 )
             )
             self.logger.error(content)
-            result = -1
+            raise APIError
 
         if result == 0:
             order_id = content["OrderId"]
