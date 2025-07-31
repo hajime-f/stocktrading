@@ -40,7 +40,7 @@ class StockTrading:
 
     def _load_config(self):
         # 定数や環境変数を読み込む
-        self.POLLING_INTERVAL = 180
+        self.POLLING_INTERVAL = 30
         self.POLLING_INTERVAL_VARIATION = 30
         self.MONITOR_INTERVAL = 1800
         load_dotenv()
@@ -203,7 +203,7 @@ class StockTrading:
 
             self.logger.error(
                 self.msg.get(
-                    "error.thread_critical_error",
+                    "errors.thread_critical_error",
                     symbol=symbol,
                     disp_name=disp_name,
                     exception=exception,
