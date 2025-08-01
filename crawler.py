@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     symbols = [
         [p[1], p[2], p[3], p[4], p[5]]
-        for p in dm.fetch_target(table_name="Target2").values.tolist()
+        for p in dm.fetch_target(table_name="Target").values.tolist()
     ]
     list_data = []
 
@@ -101,4 +101,4 @@ if __name__ == "__main__":
 
     total_pl = df["change"].sum()
     print(f"{int(total_price * 100):,} 円かけて {int(total_pl * 100):,} 円")
-    dm.save_profit_loss(df, table_name="ProfitLoss2")
+    # dm.save_profit_loss(df, table_name="ProfitLoss3")
