@@ -5,16 +5,10 @@ import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 from tensorflow.keras import metrics
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import (
-    LSTM,
-    Bidirectional,
-    Dense,
-    Dropout,
-    InputLayer,
-    SimpleRNN,
-)
+from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Dropout, InputLayer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
@@ -28,6 +22,10 @@ class ModelManager:
         self.dm = DataManager()
         self.df_stock_list = self.dm.load_stock_list()
 
+        self.lib = Library()
+
+        self.train_split_ratio = 0.8
+        self.threshold = 0.5
         self.window = 30
 
     def add_technical_indicators(self, df):
@@ -37,6 +35,7 @@ class ModelManager:
         # 移動平均線を追加する
         df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
+        df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
         # MACDを追加する
         df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
@@ -84,10 +83,10 @@ class ModelManager:
 
         return df
 
-    def compile_model(self, shape1, shape2, rnn_layer):
+    def compile_model(self, shape1, shape2):
         model = Sequential()
         model.add(InputLayer(shape=(shape1, shape2)))
-        model.add(Bidirectional(rnn_layer))
+        model.add(Bidirectional(LSTM(200)))
         model.add(Dropout(0.3))
         model.add(Dense(256, activation="relu"))
         model.add(Dropout(0.3))
@@ -103,128 +102,167 @@ class ModelManager:
 
     def prepare_data(self):
         scaler = StandardScaler()
-        dict_df = {}
-        dict_close = {}
+
+        dict_df_learn = {}  # 学習用
+        dict_df_test = {}  # テスト用
+        dict_df_close = {}  # 答え
 
         today = datetime.date.today()
-        ago = (today - relativedelta(months=4)).strftime("%Y-%m-%d")
+        start = (today - relativedelta(months=6)).strftime("%Y-%m-%d")
 
         for code in self.df_stock_list["code"]:
-            df = self.dm.load_stock_data(code, start=ago, end="end")
+            df = self.dm.load_stock_data(code, start=start)
             df = self.add_technical_indicators(df)
-            dict_df[code] = pd.DataFrame(scaler.fit_transform(df))
-            dict_close[code] = df["close"]
 
-        return dict_df, dict_close
+            df_learn = df.iloc[:-1]
+            df_test = df.tail(self.window)
+            dict_df_close[code] = df["close"]
 
-    def fit(self, dict_df, dict_close, per, opt_model):
-        list_X, list_y = [], []
+            train_split_index = int(len(df_learn) * self.train_split_ratio)
+            scaler.fit(df_learn.iloc[:train_split_index])
+
+            dict_df_learn[code] = pd.DataFrame(
+                scaler.transform(df_learn), index=df_learn.index
+            )
+            dict_df_test[code] = pd.DataFrame(
+                scaler.transform(df_test), index=df_test.index
+            )
+
+        return dict_df_learn, dict_df_test, dict_df_close
+
+    def fit(self, dict_df_learn, dict_df_close, per):
+        list_X_train, list_y_train = [], []
+        list_X_val, list_y_val = [], []
         window = self.window
 
-        for code in self.df_stock_list["code"]:
-            df = dict_df[code]
-            cl = dict_close[code]
+        for code in dict_df_learn.keys():
+            df_scaled = dict_df_learn[code]
+            df_close = dict_df_close[code]
 
-            for i in range(len(df) - window):
-                list_X.append(df.iloc[i : i + window])
+            X, y = [], []
+            for i in range(len(df_scaled) - window + 1):
+                window_X = df_scaled.iloc[i : i + window]
 
-                current_close = cl.iloc[i : i + window].tail(1).item()
-                future_close = cl.iloc[i + window : i + window + 1].item()
+                last_date_of_window = window_X.index[-1]
+                loc = df_close.index.get_loc(last_date_of_window)
 
-                if per > 1:
-                    flag = future_close >= current_close * per
-                elif per <= 1:
-                    flag = future_close <= current_close * per
-                list_y.append(1 if flag else 0)
+                current_close = df_close.iloc[loc]
+                future_close = df_close.iloc[loc + 1]
+                label = self.create_label(current_close, future_close, per)
 
-        array_X = np.array(list_X)
-        array_y = np.array(list_y)
+                X.append(window_X)
+                y.append(label)
 
-        # モデルの学習
-        layer = LSTM(200) if opt_model == "lstm" else SimpleRNN(200)
-        model = self.compile_model(array_X.shape[1], array_X.shape[2], layer)
+            split_index = int(len(X) * self.train_split_ratio)
+            list_X_train.extend(X[:split_index])
+            list_y_train.extend(y[:split_index])
+            list_X_val.extend(X[split_index:])
+            list_y_val.extend(y[split_index:])
+
+        X_train, y_train = np.array(list_X_train), np.array(list_y_train)
+        X_val, y_val = np.array(list_X_val), np.array(list_y_val)
+
+        X_train, y_train = shuffle(X_train, y_train, random_state=42)
+
+        model = self.compile_model(X_train.shape[1], X_train.shape[2])
         model.fit(
-            array_X,
-            array_y,
+            X_train,
+            y_train,
             batch_size=128,
             epochs=30,
-            validation_split=0.2,
+            validation_data=(X_val, y_val),
             callbacks=[EarlyStopping(patience=3)],
-            verbose=0,
         )
 
         return model
 
-    def predict(self, model, dict_df):
-        list_result = []
-        window = self.window
+    def create_label(self, current_close, future_close, per):
+        if per > 1:
+            flag = future_close >= current_close * per
+        elif per <= 1:
+            flag = future_close <= current_close * per
+        return 1 if flag else 0
 
-        for code, brand in zip(self.df_stock_list["code"], self.df_stock_list["brand"]):
-            array_X = np.array(dict_df[code].tail(window))
+    def predict(self, model, dict_df_test, per):
+        list_result = []
+
+        for code in dict_df_test.keys():
+            close_price = self.dm.find_newest_close_price(code)
+            if not (700 < close_price < 5500):
+                continue
+
+            array_X = np.array(dict_df_test[code])
             y_pred = model.predict(np.array([array_X]), verbose=0)
+
+            df = self.df_stock_list
+            brand = df[df["code"] == code]["brand"].iloc[0]
+
             list_result.append([code, brand, y_pred[0][0]])
 
-        df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
-        df_extract = df_result[df_result["pred"] >= 0.7].copy()
+        result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
+        return result
 
-        # nbd = datetime.date.today().strftime("%Y-%m-%d")
+    def get_candidate(self, df_long, df_short):
+        df_long = df_long[df_long["pred"] >= self.threshold].copy()
+        df_short = df_short[df_short["pred"] >= self.threshold].copy()
+
+        df_long.loc[:, "side"] = 2
+        df_short.loc[:, "side"] = 1
+
+        df = pd.concat([df_long, df_short])
+        df = df.sort_values("pred", ascending=False).drop_duplicates(
+            subset=["code"], keep="first"
+        )
+
+        selected_indices = []
+        for index, row in df.iterrows():
+            if not self.lib.examine_regulation(row["code"]):
+                selected_indices.append(index)
+        df = df.loc[selected_indices, :]
+
+        weights = df["pred"].to_numpy()
+        probabilities = weights / np.sum(weights)
+        sampled_indices = np.random.choice(
+            a=df.index,
+            size=50,
+            replace=False,
+            p=probabilities,
+        )
+        df = df.loc[sampled_indices, ["code", "brand", "pred", "side"]]
+        df = df.sort_values("pred", ascending=False).reset_index()
+
         nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
-        df_extract.loc[:, "date"] = nbd
-        df_extract = df_extract[["date", "code", "brand", "pred"]]
+        df.loc[:, "date"] = nbd
+        df = df[["date", "code", "brand", "pred", "side"]]
 
-        return df_extract
+        return df
+
+    def save_result(self, df):
+        conn = sqlite3.connect(self.dm.db)
+        with conn:
+            df.to_sql("Target2", conn, if_exists="append", index=False)
 
 
 if __name__ == "__main__":
-    # 土日祝日は実行しない
-    if Misc.check_day_type(datetime.date.today()):
-        exit()
-
-    dm = DataManager()
-    lib = Library()
-
     mm = ModelManager()
 
-    # データを準備する
-    dict_df, dict_close = mm.prepare_data()
+    # データの準備
+    dict_df_learn, dict_df_test, dict_df_close = mm.prepare_data()
 
-    # ショートモデルを学習する
-    model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
-    df_short = mm.predict(model, dict_df)
-    df_short.loc[:, "side"] = 1
+    # ロングモデルの学習
+    long_model = mm.fit(dict_df_learn, dict_df_close, 1.005)
 
-    # ロングモデルを学習する
-    model = mm.fit(dict_df, dict_close, per=1.005, opt_model="lstm")
-    df_long = mm.predict(model, dict_df)
-    df_long.loc[:, "side"] = 2
+    # ロングモデルの予測
+    df_long = mm.predict(long_model, dict_df_test, 1.005)
 
-    # 予測結果を統合する
-    df = pd.concat([df_long, df_short])
-    df = df.sort_values("pred", ascending=False).drop_duplicates(
-        subset=["code"], keep="first"
-    )
+    # ショートモデルの学習
+    short_model = mm.fit(dict_df_learn, dict_df_close, 0.995)
 
-    selected_indices = []
+    # ショートモデルの予測
+    df_short = mm.predict(short_model, dict_df_test, 0.995)
 
-    # 不適切な銘柄は除外する
-    for index, row in df.iterrows():
-        close_price = dm.find_newest_close_price(row["code"])
-        if (700 < close_price < 6000) and not lib.examine_regulation(row["code"]):
-            selected_indices.append(index)
-    df = df.loc[selected_indices, :]
+    # 最終候補を得る
+    df = mm.get_candidate(df_long, df_short)
 
-    # 予測値に応じて確率的に銘柄を50個サンプリング
-    weights = df["pred"].to_numpy()
-    probabilities = weights / np.sum(weights)
-    sampled_indices = np.random.choice(
-        a=df.index,
-        size=50,
-        replace=False,
-        p=probabilities,
-    )
-    df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
-    df = df.sort_values("pred", ascending=False).reset_index()
-
-    conn = sqlite3.connect(dm.db)
-    with conn:
-        df.to_sql("Target", conn, if_exists="append", index=False)
+    # 結果を保存する
+    mm.save_result(df)
