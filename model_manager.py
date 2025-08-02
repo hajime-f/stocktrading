@@ -39,6 +39,12 @@ class ModelManager:
         df["MA25"] = df["close"].rolling(window=25).mean()
         # df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
+        # 対数変換する
+        df["log_close"] = np.log(df["close"])
+
+        # 差分を取る
+        df["diff"] = df["close"].diff()
+
         # # MACDを追加する
         # df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
         # df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
@@ -324,6 +330,7 @@ if __name__ == "__main__":
 
     # # 特徴量の重要度を評価
     # mm.evaluate_feature_importance(dict_df_learn, dict_df_close, 1.005)
+    # breakpoint()
 
     # ロングモデルの学習
     long_model = mm.fit(dict_df_learn, dict_df_close, 1.005)
