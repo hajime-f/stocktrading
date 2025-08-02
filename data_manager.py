@@ -9,8 +9,8 @@ import pandas as pd
 import requests
 import yfinance as yf
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
 
+from config_manager import cm
 from misc import Misc
 
 
@@ -21,9 +21,8 @@ class DataManager:
         for _ in range(n_symbols):
             self.data.append([])
 
-        load_dotenv()
-        self.base_dir = os.getenv("BaseDir")
-        self.db = f"{self.base_dir}/stock_database.db"
+        self.base_dir = cm.get("directory.base_dir")
+        self.db = f"{self.base_dir}/{cm.get('database.name')}"
         self.thread_local = threading.local()
 
         self.base_url = "https://api.jquants.com/v1"
@@ -96,9 +95,8 @@ class DataManager:
         """
 
         # .envファイルから環境変数を読み込む
-        load_dotenv()
-        email = os.getenv("Email")
-        password = os.getenv("JPXPassword")
+        email = cm.get("api.jpx.email")
+        password = cm.get("api.jpx.password")
 
         # リフレッシュトークンを得る
         data = {"mailaddress": f"{email}", "password": f"{password}"}
@@ -320,8 +318,8 @@ class DataManager:
         conn = self._get_connection()
         with conn:
             sql_query = "delete from Orders where order_id = ?;"
-            conn.execute(sql_query, params=[order_id])        
-    
+            conn.execute(sql_query, params=[order_id])
+
     def update_price(self, order_id, price):
         conn = self._get_connection()
         with conn:

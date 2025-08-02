@@ -1,14 +1,13 @@
 import asyncio
 import json
-import os
 import time
 import traceback
 import urllib.request
 from logging import getLogger
 
 import websockets
-from dotenv import load_dotenv
 
+from config_manager import cm
 from data_manager import DataManager
 from exception import ConfigurationError, APIError
 from misc import MessageManager
@@ -16,26 +15,23 @@ from misc import MessageManager
 
 class Library:
     def __init__(self):
-        # .envファイルから環境変数を読み込む
-        load_dotenv()
-
         self.logger = getLogger(f"{__name__}.library")
         self.msg = MessageManager()
 
         # APIパスワードの設定
-        self.api_password = os.getenv("APIPassword_production")
+        self.api_password = cm.get("api.kabu_station.api_password")
         if not self.api_password:
             self.logger.critical(self.msg.get("errors.api_not_found"))
             raise ConfigurationError
 
         # IPアドレスの設定
-        self.ip_address = os.getenv("IPAddress")
+        self.ip_address = cm.get("api.kabu_station.ip_address")
         if not self.ip_address:
             self.logger.critical(self.msg.get("errors.ip_address_not_found"))
             raise ConfigurationError
 
         # ポート番号の設定
-        self.port = os.getenv("Port")
+        self.port = cm.get("api.kabu_station.port")
         if not self.port:
             self.logger.critical(self.msg.get("errors.port_not_found"))
             raise ConfigurationError

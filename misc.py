@@ -5,6 +5,8 @@ from logging import Formatter, LogRecord
 import jpholiday
 import yaml
 
+from config_manager import cm
+
 
 class Misc:
     def __init__(self):
@@ -130,7 +132,7 @@ class StripRichFormatter(Formatter):
 
 
 class MessageManager:
-    def __init__(self, file_path="log_messages.yaml"):
+    def __init__(self, file_path=cm.get("config.log_messages")):
         try:
             with open(file_path, "rt", encoding="utf-8") as f:
                 self._messages = yaml.safe_load(f)

@@ -4,14 +4,14 @@ api:
     port: ${Port}
     api_password: ${APIPassword_production}
   jpx:
-    email: ${EMAIL}
+    email: ${Email}
     password: ${JPXPassword}
 
 directory:
   base_dir: ${BaseDir}
     
 database:
-  path: "stock_database.db"
+  name: "stock_database.db"
 
 config:
   log_conf_file: "log_conf.yaml"
