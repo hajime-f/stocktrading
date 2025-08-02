@@ -56,7 +56,7 @@ class Library:
 
         # Websocketの設定
         self.ws_uri = f"ws://{self.ip_address}:{self.port}/kabusapi/websocket"
-        self.timeout_sec = 36000
+        self.timeout_sec = cm.get("api.kabu_station.timeout_sec")
         self.closed = asyncio.Event()
 
     def register_receiver(self, func):

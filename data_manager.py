@@ -25,7 +25,7 @@ class DataManager:
         self.db = f"{self.base_dir}/{cm.get('database.name')}"
         self.thread_local = threading.local()
 
-        self.base_url = "https://api.jquants.com/v1"
+        self.base_url = cm.get("api.jpx.base_url")
 
     def close(self):
         if hasattr(self.thread_local, "conn"):
@@ -278,25 +278,6 @@ class DataManager:
 
         with conn:
             df = pd.read_sql_query(sql_query, conn, params=[target_date])
-
-        return df
-
-    def save_model_names(self, data_df):
-        conn = self._get_connection()
-        with conn:
-            data_df.to_sql("Models", conn, if_exists="replace", index=False)
-
-    def load_model_list(self):
-        conn = self._get_connection()
-        with conn:
-            df = pd.read_sql_query("select * from Models;", conn)
-
-        return df
-
-    def load_aggregate(self):
-        conn = self._get_connection()
-        with conn:
-            df = pd.read_sql_query("select * from Aggregate;", conn)
 
         return df
 

@@ -3,9 +3,11 @@ api:
     ip_address: ${IPAddress}
     port: ${Port}
     api_password: ${APIPassword_production}
+    timeout_sec: 36000
   jpx:
     email: ${Email}
     password: ${JPXPassword}
+    base_url: "https://api.jquants.com/v1"
 
 directory:
   base_dir: ${BaseDir}
