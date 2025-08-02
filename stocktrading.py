@@ -1,4 +1,3 @@
-import os
 import queue
 import random
 import signal
@@ -12,8 +11,8 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 import yaml
-from dotenv import load_dotenv
 
+from config_manager import cm
 from data_manager import DataManager
 from exception import APIError, ConfigurationError, DataProcessingError
 from library import Library
@@ -40,17 +39,16 @@ class StockTrading:
 
     def _load_config(self):
         # 定数や環境変数を読み込む
-        self.POLLING_INTERVAL = 30
-        self.POLLING_INTERVAL_VARIATION = 30
-        self.MONITOR_INTERVAL = 1800
-        load_dotenv()
-        self.base_transaction = int(os.getenv("BaseTransaction"))
+        self.POLLING_INTERVAL = cm.get("trading.polling_interval")
+        self.POLLING_INTERVAL_VARIATION = cm.get("trading.polling_interval_variation")
+        self.MONITOR_INTERVAL = cm.get("trading.monitor_interval")
+        self.base_transaction = cm.get("trading.base_transaction")
 
     def _init_logger(self):
         # ロガーを初期化
         self.logger = getLogger(__name__)
-        path_name = os.getenv("BaseDir")
-        file_name = os.getenv("LogConfigFile")
+        path_name = cm.get("directory.base_dir")
+        file_name = cm.get("config.log_conf_file")
         if file_name is None:
             self.logger.critical(self.msg.get("errors.env_not_found", env_file=".env"))
             sys.exit(1)
@@ -115,7 +113,8 @@ class StockTrading:
             self.logger.critical(e)
             sys.exit(1)
 
-        total_risk_amount = self.base_transaction * int(os.getenv("AllowableRisk"))
+        allowable_risk = int(cm.get("trading.allowable_risk"))
+        total_risk_amount = self.base_transaction * allowable_risk
         target_stocks = self.calc_risk_amount(target_stocks, total_risk_amount)
 
         # Stockクラスをインスタンス化して辞書に入れる

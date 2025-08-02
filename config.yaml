@@ -1,0 +1,32 @@
+api:
+  kabu_station:
+    ip_address: ${IPAddress}
+    port: ${Port}
+    api_password: ${APIPassword_production}
+  jpx:
+    email: ${EMAIL}
+    password: ${JPXPassword}
+
+directory:
+  base_dir: ${BaseDir}
+    
+database:
+  path: "stock_database.db"
+
+config:
+  log_conf_file: "log_conf.yaml"
+  log_messages: "log_messages.yaml"
+
+trading:
+  base_transaction: ${BaseTransaction}
+  allowable_risk: ${AllowableRisk}
+  polling_interval: 30
+  polling_interval_variation: 30
+  monitor_interval: 1800
+  base_transaction: 1
+  allowable_risk: 50000
+
+model:
+  window_size: 30
+  train_split_ratio: 0.8
+  threshold: 0.6
