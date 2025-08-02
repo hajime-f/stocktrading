@@ -30,22 +30,19 @@ class ModelManager:
         self.threshold = 0.5
         self.window = 30
 
-        plt.rcParams["font.family"] = "Hiragino Sans"
-        plt.rcParams["font.sans-serif"] = ["Hiragino Sans"]
-
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
         df.set_index("date", inplace=True)
 
         # 移動平均線を追加する
-        df["MA5"] = df["close"].rolling(window=5).mean()
+        # df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
-        df["volume_MA20"] = df["volume"].rolling(window=20).mean()
+        # df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
-        # MACDを追加する
-        df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
-        df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
-        df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
+        # # MACDを追加する
+        # df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
+        # df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
+        # df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
 
         # ボリンジャーバンドを追加する
         sma20 = df["close"].rolling(window=20).mean()
@@ -64,24 +61,24 @@ class ModelManager:
         df_shift = df.shift(1)
         df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
 
-        # 始値と終値の差を追加する
-        df["trunk"] = df["open"] - df["close"]
+        # # 始値と終値の差を追加する
+        # df["trunk"] = df["open"] - df["close"]
 
         # 移動平均線乖離率を追加する
-        df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
+        # df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
         df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
 
-        # MACDの乖離率を追加する
-        df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
+        # # MACDの乖離率を追加する
+        # df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
 
-        # RSIの乖離率を追加する
-        df["RSI_rate"] = (df["RSI"] - 50) / 50
+        # # RSIの乖離率を追加する
+        # df["RSI_rate"] = (df["RSI"] - 50) / 50
 
         # ボリンジャーバンドの乖離率を追加する
         df["Upper_rate"] = (df["close"] - df["Upper"]) / df["Upper"]
 
-        # 移動平均の差を追加する
-        df["MA_diff"] = df["MA5"] - df["MA25"]
+        # # 移動平均の差を追加する
+        # df["MA_diff"] = df["MA5"] - df["MA25"]
 
         # nan を削除
         df = df.dropna()
@@ -200,9 +197,8 @@ class ModelManager:
         fig, ax = plt.subplots(figsize=(10, 12))
         ax.barh(y=df_plot_data.index, width=df_plot_data.values)
 
-        ax.set_title("XGBoostによる特徴量の重要度（集計版）")
-        ax.set_xlabel("重要度 (Importance)")
-        ax.set_ylabel("特徴量 (Feature)")
+        ax.set_xlabel("Importance")
+        ax.set_ylabel("Feature")
         plt.tight_layout()
         plt.show()
 
