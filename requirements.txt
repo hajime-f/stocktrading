@@ -17,3 +17,4 @@ keras
 jinja2
 python-dateutil
 PyYAML
+xgboost

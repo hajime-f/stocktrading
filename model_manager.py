@@ -3,6 +3,8 @@ import sqlite3
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import xgboost as xgb
 from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -27,6 +29,9 @@ class ModelManager:
         self.train_split_ratio = 0.8
         self.threshold = 0.5
         self.window = 30
+
+        plt.rcParams["font.family"] = "Hiragino Sans"
+        plt.rcParams["font.sans-serif"] = ["Hiragino Sans"]
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -122,13 +127,84 @@ class ModelManager:
             scaler.fit(df_learn.iloc[:train_split_index])
 
             dict_df_learn[code] = pd.DataFrame(
-                scaler.transform(df_learn), index=df_learn.index
+                scaler.transform(df_learn),
+                index=df_learn.index,
+                columns=df_learn.columns,
             )
             dict_df_test[code] = pd.DataFrame(
-                scaler.transform(df_test), index=df_test.index
+                scaler.transform(df_test),
+                index=df_test.index,
+                columns=df_test.columns,
             )
 
         return dict_df_learn, dict_df_test, dict_df_close
+
+    def evaluate_feature_importance(self, dict_df_learn, dict_df_close, per):
+        list_X, list_y = [], []
+        window = self.window
+
+        original_cols = list(dict_df_learn.values())[0].columns
+
+        for code in dict_df_learn.keys():
+            df_scaled = dict_df_learn[code]
+            df_close = dict_df_close[code]
+
+            for i in range(len(df_scaled) - window + 1):
+                window_X = df_scaled.iloc[i : i + window]
+
+                last_date_of_window = window_X.index[-1]
+                loc = df_close.index.get_loc(last_date_of_window)
+
+                current_close = df_close.iloc[loc]
+                future_close = df_close.iloc[loc + 1]
+                label = self.create_label(current_close, future_close, per)
+
+                list_X.append(window_X.to_numpy())
+                list_y.append(label)
+
+        X = np.array(list_X)
+        y = np.array(list_y)
+
+        n_samples, n_timesteps, n_features = X.shape
+        X_reshaped = X.reshape((n_samples, n_timesteps * n_features))
+
+        xgb_model = xgb.XGBClassifier(
+            objective="binary:logistic",
+            eval_metric="logloss",
+            use_label_encoder=False,
+            random_state=42,
+        )
+        xgb_model.fit(X_reshaped, y)
+
+        feature_names = [
+            f"{col}_t-{i}" for i in range(window - 1, -1, -1) for col in original_cols
+        ]
+
+        importances = xgb_model.feature_importances_
+        df_importance = pd.DataFrame(
+            {"feature": feature_names, "importance": importances}
+        )
+
+        df_importance["original_feature"] = df_importance["feature"].apply(
+            lambda x: x.rsplit("_t-", 1)[0]
+        )
+        df_agg_importance = (
+            df_importance.groupby("original_feature")["importance"]
+            .sum()
+            .sort_values(ascending=False)
+        )
+
+        df_plot_data = df_agg_importance.head(50).sort_values(ascending=True)
+
+        plt.style.use("ggplot")
+        fig, ax = plt.subplots(figsize=(10, 12))
+        ax.barh(y=df_plot_data.index, width=df_plot_data.values)
+
+        ax.set_title("XGBoostによる特徴量の重要度（集計版）")
+        ax.set_xlabel("重要度 (Importance)")
+        ax.set_ylabel("特徴量 (Feature)")
+        plt.tight_layout()
+        plt.show()
 
     def fit(self, dict_df_learn, dict_df_close, per):
         list_X_train, list_y_train = [], []
@@ -172,6 +248,7 @@ class ModelManager:
             epochs=30,
             validation_data=(X_val, y_val),
             callbacks=[EarlyStopping(patience=3)],
+            # verbose=0,
         )
 
         return model
@@ -240,7 +317,7 @@ class ModelManager:
     def save_result(self, df):
         conn = sqlite3.connect(self.dm.db)
         with conn:
-            df.to_sql("Target2", conn, if_exists="append", index=False)
+            df.to_sql("Target", conn, if_exists="append", index=False)
 
 
 if __name__ == "__main__":
@@ -248,6 +325,9 @@ if __name__ == "__main__":
 
     # データの準備
     dict_df_learn, dict_df_test, dict_df_close = mm.prepare_data()
+
+    # # 特徴量の重要度を評価
+    # mm.evaluate_feature_importance(dict_df_learn, dict_df_close, 1.005)
 
     # ロングモデルの学習
     long_model = mm.fit(dict_df_learn, dict_df_close, 1.005)
