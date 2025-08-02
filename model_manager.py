@@ -35,7 +35,7 @@ class ModelManager:
         df.set_index("date", inplace=True)
 
         # 移動平均線を追加する
-        # df["MA5"] = df["close"].rolling(window=5).mean()
+        df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
         # df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
@@ -65,7 +65,7 @@ class ModelManager:
         # df["trunk"] = df["open"] - df["close"]
 
         # 移動平均線乖離率を追加する
-        # df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
+        df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
         df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
 
         # # MACDの乖離率を追加する
