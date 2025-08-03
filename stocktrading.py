@@ -28,7 +28,7 @@ class StockTrading:
         # ロガーの初期化
         self._init_logger()
 
-        # # スレッド関連のイベントやキューを初期化する
+        # スレッド関連のイベントやキューを初期化する
         self._init_threading_components()
 
         # 外部ライブラリを初期化する
