@@ -14,6 +14,7 @@ from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Dropout, InputLa
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
+from config_manager import cm
 from data_manager import DataManager
 from library import Library
 from misc import Misc
@@ -26,9 +27,10 @@ class ModelManager:
 
         self.lib = Library()
 
-        self.train_split_ratio = 0.8
-        self.threshold = 0.5
-        self.window = 30
+        self.train_split_ratio = cm.get("model.train_split_ratio")
+        self.threshold = cm.get("model.threshold")
+        self.window = cm.get("model.window_size")
+        self.per = cm.get("model.per")
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -333,16 +335,16 @@ if __name__ == "__main__":
     # breakpoint()
 
     # ロングモデルの学習
-    long_model = mm.fit(dict_df_learn, dict_df_close, 1.005)
+    long_model = mm.fit(dict_df_learn, dict_df_close, 1 + mm.per)
 
     # ロングモデルの予測
-    df_long = mm.predict(long_model, dict_df_test, 1.005)
+    df_long = mm.predict(long_model, dict_df_test, 1 + mm.per)
 
     # ショートモデルの学習
-    short_model = mm.fit(dict_df_learn, dict_df_close, 0.995)
+    short_model = mm.fit(dict_df_learn, dict_df_close, 1 - mm.per)
 
     # ショートモデルの予測
-    df_short = mm.predict(short_model, dict_df_test, 0.995)
+    df_short = mm.predict(short_model, dict_df_test, 1 - mm.per)
 
     # 最終候補を得る
     df = mm.get_candidate(df_long, df_short)
