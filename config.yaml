@@ -25,7 +25,6 @@ trading:
   polling_interval: 30
   polling_interval_variation: 30
   monitor_interval: 1800
-  base_transaction: 1
 
 model:
   window_size: 30
