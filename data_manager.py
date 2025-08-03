@@ -16,12 +16,7 @@ from misc import Misc
 
 
 class DataManager:
-    def __init__(self, n_symbols=50):
-        self.n_symbols = n_symbols
-        self.data = []
-        for _ in range(n_symbols):
-            self.data.append([])
-
+    def __init__(self):
         self.base_dir = cm.get("directory.base_dir")
         self.db = f"{self.base_dir}/{cm.get('database.name')}"
         self.thread_local = threading.local()
