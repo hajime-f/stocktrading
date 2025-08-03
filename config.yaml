@@ -26,9 +26,9 @@ trading:
   polling_interval_variation: 30
   monitor_interval: 1800
   base_transaction: 1
-  allowable_risk: 50000
 
 model:
   window_size: 30
   train_split_ratio: 0.8
-  threshold: 0.6
+  threshold: 0.5
+  per: 0.005
