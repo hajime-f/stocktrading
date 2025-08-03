@@ -10,6 +10,7 @@ import requests
 import yfinance as yf
 from dateutil.relativedelta import relativedelta
 
+from exception import APIError
 from config_manager import cm
 from misc import Misc
 
@@ -100,16 +101,35 @@ class DataManager:
 
         # リフレッシュトークンを得る
         data = {"mailaddress": f"{email}", "password": f"{password}"}
-        r_post = requests.post(
-            self.base_url + "/token/auth_user", data=json.dumps(data)
-        )
-        self.refresh_token = r_post.json()["refreshToken"]
 
-        # リフレッシュトークンを使ってIDトークンを得る
-        r_post = requests.post(
-            self.base_url + f"/token/auth_refresh?refreshtoken={self.refresh_token}"
-        )
-        self.id_token = r_post.json()["idToken"]
+        try:
+            r_post = requests.post(
+                self.base_url + "/token/auth_user", data=json.dumps(data), timeout=10
+            )
+            r_post.raise_for_status()
+            self.refresh_token = r_post.json()["refreshToken"]
+
+            # リフレッシュトークンを使ってIDトークンを得る
+            r_post_id = requests.post(
+                self.base_url
+                + f"/token/auth_refresh?refreshtoken={self.refresh_token}",
+                timeout=10,
+            )
+            r_post_id.raise_for_status()
+            self.id_token = r_post_id.json()["idToken"]
+
+        except requests.exceptions.RequestException as e:
+            # ネットワークエラー、タイムアウト、HTTPエラーステータスなどをまとめて捕捉
+            self.logger.critical(f"Failed to communicate with J-QUANTS API: {e}")
+            raise APIError("J-QUANTS APIとの通信に失敗しました。") from e
+        except KeyError as e:
+            # レスポンスに期待したキーがなかった場合
+            self.logger.critical(
+                f"Unexpected API response format from J-QUANTS: missing key {e}"
+            )
+            raise APIError(
+                "J-QUANTS APIからのレスポンスのフォーマットが不正です。"
+            ) from e
 
     def fetch_stock_list(self):
         """
