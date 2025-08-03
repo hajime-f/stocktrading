@@ -234,10 +234,10 @@ class Stock:
             self.logger.error(data)
             raise DataProcessingError
 
-        if price is None:
-            self.logger.error(self.msg.get("errors.execution_info_invalid"))
-            self.logger.error(data)
-            raise DataProcessingError
+        if price is None or qty is None or ex_daytime is None:
+            error_msg = self.msg.get("errors.execution_info_invalid")
+            self.logger.error(error_msg, extra={"data": data})
+            raise DataProcessingError(error_msg)
 
         # 約定価格を保持しておく
         self.entry_price = float(price)
@@ -351,19 +351,25 @@ class Stock:
         elif side == SIDE_BUY:
             msg_key_success = "info.buy_order_success"
             msg_key_failed = "errors.buy_order_failed"
+        else:
+            raise DataProcessingError(f"sideの値が不正です。side={side}")
 
         try:
+            if not isinstance(content, dict):
+                raise TypeError(
+                    f"APIレスポンスが辞書型のデータではありませんでした。{content}"
+                )
             result = content["Result"]
-        except KeyError:
+        except (KeyError, TypeError) as e:
             self.logger.error(
                 self.msg.get(
                     msg_key_failed,
                     disp_name=self.disp_name,
                     symbol=self.symbol,
-                )
+                ),
+                extra={"content": content, "error": str(e)},
             )
-            self.logger.error(content)
-            raise APIError
+            raise APIError("注文レスポンスのパースに失敗しました。") from e
 
         if result == 0:
             order_id = content["OrderId"]

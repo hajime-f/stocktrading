@@ -3,6 +3,7 @@ import json
 import time
 import traceback
 import urllib.request
+import urllib.error
 from logging import getLogger
 
 import websockets
@@ -256,15 +257,29 @@ class Library:
     def throw_request(self, req):
         # リクエストを投げる
         try:
-            with urllib.request.urlopen(req) as res:
-                content = json.loads(res.read())
+            with urllib.request.urlopen(req, timeout=10) as res:
+                return json.loads(res.read())
         except urllib.error.HTTPError as e:
-            self.logger.critical(self.msg.get("errors.http_error", reason=e))
-            content = json.loads(e.read())
+            self.logger.critical(
+                self.msg.get("errors.http_error", code=e.code, reason=e.reason)
+            )
+            try:
+                error_content = json.loads(e.read())
+                self.logger.error(f"APIエラーレスポンス: {error_content}")
+                return error_content
+            except json.JSONDecodeError:
+                self.logger.error(self.msg.get("errors.decode_error"))
+                raise APIError(
+                    f"HTTP Error {e.code}, but failed to parse error body."
+                ) from e
+        except urllib.error.URLError as e:
+            self.logger.critical(self.msg.get("errors.url_error", reason=e.reason))
+            raise APIError("Network connection failed.") from e
+        except json.JSONDecodeError as e:
+            self.logger.critical(self.msg.get("errors.decode_error"))
+            raise APIError("Invalid JSON response from API.") from e
         except Exception as e:
             self.logger.critical(self.msg.get("errors.http_other_error", reason=e))
-
-        return content
 
     def buy_at_market_price_with_cash(self, symbol, count, exchange=1):
         # 預かり金で成行買いする→現物の成行買い
