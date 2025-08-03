@@ -244,29 +244,6 @@ class DataManager:
 
         return df
 
-    def load_open_close_prices(self, code, date):
-        conn = self._get_connection()
-        with conn:
-            sql_query = f"select open, close from '{code}' where date = ?;"
-            df = pd.read_sql_query(sql_query, conn, params=[date])
-
-        return df
-
-    def check_stock_data(self, code, val_date):
-        conn = self._get_connection()
-        with conn:
-            sql_query = f"select * from '{code}' order by date desc limit 1;"
-            df = pd.read_sql_query(sql_query, conn)
-
-        if df.empty:
-            return False
-
-        last_date = df["date"].item()
-        if last_date == val_date:
-            return True
-        else:
-            return False
-
     def save_execution(self, df_data):
         conn = self._get_connection()
         with conn:
