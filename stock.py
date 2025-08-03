@@ -230,11 +230,11 @@ class Stock:
                 "%Y-%m-%d %H:%M:%S"
             )
         else:
-            self.logger.error(self.msg.get("errors.execution_info_invalid"))
-            self.logger.error(data)
-            raise DataProcessingError
+            error_msg = self.msg.get("errors.execution_info_invalid")
+            self.logger.error(error_msg, extra={"data": data})
+            raise DataProcessingError(error_msg)
 
-        if price is None or qty is None or ex_daytime is None:
+        if price is None or qty is None or ex_id is None or ex_daytime is None:
             error_msg = self.msg.get("errors.execution_info_invalid")
             self.logger.error(error_msg, extra={"data": data})
             raise DataProcessingError(error_msg)
@@ -247,19 +247,18 @@ class Stock:
             msg_key = "info.sell_executed"
         elif side == SIDE_BUY:
             msg_key = "info.buy_executed"
-
-        if msg_key:
-            self.logger.info(
-                self.msg.get(
-                    msg_key,
-                    disp_name=self.disp_name,
-                    symbol=self.symbol,
-                    price=f"{int(price):,}" if float(price).is_integer() else price,
-                    qty=f"{int(qty):,}" if float(qty).is_integer() else qty,
-                )
-            )
         else:
-            self.logger.warning(self.msg.get("errors.unexpected_side_value"))
+            raise DataProcessingError(f"sideの値が不正です。side={side}")
+
+        self.logger.info(
+            self.msg.get(
+                msg_key,
+                disp_name=self.disp_name,
+                symbol=self.symbol,
+                price=f"{int(price):,}" if float(price).is_integer() else price,
+                qty=f"{int(qty):,}" if float(qty).is_integer() else qty,
+            )
+        )
 
         # 約定情報をデータベースに保存
         df_data = pd.DataFrame(
