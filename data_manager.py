@@ -1,14 +1,12 @@
 import datetime
 import json
 import os
-import pickle
 import sqlite3
 import threading
 
 import pandas as pd
 import requests
 import yfinance as yf
-from dateutil.relativedelta import relativedelta
 
 from exception import APIError
 from config_manager import cm
