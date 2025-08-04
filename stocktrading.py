@@ -39,17 +39,19 @@ class StockTrading:
 
     def _load_config(self):
         # 定数や環境変数を読み込む
-        self.POLLING_INTERVAL = cm.get("trading.polling_interval")
-        self.POLLING_INTERVAL_VARIATION = cm.get("trading.polling_interval_variation")
-        self.MONITOR_INTERVAL = cm.get("trading.monitor_interval")
-        self.base_transaction = cm.get("trading.base_transaction")
+        self.POLLING_INTERVAL = int(cm.get("trading.polling_interval"))
+        self.POLLING_INTERVAL_VARIATION = int(
+            cm.get("trading.polling_interval_variation")
+        )
+        self.MONITOR_INTERVAL = int(cm.get("trading.monitor_interval"))
+        self.base_transaction = int(cm.get("trading.base_transaction"))
 
     def _init_logger(self):
         # ロガーを初期化
         self.logger = getLogger(__name__)
         path_name = cm.get("directory.base_dir")
         file_name = cm.get("config.log_conf_file")
-        if file_name is None:
+        if file_name is None or path_name is None:
             self.logger.critical(self.msg.get("errors.env_not_found", env_file=".env"))
             sys.exit(1)
         log_conf_file = f"{path_name}/{file_name}"
@@ -128,7 +130,7 @@ class StockTrading:
                 row["brand"],
                 row["risk_amount"],
                 self.base_transaction,
-                realtime_queue=self.realtime_queue,
+                self.realtime_queue,
             )
             stock_instance.set_information()
             self.stocks[symbol] = stock_instance

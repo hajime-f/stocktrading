@@ -27,10 +27,10 @@ class ModelManager:
 
         self.lib = Library()
 
-        self.train_split_ratio = cm.get("model.train_split_ratio")
-        self.threshold = cm.get("model.threshold")
-        self.window = cm.get("model.window_size")
-        self.per = cm.get("model.per")
+        self.train_split_ratio = int(cm.get("model.train_split_ratio"))
+        self.threshold = float(cm.get("model.threshold"))
+        self.window = int(cm.get("model.window_size"))
+        self.det_per = float(cm.get("model.det_per"))
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -335,16 +335,16 @@ if __name__ == "__main__":
     # breakpoint()
 
     # ロングモデルの学習
-    long_model = mm.fit(dict_df_learn, dict_df_close, 1 + mm.per)
+    long_model = mm.fit(dict_df_learn, dict_df_close, 1 + mm.det_per)
 
     # ロングモデルの予測
-    df_long = mm.predict(long_model, dict_df_test, 1 + mm.per)
+    df_long = mm.predict(long_model, dict_df_test, 1 + mm.det_per)
 
     # ショートモデルの学習
-    short_model = mm.fit(dict_df_learn, dict_df_close, 1 - mm.per)
+    short_model = mm.fit(dict_df_learn, dict_df_close, 1 - mm.det_per)
 
     # ショートモデルの予測
-    df_short = mm.predict(short_model, dict_df_test, 1 - mm.per)
+    df_short = mm.predict(short_model, dict_df_test, 1 - mm.det_per)
 
     # 最終候補を得る
     df = mm.get_candidate(df_long, df_short)

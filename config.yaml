@@ -30,4 +30,4 @@ model:
   window_size: 30
   train_split_ratio: 0.8
   threshold: 0.5
-  per: 0.005
+  det_per: 0.005
