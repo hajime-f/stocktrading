@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 class ConfigManager:
     def __init__(self, config_path="config.yaml"):
         load_dotenv()
+        base_dir = os.getenv("BaseDir")
+        config_path = f"{base_dir}/{config_path}"
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
 
