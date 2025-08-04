@@ -27,7 +27,7 @@ class ModelManager:
 
         self.lib = Library()
 
-        self.train_split_ratio = int(cm.get("model.train_split_ratio"))
+        self.train_split_ratio = float(cm.get("model.train_split_ratio"))
         self.threshold = float(cm.get("model.threshold"))
         self.window = int(cm.get("model.window_size"))
         self.det_per = float(cm.get("model.det_per"))
@@ -283,7 +283,7 @@ class ModelManager:
         result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
         return result
 
-    def get_candidate(self, df_long, df_short):
+    def select_candidate(self, df_long, df_short):
         df_long = df_long[df_long["pred"] >= self.threshold].copy()
         df_short = df_short[df_short["pred"] >= self.threshold].copy()
 
@@ -347,7 +347,7 @@ if __name__ == "__main__":
     df_short = mm.predict(short_model, dict_df_test, 1 - mm.det_per)
 
     # 最終候補を得る
-    df = mm.get_candidate(df_long, df_short)
+    df = mm.select_candidate(df_long, df_short)
 
     # 結果を保存する
     mm.save_result(df)
