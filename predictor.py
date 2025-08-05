@@ -178,10 +178,12 @@ class Predictor:
                 predicts.append(array_pred)
                 rmses.append(rmse)
 
-            champion_model = models[np.argmin(rmses)]
+            champion = np.argmin(rmses)
+            champion_model = models[champion]
             future_pred = self.predict(champion_model, array_pred_X)
 
-            actual_prices = self.inverse_transform(array_test_y)
+            champion_pred = predicts[champion]
+            pred_prices = self.inverse_transform(champion_pred)
             future_price = self.inverse_transform(future_pred)
 
             breakpoint()
