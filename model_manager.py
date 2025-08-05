@@ -348,6 +348,6 @@ if __name__ == "__main__":
 
     # 最終候補を得る
     df = mm.select_candidate(df_long, df_short)
-
+    breakpoint()
     # 結果を保存する
     mm.save_result(df)
