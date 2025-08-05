@@ -76,7 +76,6 @@ class Predictor:
         df = self.add_technical_indicators(df)
 
         self.feature_names = df.columns.tolist()
-        self.df_index = df.index.tolist()
 
         df = pd.DataFrame(
             self.scaler.fit_transform(df),
@@ -91,6 +90,7 @@ class Predictor:
         array_learn_X, array_learn_y = X[:n_split2], y[:n_split2]
         array_val_X, array_val_y = X[n_split2:n_split1], y[n_split2:n_split1]
         array_test_X, array_test_y = X[n_split1:], y[n_split1:]
+        array_pred_X = np.array(df.tail(self.window))[np.newaxis, :, :]
 
         return (
             array_learn_X,
@@ -99,6 +99,7 @@ class Predictor:
             array_val_y,
             array_test_X,
             array_test_y,
+            array_pred_X,
         )
 
     def compile_model(self, shape1, shape2):
@@ -145,14 +146,14 @@ class Predictor:
         plt.plot(pred, color="red")
         plt.show()
 
-    def inverse_transform(self, array_pred):
-        dummy_array = np.zeros((len(array_pred), len(self.feature_names)))
+    def inverse_transform(self, array):
+        dummy_array = np.zeros((len(array), len(self.feature_names)))
         target_col_index = self.feature_names.index("close")
-        dummy_array[:, target_col_index] = array_pred.flatten()
+        dummy_array[:, target_col_index] = array.flatten()
         descaled_array = self.scaler.inverse_transform(dummy_array)
-        predicted_stock_price = descaled_array[:, target_col_index]
+        stock_price = descaled_array[:, target_col_index]
 
-        return predicted_stock_price
+        return stock_price
 
     def main(self):
         for code in self.df_stock_list["code"]:
@@ -163,22 +164,27 @@ class Predictor:
                 array_val_y,
                 array_test_X,
                 array_test_y,
+                array_pred_X,
             ) = self.prepare_data(code)
 
-            predicts, rmses = [], []
+            models, predicts, rmses = [], [], []
 
             for _ in range(10):
                 model = self.fit(array_learn_X, array_learn_y, array_val_X, array_val_y)
                 array_pred = self.predict(model, array_test_X)
                 rmse = self.evaluate_model(array_pred, array_test_y)
 
+                models.append(model)
                 predicts.append(array_pred)
                 rmses.append(rmse)
 
-            champion_result = predicts[np.argmin(rmses)]
-            prices_pred = self.inverse_transform(champion_result)
-            prices_actual = self.inverse_transform(array_test_y)
-            self.draw_figure(prices_pred, prices_actual)
+            champion_model = models[np.argmin(rmses)]
+            future_pred = self.predict(champion_model, array_pred_X)
+
+            actual_prices = self.inverse_transform(array_test_y)
+            future_price = self.inverse_transform(future_pred)
+
+            breakpoint()
 
 
 if __name__ == "__main__":
