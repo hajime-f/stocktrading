@@ -3,7 +3,8 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+import seaborn as sns
+from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Dropout, InputLayer
@@ -20,8 +21,9 @@ class Predictor:
         self.df_stock_list = self.dm.load_stock_list()
         self.scaler = StandardScaler()
 
-        self.window = 60
+        self.window = 45
         self.split_ratio = 0.8
+        self.prediction_horizon = 5
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -30,12 +32,6 @@ class Predictor:
         # 移動平均線を追加する
         df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
-
-        # # 対数変換する
-        # df["log_close"] = np.log(df["close"])
-
-        # # 差分を取る
-        # df["diff"] = df["close"].diff()
 
         # ボリンジャーバンドを追加する
         sma20 = df["close"].rolling(window=20).mean()
@@ -50,10 +46,6 @@ class Predictor:
         rs = gain / loss
         df["RSI"] = 100 - (100 / (1 + rs))
 
-        # # 終値の前日比を追加する
-        # df_shift = df.shift(1)
-        # df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
-
         # 移動平均線乖離率を追加する
         df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
         df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
@@ -66,9 +58,10 @@ class Predictor:
     def create_dataset(self, array_data, array_close):
         X, y = [], []
 
-        for i in range(self.window, len(array_data)):
+        for i in range(self.window, len(array_data) - self.prediction_horizon + 1):
             X.append(array_data[i - self.window : i])
-            y.append(array_close[i])
+            y.append(array_close[i + self.prediction_horizon - 1])
+
         return np.array(X), np.array(y)
 
     def prepare_data(self, code):
@@ -77,20 +70,54 @@ class Predictor:
 
         self.feature_names = df.columns.tolist()
 
-        df = pd.DataFrame(
-            self.scaler.fit_transform(df),
-            index=df.index,
-            columns=df.columns,
-        )
-        X, y = self.create_dataset(np.array(df), np.array(df["close"]))
-
-        n_split1 = int(len(X) * self.split_ratio)
+        # 1. 訓練、検証、テストにデータを分割
+        n_total = len(df)
+        n_split1 = int(n_total * self.split_ratio)
         n_split2 = int(n_split1 * self.split_ratio)
 
-        array_learn_X, array_learn_y = X[:n_split2], y[:n_split2]
-        array_val_X, array_val_y = X[n_split2:n_split1], y[n_split2:n_split1]
-        array_test_X, array_test_y = X[n_split1:], y[n_split1:]
-        array_pred_X = np.array(df.tail(self.window))[np.newaxis, :, :]
+        df_train = df.iloc[:n_split2]
+        df_val = df.iloc[n_split2:n_split1]
+        df_test = df.iloc[n_split1:]
+
+        # 2. 訓練データ(df_train)のみでscalerを学習
+        self.scaler.fit(df_train)
+
+        # 3. 学習済みscalerで全てのデータを変換
+        df_train_scaled = pd.DataFrame(
+            self.scaler.transform(df_train),
+            index=df_train.index,
+            columns=self.feature_names,
+        )
+        df_val_scaled = pd.DataFrame(
+            self.scaler.transform(df_val),
+            index=df_val.index,
+            columns=self.feature_names,
+        )
+        df_test_scaled = pd.DataFrame(
+            self.scaler.transform(df_test),
+            index=df_test.index,
+            columns=self.feature_names,
+        )
+
+        # 4. スケーリング済みのデータからシーケンスを作成
+        array_learn_X, array_learn_y = self.create_dataset(
+            np.array(df_train_scaled), np.array(df_train_scaled["close"])
+        )
+        array_val_X, array_val_y = self.create_dataset(
+            np.array(df_val_scaled), np.array(df_val_scaled["close"])
+        )
+        array_test_X, array_test_y = self.create_dataset(
+            np.array(df_test_scaled), np.array(df_test_scaled["close"])
+        )
+
+        # 5. 未来予測用のデータを作成 (全データの末尾からwindow分)
+        df_pred_source = df.tail(self.window)
+        df_pred_scaled = pd.DataFrame(
+            self.scaler.transform(df_pred_source),
+            index=df_pred_source.index,
+            columns=self.feature_names,
+        )
+        array_pred_X = np.array(df_pred_scaled)[np.newaxis, :, :]
 
         return (
             array_learn_X,
@@ -141,9 +168,22 @@ class Predictor:
         return math.sqrt(mean_squared_error(array_test_y, array_pred))
 
     def draw_figure(self, pred, actual):
+        sns.set(style="darkgrid", font="Hiragino Maru Gothic Pro")
         plt.figure(figsize=(12, 7))
-        plt.plot(actual, color="blue")
-        plt.plot(pred, color="red")
+        # pred_dates = range(len(actual), len(actual) + len(pred))
+        pred_dates = range(self.prediction_horizon, self.prediction_horizon + len(pred))
+        plt.plot(actual, color="blue", label="実績値")
+        plt.plot(
+            pred_dates,
+            pred,
+            color="red",
+            label=f"予測値 ({self.prediction_horizon}日先)",
+        )
+        plt.title("株価予測結果")
+        plt.xlabel("日数")
+        plt.ylabel("価格 (スケーリング後)")
+        plt.legend()
+        plt.grid(True)
         plt.show()
 
     def inverse_transform(self, array):
@@ -156,37 +196,37 @@ class Predictor:
         return stock_price
 
     def main(self):
-        for code in self.df_stock_list["code"]:
-            (
-                array_learn_X,
-                array_learn_y,
-                array_val_X,
-                array_val_y,
-                array_test_X,
-                array_test_y,
-                array_pred_X,
-            ) = self.prepare_data(code)
+        code = self.df_stock_list["code"].iloc[0]
 
-            models, predicts, rmses = [], [], []
+        (
+            array_learn_X,
+            array_learn_y,
+            array_val_X,
+            array_val_y,
+            array_test_X,
+            array_test_y,
+            array_pred_X,
+        ) = self.prepare_data(code)
 
-            for _ in range(10):
-                model = self.fit(array_learn_X, array_learn_y, array_val_X, array_val_y)
-                array_pred = self.predict(model, array_test_X)
-                rmse = self.evaluate_model(array_pred, array_test_y)
+        # 学習
+        model = self.fit(array_learn_X, array_learn_y, array_val_X, array_val_y)
 
-                models.append(model)
-                predicts.append(array_pred)
-                rmses.append(rmse)
+        # テストデータで評価
+        array_pred_test_scaled = self.predict(model, array_test_X)
+        rmse = self.evaluate_model(array_pred_test_scaled, array_test_y)
+        print(f"Test RMSE (scaled): {rmse:.4f}")
 
-            champion = np.argmin(rmses)
-            champion_model = models[champion]
-            future_pred = self.predict(champion_model, array_pred_X)
+        # 実際の価格に戻してグラフ描画
+        pred_prices = self.inverse_transform(array_pred_test_scaled)
+        actual_prices = self.inverse_transform(array_test_y)
+        self.draw_figure(pred_prices, actual_prices)
 
-            champion_pred = predicts[champion]
-            pred_prices = self.inverse_transform(champion_pred)
-            future_price = self.inverse_transform(future_pred)
-
-            breakpoint()
+        # n日後の未来を予測
+        future_pred_scaled = self.predict(model, array_pred_X)
+        future_price = self.inverse_transform(future_pred_scaled)
+        print(
+            f"\n最新データに基づく{self.prediction_horizon}営業日後の予測価格: {future_price[0]:,.2f} 円"
+        )
 
 
 if __name__ == "__main__":
