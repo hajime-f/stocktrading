@@ -101,7 +101,7 @@ class DataManager:
             code = df["Code"][:-1]
             try:
                 df_prices = yf.download(
-                    code + ".T", period="2y", auto_adjust=True, progress=False
+                    code + ".T", period="5y", auto_adjust=True, progress=False
                 )
             except Exception:
                 continue
