@@ -53,7 +53,7 @@ if __name__ == "__main__":
     dm = DataManager()
 
     symbols = [
-        [p[0], p[1], p[2], p[3], p[4]]
+        [p[1], p[2], p[3], p[4], p[5]]
         for p in dm.fetch_target(table_name="Target").values.tolist()
     ]
     list_data = []
