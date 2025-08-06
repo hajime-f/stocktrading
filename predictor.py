@@ -23,7 +23,7 @@ class Predictor:
 
         self.window = 45
         self.split_ratio = 0.8
-        self.prediction_horizon = 5
+        self.prediction_horizon = 1
 
     def add_technical_indicators(self, df):
         # 日付をインデックスにする
@@ -170,15 +170,8 @@ class Predictor:
     def draw_figure(self, pred, actual):
         sns.set(style="darkgrid", font="Hiragino Maru Gothic Pro")
         plt.figure(figsize=(12, 7))
-        # pred_dates = range(len(actual), len(actual) + len(pred))
-        pred_dates = range(self.prediction_horizon, self.prediction_horizon + len(pred))
         plt.plot(actual, color="blue", label="実績値")
-        plt.plot(
-            pred_dates,
-            pred,
-            color="red",
-            label=f"予測値 ({self.prediction_horizon}日先)",
-        )
+        plt.plot(pred, color="red", label=f"予測値 ({self.prediction_horizon}日先)")
         plt.title("株価予測結果")
         plt.xlabel("日数")
         plt.ylabel("価格 (スケーリング後)")
