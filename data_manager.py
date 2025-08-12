@@ -193,8 +193,8 @@ class DataManager:
     def delete_order(self, order_id):
         conn = self._get_connection()
         with conn:
-            sql_query = "delete from Orders where order_id = ?;"
-            conn.execute(sql_query, params=[order_id])
+            sql_query = f"delete from Orders where order_id = '{order_id}';"
+            conn.execute(sql_query)
 
     def update_price(self, order_id, price):
         conn = self._get_connection()
