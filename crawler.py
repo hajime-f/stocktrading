@@ -51,17 +51,11 @@ class Crawler:
 
 if __name__ == "__main__":
     dm = DataManager()
-
-    symbols = [
-        [p[1], p[2], p[3], p[4], p[5]]
-        for p in dm.fetch_target(table_name="Target").values.tolist()
-    ]
     list_data = []
 
-    for s in symbols:
-        crawler = Crawler(s[1])
-        values = crawler.fetch_stock_data()
-        data = crawler.extract_todays_data(values)
+    for _, row in dm.fetch_target().iterrows():
+        crawler = Crawler(row["code"])
+        data = crawler.extract_todays_data(crawler.fetch_stock_data())
 
         try:
             open_price = float(data[0].replace(",", ""))
@@ -69,13 +63,13 @@ if __name__ == "__main__":
 
             list_data.append(
                 [
-                    datetime.now().strftime("%Y-%m-%d"),
-                    s[1],
-                    s[2],
+                    row["date"],
+                    row["code"],
+                    row["brand"],
                     open_price,
                     close_price,
-                    s[3],
-                    s[4],
+                    row["pred"],
+                    row["side"],
                 ]
             )
         except Exception:
