@@ -23,7 +23,7 @@ trading:
   base_transaction: ${BaseTransaction}
   allowable_risk: ${AllowableRisk}
   polling_interval: 30
-  polling_interval_variation: 30
+  polling_interval_variation: 35
   monitor_interval: 1800
 
 model:
