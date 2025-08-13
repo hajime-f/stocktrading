@@ -550,6 +550,12 @@ class Library:
             print(symbol)
             return True
 
+    def examine_premium(self, symbol, exchange=1):
+        url = self.base_url + "/margin/marginpremium/" + str(symbol)
+        content = self.get_request(url)
+
+        return content["DayTrade"]["MarginPremium"]
+
 
 if __name__ == "__main__":
     dm = DataManager()

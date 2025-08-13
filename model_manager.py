@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     dict_df_all = {}
 
-    for i in range(10):
+    for i in range(2):
         # ショートモデルを学習する
         model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
         df_short = mm.predict(model, dict_df, nbd)
@@ -211,8 +211,13 @@ if __name__ == "__main__":
         # 不適切な銘柄は除外する
         for index, row in df.iterrows():
             close_price = dm.find_newest_close_price(row["code"])
-            if (700 < close_price < 5500) and not lib.examine_regulation(row["code"]):
-                selected_indices.append(index)
+            if not (700 < close_price < 5500):
+                continue
+            if lib.examine_premium(row["code"]):
+                continue
+            if lib.examine_regulation(row["code"]):
+                continue
+            selected_indices.append(index)
         df = df.loc[selected_indices, :]
         dict_df_all[i] = df
 
@@ -222,16 +227,27 @@ if __name__ == "__main__":
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
 
+    n_samples = 0
+    df_sampled = pd.DataFrame([], columns=["date", "code", "brand", "pred", "side"])
+
     while True:
-        # 予測値に応じて確率的に銘柄を50個サンプリング
-        sampled_indices = np.random.choice(
-            a=df.index, size=50, replace=False, p=probabilities
-        )
-        if len(df) == len(df.drop_duplicates(subset=["code"])):
+        if n_samples == 50:
             break
 
-    df = df.loc[sampled_indices, :]
-    df = df.sort_values("pred", ascending=False).reset_index()[
+        sampled_indices = np.random.choice(
+            a=df.index,
+            size=1,
+            replace=False,
+            p=probabilities,
+        )
+
+        df_tmp = df.loc[sampled_indices, :]
+        if not df_sampled["code"].isin([df_tmp["code"]]).any():
+            if not df_tmp.empty:
+                df_sampled = pd.concat([df_sampled, df_tmp])
+                n_samples += 1
+
+    df = df_sampled.sort_values("pred", ascending=False).reset_index()[
         ["date", "code", "brand", "pred", "side"]
     ]
 
