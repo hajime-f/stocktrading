@@ -218,35 +218,22 @@ if __name__ == "__main__":
 
     df = pd.concat(dict_df_all)
     df = df.sort_values("code")
-    df_selected = pd.DataFrame([], columns=["date", "code", "brand", "pred", "side"])
 
-    for _, row in df.iterrows():
-        if len(df_selected[df_selected["code"] == row["code"]]) != 0:
-            continue
-        df_tmp = df[df["code"] == row["code"]].copy()
-
-        weights = df_tmp["pred"].to_numpy()
-        probabilities = weights / np.sum(weights)
-        sampled_indices = np.random.choice(
-            a=df_tmp.index, size=1, replace=False, p=probabilities
-        )
-        df_to_add = df_tmp.loc[sampled_indices, :]
-        if not df_to_add.empty:
-            df_selected = pd.concat([df_selected, df_to_add])
-
-    df = df_selected.reset_index()[["date", "code", "brand", "pred", "side"]]
-
-    # 予測値に応じて確率的に銘柄を50個サンプリング
     weights = df["pred"].to_numpy()
     probabilities = weights / np.sum(weights)
-    sampled_indices = np.random.choice(
-        a=df.index,
-        size=50,
-        replace=False,
-        p=probabilities,
-    )
-    df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
-    df = df.sort_values("pred", ascending=False).reset_index()
+
+    while True:
+        # 予測値に応じて確率的に銘柄を50個サンプリング
+        sampled_indices = np.random.choice(
+            a=df.index, size=50, replace=False, p=probabilities
+        )
+        if len(df) == len(df.drop_duplicates(subset=["code"])):
+            break
+
+    df = df.loc[sampled_indices, :]
+    df = df.sort_values("pred", ascending=False).reset_index()[
+        ["date", "code", "brand", "pred", "side"]
+    ]
 
     breakpoint()
 
