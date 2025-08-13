@@ -167,8 +167,8 @@ class ModelManager:
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
         df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
-        # nbd = datetime.date.today().strftime("%Y-%m-%d")
-        nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+        nbd = datetime.date.today().strftime("%Y-%m-%d")
+        # nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
@@ -224,8 +224,6 @@ if __name__ == "__main__":
     )
     df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
     df = df.sort_values("pred", ascending=False).reset_index()
-
-    breakpoint()
 
     conn = sqlite3.connect(dm.db)
     with conn:
