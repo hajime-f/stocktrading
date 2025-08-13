@@ -554,7 +554,11 @@ class Library:
         url = self.base_url + "/margin/marginpremium/" + str(symbol)
         content = self.get_request(url)
 
-        return content["DayTrade"]["MarginPremium"]
+        try:
+            return content["DayTrade"]["MarginPremium"]
+        except KeyError:
+            print(symbol)
+            return True
 
 
 if __name__ == "__main__":

@@ -177,7 +177,8 @@ if __name__ == "__main__":
     # 土日祝日は実行しない
     if Misc.check_day_type(datetime.date.today()):
         exit()
-    nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
+    nbd = datetime.date.today().strftime("%Y-%m-%d")
+    # nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
 
     dm = DataManager()
     lib = Library()
@@ -189,7 +190,7 @@ if __name__ == "__main__":
 
     dict_df_all = {}
 
-    for i in range(2):
+    for i in range(10):
         # ショートモデルを学習する
         model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
         df_short = mm.predict(model, dict_df, nbd)
