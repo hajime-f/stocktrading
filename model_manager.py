@@ -155,7 +155,7 @@ class ModelManager:
 
         return model
 
-    def predict(self, model, dict_df):
+    def predict(self, model, dict_df, nbd):
         list_result = []
         window = self.window
 
@@ -167,8 +167,6 @@ class ModelManager:
         df_result = pd.DataFrame(list_result, columns=["code", "brand", "pred"])
         df_extract = df_result[df_result["pred"] >= 0.7].copy()
 
-        nbd = datetime.date.today().strftime("%Y-%m-%d")
-        # nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
         df_extract.loc[:, "date"] = nbd
         df_extract = df_extract[["date", "code", "brand", "pred"]]
 
@@ -179,6 +177,7 @@ if __name__ == "__main__":
     # 土日祝日は実行しない
     if Misc.check_day_type(datetime.date.today()):
         exit()
+    nbd = Misc.get_next_business_day(datetime.date.today()).strftime("%Y-%m-%d")
 
     dm = DataManager()
     lib = Library()
@@ -188,30 +187,43 @@ if __name__ == "__main__":
     # データを準備する
     dict_df, dict_close = mm.prepare_data()
 
-    # ショートモデルを学習する
-    model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
-    df_short = mm.predict(model, dict_df)
-    df_short.loc[:, "side"] = 1
+    dict_df_all = {}
 
-    # ロングモデルを学習する
-    model = mm.fit(dict_df, dict_close, per=1.005, opt_model="lstm")
-    df_long = mm.predict(model, dict_df)
-    df_long.loc[:, "side"] = 2
+    for i in range(10):
+        # ショートモデルを学習する
+        model = mm.fit(dict_df, dict_close, per=0.995, opt_model="lstm")
+        df_short = mm.predict(model, dict_df, nbd)
+        df_short.loc[:, "side"] = 1
 
-    # 予測結果を統合する
-    df = pd.concat([df_long, df_short])
-    df = df.sort_values("pred", ascending=False).drop_duplicates(
+        # ロングモデルを学習する
+        model = mm.fit(dict_df, dict_close, per=1.005, opt_model="lstm")
+        df_long = mm.predict(model, dict_df, nbd)
+        df_long.loc[:, "side"] = 2
+
+        # 予測結果を統合する
+        df = pd.concat([df_long, df_short])
+        df = df.sort_values("pred", ascending=False).drop_duplicates(
+            subset=["code"], keep="first"
+        )
+
+        selected_indices = []
+
+        # 不適切な銘柄は除外する
+        for index, row in df.iterrows():
+            close_price = dm.find_newest_close_price(row["code"])
+            if (700 < close_price < 5500) and not lib.examine_regulation(row["code"]):
+                selected_indices.append(index)
+        df = df.loc[selected_indices, :]
+        dict_df_all[i] = df
+
+    df = pd.concat(dict_df_all)
+    df_aggregated = df.groupby(["code", "side"])["pred"].sum().reset_index()
+    df_aggregated = df_aggregated.sort_values("pred", ascending=False).drop_duplicates(
         subset=["code"], keep="first"
     )
+    df = df_aggregated.reset_index(drop=True)
 
-    selected_indices = []
-
-    # 不適切な銘柄は除外する
-    for index, row in df.iterrows():
-        close_price = dm.find_newest_close_price(row["code"])
-        if (700 < close_price < 6000) and not lib.examine_regulation(row["code"]):
-            selected_indices.append(index)
-    df = df.loc[selected_indices, :]
+    breakpoint()
 
     # 予測値に応じて確率的に銘柄を50個サンプリング
     weights = df["pred"].to_numpy()
@@ -222,8 +234,12 @@ if __name__ == "__main__":
         replace=False,
         p=probabilities,
     )
-    df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
-    df = df.sort_values("pred", ascending=False).reset_index()
+    df = df.loc[sampled_indices, :]
+    df = df.sort_values("pred", ascending=False).reset_index()[
+        ["date", "code", "brand", "pred", "side"]
+    ]
+
+    breakpoint()
 
     conn = sqlite3.connect(dm.db)
     with conn:
