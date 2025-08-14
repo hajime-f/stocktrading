@@ -217,13 +217,16 @@ if __name__ == "__main__":
         dict_df_all[i] = df
 
     df = pd.concat(dict_df_all)
-    df_aggregated = df.groupby(["code", "side"])["pred"].sum().reset_index()
+    df_aggregated = (
+        df.groupby(["code", "side", "brand", "date"])["pred"].sum().reset_index()
+    )
     df_aggregated = df_aggregated.sort_values("pred", ascending=False).drop_duplicates(
         subset=["code"], keep="first"
     )
     df = df_aggregated.reset_index(drop=True)
 
-    breakpoint()
+    # pd.set_option("display.max_rows", None)
+    # breakpoint()
 
     # 予測値に応じて確率的に銘柄を50個サンプリング
     weights = df["pred"].to_numpy()
@@ -239,7 +242,7 @@ if __name__ == "__main__":
         ["date", "code", "brand", "pred", "side"]
     ]
 
-    breakpoint()
+    # breakpoint()
 
     conn = sqlite3.connect(dm.db)
     with conn:
