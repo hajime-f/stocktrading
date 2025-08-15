@@ -113,6 +113,8 @@ class ModelManager:
         return model
 
     def prepare_data(self):
+        # データを準備するメソッド
+
         scaler = StandardScaler()
 
         dict_df = {}
@@ -130,6 +132,9 @@ class ModelManager:
         return dict_df, dict_df_close
 
     def evaluate_feature_importance(self, dict_df_learn, dict_df_close, per):
+        # 特徴量の重要度を評価するメソッド
+        # （学習・予測には使わないメソッドなので見なくてよい）
+
         list_X, list_y = [], []
         window = self.window
 
@@ -196,6 +201,8 @@ class ModelManager:
         plt.show()
 
     def fit(self, dict_df, dict_df_close, per):
+        # 予測器（LSTM）を学習させるメソッド
+
         list_X, list_y = [], []
         window = self.window
 
@@ -234,6 +241,8 @@ class ModelManager:
         return model
 
     def create_label(self, current_close, future_close, per):
+        # ラベルを計算するメソッド
+
         if per > 1:
             flag = future_close >= current_close * per
         elif per <= 1:
@@ -241,6 +250,8 @@ class ModelManager:
         return 1 if flag else 0
 
     def predict(self, model, dict_df, per):
+        # 予測値を得るためのメソッド
+
         list_result = []
 
         for code in dict_df.keys():
@@ -260,11 +271,13 @@ class ModelManager:
         return result
 
     def select_candidate(self, df_long, df_short):
+        # 予測結果に基づいて明日売買する銘柄を決定するメソッド
+
         df_long = df_long[df_long["pred"] >= self.threshold].copy()
         df_short = df_short[df_short["pred"] >= self.threshold].copy()
 
-        df_long.loc[:, "side"] = 2
-        df_short.loc[:, "side"] = 1
+        df_long.loc[:, "side"] = 2  # 買い建て
+        df_short.loc[:, "side"] = 1  # 売り建て
 
         df = pd.concat([df_long, df_short])
         df = df.sort_values("pred", ascending=False).drop_duplicates(
@@ -273,13 +286,16 @@ class ModelManager:
 
         selected_indices = []
         for index, row in df.iterrows():
-            if self.lib.examine_premium(row["code"]):
+            # 信用売りにプレミアム料が乗る銘柄はスキップする
+            if row["side"] == 1 and self.lib.examine_premium(row["code"]):
                 continue
+            # 売買制限がかかっている銘柄はスキップする
             if self.lib.examine_regulation(row["code"]):
                 continue
             selected_indices.append(index)
         df = df.loc[selected_indices, :]
 
+        # 予測値に応じて確率的に50銘柄を選抜する
         weights = df["pred"].to_numpy()
         probabilities = weights / np.sum(weights)
         sampled_indices = np.random.choice(
