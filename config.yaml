@@ -28,6 +28,5 @@ trading:
 
 model:
   window_size: 30
-  train_split_ratio: 0.8
   threshold: 0.7
   det_per: 0.005
