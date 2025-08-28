@@ -41,7 +41,7 @@ class ModelManager:
         # 移動平均線を追加する
         df["MA5"] = df["close"].rolling(window=5).mean()
         df["MA25"] = df["close"].rolling(window=25).mean()
-        # df["volume_MA20"] = df["volume"].rolling(window=20).mean()
+        df["volume_MA20"] = df["volume"].rolling(window=20).mean()
 
         # 対数変換する
         df["log_close"] = np.log(df["close"])
@@ -49,10 +49,10 @@ class ModelManager:
         # 差分を取る
         df["diff"] = df["close"].diff()
 
-        # # MACDを追加する
-        # df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
-        # df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
-        # df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
+        # MACDを追加する
+        df["MACD"] = df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean()
+        df["SIGNAL"] = df["MACD"].ewm(span=9).mean()
+        df["HISTOGRAM"] = df["MACD"] - df["SIGNAL"]
 
         # ボリンジャーバンドを追加する
         sma20 = df["close"].rolling(window=20).mean()
@@ -71,24 +71,24 @@ class ModelManager:
         df_shift = df.shift(1)
         df["close_rate"] = (df["close"] - df_shift["close"]) / df_shift["close"]
 
-        # # 始値と終値の差を追加する
-        # df["trunk"] = df["open"] - df["close"]
+        # 始値と終値の差を追加する
+        df["trunk"] = df["open"] - df["close"]
 
         # 移動平均線乖離率を追加する
         df["MA5_rate"] = (df["close"] - df["MA5"]) / df["MA5"]
         df["MA25_rate"] = (df["close"] - df["MA25"]) / df["MA25"]
 
-        # # MACDの乖離率を追加する
-        # df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
+        # MACDの乖離率を追加する
+        df["MACD_rate"] = (df["MACD"] - df["SIGNAL"]) / df["SIGNAL"]
 
-        # # RSIの乖離率を追加する
-        # df["RSI_rate"] = (df["RSI"] - 50) / 50
+        # RSIの乖離率を追加する
+        df["RSI_rate"] = (df["RSI"] - 50) / 50
 
         # ボリンジャーバンドの乖離率を追加する
         df["Upper_rate"] = (df["close"] - df["Upper"]) / df["Upper"]
 
-        # # 移動平均の差を追加する
-        # df["MA_diff"] = df["MA5"] - df["MA25"]
+        # 移動平均の差を追加する
+        df["MA_diff"] = df["MA5"] - df["MA25"]
 
         # nan を削除
         df = df.dropna()
@@ -144,7 +144,7 @@ class ModelManager:
             df_scaled = dict_df_learn[code]
             df_close = dict_df_close[code]
 
-            for i in range(len(df_scaled) - window + 1):
+            for i in range(len(df_scaled) - window):
                 window_X = df_scaled.iloc[i : i + window]
 
                 last_date_of_window = window_X.index[-1]
@@ -225,7 +225,7 @@ class ModelManager:
                 list_y.append(label)
 
         array_X, array_y = np.array(list_X), np.array(list_y)
-        array_X, array_y = shuffle(array_X, array_y, random_state=42)
+        # array_X, array_y = shuffle(array_X, array_y, random_state=42)
 
         model = self.compile_model(array_X.shape[1], array_X.shape[2])
         model.fit(
@@ -342,6 +342,6 @@ if __name__ == "__main__":
 
     # 最終候補を得る
     df = mm.select_candidate(df_long, df_short)
-    breakpoint()
+
     # 結果を保存する
     mm.save_result(df)
