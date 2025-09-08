@@ -53,7 +53,8 @@ if __name__ == "__main__":
     dm = DataManager()
     list_data = []
 
-    for _, row in dm.fetch_target().iterrows():
+    for _, row in dm.fetch_target(table_name="Target").iterrows():
+        
         crawler = Crawler(row["code"])
         data = crawler.extract_todays_data(crawler.fetch_stock_data())
 
