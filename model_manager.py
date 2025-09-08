@@ -224,6 +224,7 @@ if __name__ == "__main__":
     )
     df = df.loc[sampled_indices, ["date", "code", "brand", "pred", "side"]]
     df = df.sort_values("pred", ascending=False).reset_index()
+    df = df[["date", "code", "brand", "pred", "side"]]
 
     conn = sqlite3.connect(dm.db)
     with conn:
